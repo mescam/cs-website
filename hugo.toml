@@ -1,0 +1,8 @@
+baseURL = 'https://put.wozniak.im/'
+languageCode = 'pl-PL'
+title = 'mgr inż. Jakub Woźniak'
+theme = "PaperMod"
+
+[params]
+	[homeInfoParams]
+		content = "hello there"
