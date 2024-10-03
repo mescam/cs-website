@@ -1,0 +1,33 @@
+baseURL: https://put.wozniak.im/
+title: mgr inż. Jakub Woźniak
+theme: typo
+params:
+  description: 'materiały dla studentów'
+
+  homeIntroContent: |
+    jakub.wozniak@cs.put.poznan.pl
+
+    Instytut Informatyki  
+    Politechnika Poznańska
+
+    **Konsultacje**  
+    na żądanie po wcześniejszym umówieniu mailowym  
+
+    ### Przedmioty
+    - **Zarządzanie Systemami Rozproszonymi**  
+      wykład (15h) i laboratoria (45h)  
+      semestr zimowy  
+      systemy rozproszone, informatyka (mgr)  
+    - **Projektowanie Systemów Rozproszonych**   
+      wykład i projekt  
+      semestr letni  
+      systemy rozproszone, informatyka (mgr)  
+
+  menu:
+    - name: "home"
+      url: "/"
+    - name: "zsr wykład"
+      url: /zsr-wyklady
+    - name: "zsr lab"
+      url: /zsr-lab
+
