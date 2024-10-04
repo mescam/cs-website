@@ -17,9 +17,6 @@ permissions:
 
   # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
   # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
   # Default to bash
 defaults:
@@ -79,4 +76,4 @@ jobs:
           echo "${{ secrets.SSH_KEY }}" > ssh_key
       - name: Deploy using rsync
         run: |
-          rsync -avz -e "ssh -i ssh_key" ./public/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/public_html/
+          rsync -avz -e "ssh -i ssh_key -o StrictHostKeyChecking=no" ./public/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/public_html/
