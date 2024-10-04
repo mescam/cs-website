@@ -3,12 +3,10 @@
     --h2-font-size: 1.25rem;
     --h3-font-size: 1.125rem;
     --hx-font-size: 1.1rem;
+    --background: #f3f4f6;
 }
 
 .header-title {
     font-size: 2.25rem;
 }
 
-body {
-    background: "#f3f4f6";
-}
