@@ -1,4 +1,4 @@
-baseURL: https://put.wozniak.im/
+baseURL: https://www.cs.put.poznan.pl/jwozniak/
 title: mgr inż. Jakub Woźniak
 theme: typo
 params:
@@ -25,9 +25,9 @@ params:
 
   menu:
     - name: "home"
-      url: "/"
+      url: "/jwozniak/"
     - name: "zsr wykład"
-      url: /zsr-wyklady
+      url: /jwozniak/zsr-wyklady
     - name: "zsr lab"
-      url: /zsr-lab
+      url: /jwozniak/zsr-lab
 
