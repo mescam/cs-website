@@ -74,6 +74,7 @@ jobs:
         run: |
           ssh-keyscan ${{ secrets.SERVER_HOST }}
           echo "${{ secrets.SSH_KEY }}" > ssh_key
+          chmod 600 ssh_key
       - name: Deploy using rsync
         run: |
           rsync -avz -e "ssh -i ssh_key -o StrictHostKeyChecking=no" ./public/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/public_html/
