@@ -4,9 +4,15 @@ date = 2024-10-03T22:21:13+02:00
 draft = false
 +++
 
+### Informacje
+
 Semestr zimowy 2024/25  
 Laboratorium 1.6.16  
 poniedziałki, 18:15
+
+### Zaliczenie
+
+Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach (lub w terminie uzgodnionym przez prowadzących).
 
 ### Plan laboratoriów
 
@@ -22,7 +28,7 @@ poniedziałki, 18:15
    - **Zadania**:
      - Tworzenie obrazów Docker
      - Uruchamianie i zarządzanie kontenerami
-     - Tworzenie aplikacji wielokontenerowych z Docker Compose
+     - Tworzenie aplikacji wielokontenerowych
 
 3. #### Kubernetes: Tworzenie klastra i skalowanie
    - **Wymagania**: Kubernetes (Minikube lub chmura)
@@ -88,8 +94,7 @@ poniedziałki, 18:15
       - Tworzenie zaawansowanych dashboardów
       - Integracja logowania i monitorowania
 
-13. #### Podsumowanie: Projekty końcowe
-    - **Wymagania**: N/A
+13. #### Kolokwium zaliczeniowe
+    - **Wymagania**: Wiedza i szczęście
     - **Zadania**:
-      - Praca nad projektem końcowym obejmującym technologie DevOps
-      - Prezentacja rozwiązań i omówienie wyzwań
+      - :)
