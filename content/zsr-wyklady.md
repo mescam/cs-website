@@ -15,7 +15,8 @@ poniedziałki, 16:50
    - Zasady systemów rozproszonych
    - Automatyzacja i ciągłe dostarczanie w DevOps
    - Przegląd narzędzi: Ansible, Puppet, Chef
-   - Zarządzanie konfiguracją w środowiskach lokalnych i chmurowych
+   - Zarządzanie konfiguracją w środowiskach lokalnych i chmurowych  
+[prezentacja](/jwozniak/static/lectures/0-intro.pdf])
 
 2. #### CI/CD i konteneryzacja
    - Wprowadzenie do CI/CD: Jenkins, GitLab CI/CD
