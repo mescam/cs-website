@@ -22,6 +22,7 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - Instalacja i konfiguracja Ansible
      - Tworzenie i uruchamianie playbooków
      - Automatyzacja konfiguracji serwerów
+   - [skrypt](/jwozniak/labs/0-ansible.pdf)  
 
 2. #### Docker: Konteneryzacja aplikacji
    - **Wymagania**: Docker
