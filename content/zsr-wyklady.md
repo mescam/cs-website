@@ -11,7 +11,7 @@ poniedziałki, 16:50
 ### Plan wykładów
 
 1. #### Wprowadzenie do DevOps i systemów rozproszonych
-   [prezentacja](/jwozniak/lectures/0-intro.pdf]    
+   [prezentacja](/jwozniak/lectures/0-intro.pdf)  
    - Filozofia DevOps
    - Zasady systemów rozproszonych
    - Automatyzacja i ciągłe dostarczanie w DevOps
