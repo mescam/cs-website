@@ -11,12 +11,13 @@ poniedziałki, 16:50
 ### Plan wykładów
 
 1. #### Wprowadzenie do DevOps i systemów rozproszonych
+[prezentacja](/jwozniak/lectures/0-intro.pdf])  
+
    - Filozofia DevOps
    - Zasady systemów rozproszonych
    - Automatyzacja i ciągłe dostarczanie w DevOps
    - Przegląd narzędzi: Ansible, Puppet, Chef
    - Zarządzanie konfiguracją w środowiskach lokalnych i chmurowych  
-[prezentacja](/jwozniak/static/lectures/0-intro.pdf])
 
 2. #### CI/CD i konteneryzacja
    - Wprowadzenie do CI/CD: Jenkins, GitLab CI/CD
