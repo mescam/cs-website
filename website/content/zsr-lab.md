@@ -30,6 +30,7 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - Tworzenie obrazów Docker
      - Uruchamianie i zarządzanie kontenerami
      - Tworzenie aplikacji wielokontenerowych
+   - [skrypt](/jwozniak/labs/1-docker.pdf)
 
 3. #### Kubernetes: Tworzenie klastra i skalowanie
    - **Wymagania**: Kubernetes (Minikube lub chmura)
