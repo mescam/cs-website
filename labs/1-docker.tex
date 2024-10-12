@@ -1,0 +1,188 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{color}
+\setlength{\parindent}{0pt}
+
+\title{Zarządzanie Systemami Rozproszonymi\\Laboratoria z Docker - Kontenery aplikacyjne}
+\author{mgr inż. Jakub Woźniak}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Wprowadzenie}
+
+\textbf{Cel laboratoriów}:  
+Celem tych laboratoriów jest zapoznanie studentów z podstawami pracy z kontenerami aplikacyjnymi przy użyciu Dockera. Studenci nauczą się uruchamiać kontenery w trybie interaktywnym, budować własne obrazy Docker, zarządzać wolumenami oraz tworzyć sieci między kontenerami. Laboratoria zakończą się zadaniem polegającym na uruchomieniu Redmine i Postgres w oddzielnych kontenerach, z zapewnieniem trwałości danych.
+
+\textbf{Wymagana wiedza}:  
+\begin{itemize}
+    \item Podstawy pracy w terminalu (Linux).
+    \item Znajomość programowania (np. w Pythonie).
+    \item Podstawy pracy z bazami danych (Postgres).
+\end{itemize}
+
+\textbf{Narzędzia}:  
+\begin{itemize}
+    \item Docker zainstalowany na komputerze.
+    \item Przykładowe pliki: \texttt{requirements.txt}, prosty kod aplikacji (np. Flask).
+\end{itemize}
+
+\section{Uruchamianie kontenerów w trybie interaktywnym}
+
+\textbf{Teoria:}  
+Kontenery to lekkie środowiska wirtualne, które pozwalają na izolowanie aplikacji wraz z ich zależnościami. Docker pozwala na uruchamianie takich kontenerów w trybie interaktywnym, co umożliwia bezpośrednią interakcję z systemem w kontenerze, np. za pomocą terminala.
+
+\textbf{Uruchomienie kontenera z bash:}
+
+\noindent\begin{lstlisting}
+docker run -it ubuntu bash
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{-it}: Tryb interaktywny z terminalem.
+    \item \texttt{ubuntu}: Obraz bazowy Ubuntu.
+    \item \texttt{bash}: Polecenie do uruchomienia w kontenerze.
+\end{itemize}
+
+\textbf{Uruchomienie kontenera z konkretną wersją Pythona:}
+
+\noindent\begin{lstlisting}
+docker run -it python:3.8 bash
+\end{lstlisting}
+
+Studenci mogą sprawdzić wersję Pythona za pomocą komendy \texttt{python --version}.
+
+\section{Budowanie własnego obrazu kontenera}
+
+\textbf{Teoria:}  
+Docker umożliwia tworzenie własnych obrazów kontenerów, które zawierają wszystkie zależności potrzebne do uruchomienia aplikacji. Obraz kontenera jest budowany na podstawie pliku \texttt{Dockerfile}, który definiuje kroki budowy obrazu. Kolejność tych kroków ma kluczowe znaczenie w optymalizacji procesu budowy, ponieważ Docker używa mechanizmu cache do ponownego wykorzystania wcześniej wykonanych kroków.
+
+\textbf{Przygotowanie Dockerfile:}
+
+Studenci muszą stworzyć plik \texttt{Dockerfile} z poniższą zawartością:
+
+\noindent\begin{lstlisting}
+FROM python:3.8
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install -r requirements.txt
+
+COPY . .
+
+ENV FLASK_APP=app.py
+
+CMD ["flask", "run", "--host=0.0.0.0"]
+\end{lstlisting}
+
+\textbf{Wyjaśnienie kolejności dyrektyw w Dockerfile:}  
+Kolejność poleceń w Dockerfile ma kluczowe znaczenie ze względu na sposób, w jaki Docker buduje obraz. Każde polecenie w Dockerfile tworzy nową warstwę obrazu. Jeśli wprowadzimy zmiany w jednej z warstw, Docker musi przebudować wszystkie kolejne warstwy. Dlatego warto najpierw skopiować plik \texttt{requirements.txt} i zainstalować zależności, a dopiero później skopiować kod aplikacyjny. Dzięki temu Docker będzie mógł skorzystać z mechanizmu cache, jeśli zależności nie zmienią się, co znacznie przyspieszy budowę obrazu.
+
+\textbf{Budowanie obrazu:}
+
+\noindent\begin{lstlisting}
+docker build -t my-flask-app .
+\end{lstlisting}
+
+\textbf{Uruchomienie kontenera:}
+
+\noindent\begin{lstlisting}
+docker run -p 5000:5000 my-flask-app
+\end{lstlisting}
+
+\textbf{Wymiana kontenerów między komputerami:}
+
+Eksportowanie kontenera do pliku \texttt{.tar.gz}:
+
+\noindent\begin{lstlisting}
+docker save my-flask-app | gzip > my-flask-app.tar.gz
+\end{lstlisting}
+
+Importowanie kontenera na innym komputerze:
+
+\noindent\begin{lstlisting}
+gunzip -c my-flask-app.tar.gz | docker load
+\end{lstlisting}
+
+\section{Docker Volumes - Trwałość danych z Postgres}
+
+\textbf{Teoria:}  
+Kontenery są z natury efemeryczne, co oznacza, że po usunięciu kontenera dane mogą zostać utracone. Aby tego uniknąć, Docker pozwala na używanie wolumenów, które przechowują dane poza kontenerem. Dzięki wolumenom możemy zapewnić trwałość danych nawet po restarcie lub usunięciu kontenera.
+
+\textbf{Uruchomienie bazy danych Postgres z wolumenem:}
+
+\noindent\begin{lstlisting}
+docker run -d --name postgres-db \
+  -e POSTGRES_PASSWORD=mysecretpassword \
+  -v postgres-data:/var/lib/postgresql/data \
+  postgres
+\end{lstlisting}
+
+Wolumeny są używane do przechowywania danych poza kontenerem, aby dane mogły przetrwać restart lub usunięcie kontenera.
+
+\section{Sieć między kontenerami}
+
+\textbf{Teoria:}  
+Kontenery działające w Dockerze mogą komunikować się ze sobą, jeśli znajdują się w tej samej sieci. Docker pozwala na tworzenie sieci wirtualnych, które łączą kontenery i umożliwiają ich komunikację. Jest to szczególnie przydatne, gdy różne aplikacje (np. baza danych i aplikacja) muszą wymieniać dane.
+
+\textbf{Tworzenie sieci Dockera:}
+
+\noindent\begin{lstlisting}
+docker network create mynetwork
+\end{lstlisting}
+
+\textbf{Uruchomienie Postgres w tle:}
+
+\noindent\begin{lstlisting}
+docker run -d --name postgres-db \
+  --network mynetwork \
+  -e POSTGRES_PASSWORD=mysecretpassword \
+  postgres
+\end{lstlisting}
+
+\textbf{Uruchomienie klienta PostgreSQL w trybie interaktywnym:}
+
+\noindent\begin{lstlisting}
+docker run -it --network mynetwork \
+  --rm postgres psql -h postgres-db -U postgres
+\end{lstlisting}
+
+Studenci mogą teraz połączyć się z bazą danych Postgres uruchomioną w drugim kontenerze.
+
+\section{Zadanie główne: Redmine z bazą danych Postgres}
+
+\textbf{Opis zadania:}
+
+Redmine to popularne narzędzie do zarządzania projektami, które wykorzystuje bazę danych Postgres do przechowywania danych. Celem zadania jest skonfigurowanie dwóch kontenerów: jednego z Redmine oraz drugiego z bazą danych Postgres. Kontenery te muszą działać w jednej sieci i być skonfigurowane w taki sposób, aby dane były przechowywane w sposób trwały, co oznacza, że reset żadnego z kontenerów nie może spowodować utraty danych.
+
+\textbf{Wymagania:}
+\begin{itemize}
+    \item Uruchom kontener z aplikacją Redmine.
+    \item Uruchom oddzielny kontener z bazą danych Postgres.
+    \item Zapewnij trwałość danych, korzystając z odpowiednich mechanizmów (wolumeny Docker).
+    \item Oba kontenery muszą działać w tej samej sieci i Redmine musi korzystać z bazy Postgres.
+\end{itemize}
+
+\textbf{Dokumentacja:}
+\begin{itemize}
+    \item Obraz Redmine: \url{https://hub.docker.com/_/redmine}
+    \item Obraz Postgres: \url{https://hub.docker.com/_/postgres}
+    \item Dokumentacja Redmine: \url{https://www.redmine.org/projects/redmine/wiki/Guide}
+\end{itemize}
+
+\textbf{Kryteria zaliczenia:}
+\begin{itemize}
+    \item Redmine działa prawidłowo i jest dostępny na porcie 3000.
+    \item Restart kontenera Redmine lub Postgres nie powoduje utraty danych.
+    \item Po restarcie kontenerów, aplikacja Redmine nadal łączy się z bazą danych Postgres.
+    \item Studenci muszą samodzielnie wyjaśnić, dlaczego dane są trwałe (wolumeny) oraz jak ich konfiguracja zapewnia tę trwałość.
+\end{itemize}
+
+\end{document}
+

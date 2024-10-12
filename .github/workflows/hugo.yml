@@ -24,8 +24,24 @@ defaults:
     shell: bash
 
 jobs:
-  # Build job
-  build:
+  build-pdfs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nix
+        uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Build labs
+        run: nix build
+        working-directory: ./labs
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: labs
+          path: ./labs/result
+  build-website:
     runs-on: ubuntu-latest
     env:
       HUGO_VERSION: 0.128.0
@@ -40,11 +56,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+        working-directory: website
       - name: Build with Hugo
         env:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
@@ -53,11 +67,12 @@ jobs:
           hugo \
           --minify \
           --baseURL "//www.cs.put.poznan.pl/jwozniak/"
+        working-directory: website
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: public
-          path: ./public
+          path: ./website/public
           # Deployment job
   deploy:
     environment:
