@@ -59,6 +59,16 @@ jobs:
         with:
           name: public
           path: ./website/result
+
+  build-pptx: # not really a build ;) just nicer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pptx
+          path: ./lectures
  
   deploy:
     environment:
@@ -75,10 +85,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: labs
-          path: ./labs
-      - name: Copy pptx
-        run: |
-          cp -R lectures public/
+          path: ./public/labs
+      - name: Download pptx
+        uses: actions/download-artifact@v4
+        with:
+          name: pptx
+          path: ./public/lectures
       - name: Setup SSH keys
         run: |
           ssh-keyscan ${{ secrets.SERVER_HOST }}
