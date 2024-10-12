@@ -78,7 +78,7 @@ jobs:
     environment:
       name: libra
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build-website, build-pdfs]
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
