@@ -1,5 +1,5 @@
 {
-  description = "Jakub Wozniak resume";
+  description = "Lab scripts for Distributed Systems Management at PUT";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -18,7 +18,7 @@
       in rec {
         packages = {
           document = pkgs.stdenvNoCC.mkDerivation rec {
-            name = "JakubWozniakResume";
+            name = "LaTeX-Build";
             src = self;
             buildInputs = [ pkgs.coreutils tex ];
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
