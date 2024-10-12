@@ -1,8 +1,9 @@
 \documentclass{article}
+\usepackage[utf8]{inputenc}
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{color}
-\usepackage[utf8]{inputenc}
+\setlength{\parindent}{0pt}
 
 \title{Zarządzanie Systemami Rozproszonymi\\Laboratoria z Ansible}
 \author{mgr inż. Jakub Woźniak}
@@ -18,76 +19,87 @@
 Celem tych laboratoriów jest zapoznanie studentów z narzędziem Ansible oraz automatyzacją zarządzania konfiguracją. Studenci będą używać Ansible do instalacji oprogramowania, zarządzania plikami oraz konfiguracji systemów w sieci za pomocą playbooków YAML. Laboratoria kończą się zadaniem zbudowania klastra Redis z jednym węzłem Master i dwoma węzłami Slave.
 
 \textbf{Wymagana wiedza}:  
-Znajomość podstaw systemu Linux (komendy terminala) oraz podstawowa znajomość sieci (np. SSH, IP).
+\begin{itemize}
+    \item Znajomość podstaw systemu Linux (komendy terminala).
+    \item Podstawowa znajomość sieci (np. SSH, IP).
+\end{itemize}
 
 \textbf{Narzędzia}:  
-- Maszyna kontrolna (np. openSUSE) z zainstalowanym Ansible.
-- Trzy maszyny wirtualne w tej samej sieci, na których będą wykonywane zadania.
-- Połączenie SSH między maszynami.
+\begin{itemize}
+    \item Maszyna kontrolna (np. openSUSE) z zainstalowanym Ansible.
+    \item Trzy maszyny wirtualne w tej samej sieci, na których będą wykonywane zadania.
+    \item Połączenie SSH między maszynami.
+\end{itemize}
 
-\textbf{Rezultat}:  
-Studenci nauczą się używać Ansible do zarządzania wieloma maszynami jednocześnie za pomocą playbooków YAML. Efektem końcowym będzie działający klaster Redis.
+\section{Przygotowanie środowiska}
 
-\section{Krok 1: Przygotowanie środowiska}
+\textbf{Teoria:}  
+W środowiskach rozproszonych ważne jest zapewnienie bezproblemowej komunikacji między maszynami. Dzięki Ansible możemy automatycznie zarządzać wieloma systemami jednocześnie. W tym laboratorium studenci skonfigurują trzy maszyny wirtualne w tej samej sieci, które będą mogły komunikować się ze sobą oraz z maszyną kontrolną przez SSH.
 
-\textbf{Instalacja Ansible na maszynie kontrolnej:}  
-Na maszynie kontrolnej (np. openSUSE) należy zainstalować Ansible:
+\subsection*{Tutorial: Konfiguracja maszyn wirtualnych w VirtualBox z użyciem gotowych obrazów}
 
-\begin{lstlisting}
-sudo zypper install ansible
-\end{lstlisting}
+1. \textbf{Pobranie gotowych obrazów systemu:}
+   \begin{itemize}
+       \item \textbf{Ubuntu Minimal}: Pobierz obraz minimalny Ubuntu z \href{https://cloud-images.ubuntu.com/}{Ubuntu Cloud}.
+       \item \textbf{openSUSE Minimal}: Pobierz minimalny obraz openSUSE z \href{https://get.opensuse.org/tumbleweed/}{openSUSE Tumbleweed}.
+   \end{itemize}
 
-Po instalacji upewnij się, że Ansible działa:
+2. \textbf{Konfiguracja sieci:}
+   \begin{itemize}
+       \item Utwórz sieć typu "Host-Only" w VirtualBox, która pozwala na komunikację między maszynami.
+       \item Dla każdej maszyny wirtualnej skonfiguruj Adapter 1 jako NAT (dostęp do internetu) i Adapter 2 jako Host-Only.
+   \end{itemize}
 
-\begin{lstlisting}
-ansible --version
-\end{lstlisting}
+3. \textbf{Importowanie maszyn wirtualnych:}
+   \begin{itemize}
+       \item Utwórz nowe maszyny w VirtualBox, korzystając z pobranych obrazów jako dysków.
+   \end{itemize}
 
-Link do dokumentacji Ansible:  
-\url{https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html}
+4. \textbf{Konfiguracja bezhasłowego SSH:}
+   \begin{itemize}
+       \item Na maszynie hosta wygeneruj parę kluczy SSH za pomocą \texttt{ssh-keygen -t rsa -b 4096}.
+       \item Skopiuj klucz publiczny na każdą z maszyn wirtualnych, korzystając z \texttt{ssh-copy-id}.
+   \end{itemize}
 
-\textbf{Utworzenie pliku \texttt{hosts}}:  
-W katalogu \texttt{/etc/ansible/} utwórz plik \texttt{hosts}, w którym wymienione będą maszyny docelowe:
+5. \textbf{Sprawdzenie komunikacji między maszynami:}
+   \begin{itemize}
+       \item Użyj polecenia \texttt{ping}, aby upewnić się, że maszyny wirtualne mogą się ze sobą komunikować.
+   \end{itemize}
 
-\begin{lstlisting}
-[myservers]
-vm1 ansible_host=192.168.1.101
-vm2 ansible_host=192.168.1.102
-vm3 ansible_host=192.168.1.103
-\end{lstlisting}
+\section{Sprawdzenie połączenia}
 
-\section{Krok 2: Sprawdzenie połączenia}
+\textbf{Teoria:}  
+Pierwszym krokiem przy pracy z Ansible jest upewnienie się, że maszyna kontrolna może komunikować się z innymi maszynami. Ansible umożliwia to za pomocą modułu \texttt{ping}, który testuje dostępność maszyn w grupie.
 
-\textbf{Polecenie \texttt{ping}}:  
-Aby upewnić się, że Ansible może połączyć się z maszynami:
+\textbf{Polecenie \texttt{ping}:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ansible myservers -m ping
 \end{lstlisting}
 
-Połączone maszyny odpowiedzą "pong".  
-Link do dokumentacji modułu \texttt{ping}:  
-\url{https://docs.ansible.com/ansible/latest/collections/ansible/builtin/ping_module.html}
+To polecenie wysyła żądanie ping do każdej maszyny w grupie \texttt{myservers}, sprawdzając, czy jest dostępna.
 
-\section{Krok 3: Zbieranie faktów}
+\section{Zbieranie faktów}
+
+\textbf{Teoria:}  
+Moduł \texttt{gather\_facts} pozwala zebrać szczegółowe informacje o maszynach, takie jak adresy IP, system operacyjny czy dostępne zasoby. Jest to przydatne przy dalszej automatyzacji.
 
 \textbf{Zbieranie faktów z maszyn:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ansible myservers -m gather_facts
 \end{lstlisting}
 
-Moduł \texttt{gather\_facts} dostarcza szczegółowych informacji o systemach (adresy IP, system operacyjny itd.).  
+Wyświetli to szczegółowe dane na temat każdej z maszyn w formacie JSON.
 
-Link do dokumentacji:  
-\url{https://docs.ansible.com/ansible/latest/collections/ansible/builtin/setup_module.html}
+\section{Instalacja Nginx za pomocą playbooka}
 
-\section{Krok 4: Instalacja Nginx za pomocą playbooka}
+\textbf{Teoria:}  
+Playbooki Ansible to pliki YAML, które definiują zestawy instrukcji do wykonania na zdalnych maszynach. W tym kroku zainstalujemy serwer Nginx na wszystkich maszynach.
 
-\textbf{Playbook YAML do instalacji Nginx:}  
-Od tego momentu studenci będą korzystać wyłącznie z playbooków w formacie YAML. Stwórz playbook o nazwie \texttt{nginx-install.yml}:
+\textbf{Playbook YAML do instalacji Nginx:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ---
 - hosts: myservers
   become: yes
@@ -98,21 +110,20 @@ Od tego momentu studenci będą korzystać wyłącznie z playbooków w formacie 
         state: present
 \end{lstlisting}
 
-Wykonaj playbook:
+\textbf{Uruchomienie playbooka:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ansible-playbook nginx-install.yml
 \end{lstlisting}
 
-Link do dokumentacji modułu \texttt{apt}:  
-\url{https://docs.ansible.com/ansible/latest/collections/ansible/builtin/apt_module.html}
+\section{Modyfikacja strony głównej za pomocą playbooka}
 
-\section{Krok 5: Modyfikacja strony głównej za pomocą playbooka}
+\textbf{Teoria:}  
+Ansible umożliwia automatyczne zarządzanie plikami na zdalnych maszynach. W tym kroku skopiujemy plik \texttt{index.html} na wszystkie maszyny, zmieniając stronę główną Nginx.
 
-\textbf{Tworzenie i kopiowanie pliku \texttt{index.html}}:  
-Napisz playbook o nazwie \texttt{update-index.yml}, który skopiuje plik \texttt{index.html} do katalogu Nginx:
+\textbf{Playbook YAML do skopiowania pliku \texttt{index.html}:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ---
 - hosts: myservers
   become: yes
@@ -123,21 +134,20 @@ Napisz playbook o nazwie \texttt{update-index.yml}, który skopiuje plik \texttt
         dest: /var/www/html/index.html
 \end{lstlisting}
 
-Wykonaj playbook:
+\textbf{Uruchomienie playbooka:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ansible-playbook update-index.yml
 \end{lstlisting}
 
-Link do dokumentacji modułu \texttt{copy}:  
-\url{https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html}
+\section{Wykorzystanie szablonu do dynamicznej strony}
 
-\section{Krok 6: Użycie szablonu do dynamicznej strony}
+\textbf{Teoria:}  
+Ansible pozwala na korzystanie z szablonów, które dynamicznie generują pliki na podstawie zmiennych. W tym kroku stworzymy szablon \texttt{index.html}, który będzie wyświetlał adres IP każdej maszyny.
 
-\textbf{Tworzenie dynamicznego szablonu strony głównej:}  
-Napisz szablon \texttt{index.html.j2}, który będzie zawierał adres IP każdej maszyny:
+\textbf{Szablon \texttt{index.html.j2} z dynamicznymi zmiennymi:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 <html>
   <head><title>Ansible Lab</title></head>
   <body>
@@ -146,9 +156,9 @@ Napisz szablon \texttt{index.html.j2}, który będzie zawierał adres IP każdej
 </html>
 \end{lstlisting}
 
-Następnie napisz playbook o nazwie \texttt{template-index.yml}, aby wdrożyć szablon:
+\textbf{Playbook YAML do wdrożenia szablonu:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ---
 - hosts: myservers
   become: yes
@@ -159,34 +169,25 @@ Następnie napisz playbook o nazwie \texttt{template-index.yml}, aby wdrożyć s
         dest: /var/www/html/index.html
 \end{lstlisting}
 
-Wykonaj playbook:
+\textbf{Uruchomienie playbooka:}
 
-\begin{lstlisting}
+\noindent\begin{lstlisting}
 ansible-playbook template-index.yml
 \end{lstlisting}
 
-Link do dokumentacji modułu \texttt{template}:  
-\url{https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html}
+\section{Instalacja Redis (Master-Slave)}
 
-\section{Krok 7: Instalacja Redis (Master-Slave)}
+\textbf{Teoria:}  
+Redis jest bazą danych typu key-value, która obsługuje replikację danych w trybie Master-Slave. W tym kroku skonfigurujemy klaster Redis z jednym węzłem Master i dwoma węzłami Slave.
 
-\textbf{Zadanie główne}:  
-Zadanie to polega na skonfigurowaniu Redis w trybie Master-Slave z jedną maszyną Master i dwiema maszynami Slave.
+\textbf{Zadanie:}  
+Stwórz playbook, który zainstaluje Redis na wszystkich maszynach i skonfiguruje replikację Master-Slave. Po zakończeniu zadania sprawdź, czy dane są replikowane między węzłami.
 
-\textbf{Polecenie}:  
-Stwórz playbook, który zainstaluje Redis na wszystkich maszynach, a następnie skonfiguruj go, aby działał w trybie Master-Slave. Na jednej maszynie skonfiguruj Redis jako Master, a na dwóch pozostałych jako Slave.
+\textbf{Kryteria zaliczenia:}
+\begin{itemize}
+    \item Poprawnie skonfigurowany klaster Redis z jednym Master i dwoma Slave.
+    \item Weryfikacja, że dane dodane na węźle Master są replikowane na węzłach Slave.
+\end{itemize}
 
-\textbf{Weryfikacja}:  
-Zaloguj się na maszynę Master i dodaj dane do Redis, a następnie sprawdź na maszynach Slave, czy dane zostały zreplikowane:
-
-\begin{lstlisting}
-redis-cli set mykey "Ansible Redis"
-redis-cli get mykey
-\end{lstlisting}
-
-Dane muszą być replikowane na maszynach Slave.
-
-\section*{Podsumowanie}
-W trakcie tych laboratoriów studenci nauczyli się korzystać z Ansible, aby zarządzać konfiguracją na wielu maszynach przy pomocy playbooków YAML. Zakończyliśmy laboratoria, budując klaster Redis z konfiguracją Master-Slave i zweryfikowaliśmy replikację danych.
 \end{document}
 
