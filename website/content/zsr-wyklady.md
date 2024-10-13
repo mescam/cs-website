@@ -19,12 +19,15 @@ poniedziałki, 16:50
 
    [prezentacja](/jwozniak/lectures/0-intro.pdf)  
 
-2. #### CI/CD i konteneryzacja
-   - Wprowadzenie do CI/CD: Jenkins, GitLab CI/CD
-   - Pipeline CI/CD: budowanie, testowanie, wdrażanie
-   - Docker: konteneryzacja aplikacji, tworzenie obrazów, Docker Compose
-   - Optymalizacja i bezpieczeństwo obrazów Docker
-   - Tworzenie wielokontenerowych aplikacji
+2. #### Kontenery aplikacyjne
+   - Wprowadzenie do wirtualizacji i rys historyczny
+   - Potrzeba i charakterystyka wirtualizacji
+   - Konteneryzacja jako odpowiedź na wady wirtualizacji
+   - Przykłady technologii konteneryzacji
+   - Nawiązanie do problemów w logistyce
+   - Docker jako kontener aplikacyjny
+
+   [prezentacja](/jwozniak/lectures/1-docker.pdf)
 
 3. #### Kubernetes: Orkiestracja i zarządzanie kontenerami
    - Wprowadzenie do Kubernetes: Podstawy i komponenty (Pod, Node, Cluster)
