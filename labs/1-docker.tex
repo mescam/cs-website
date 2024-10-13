@@ -43,16 +43,23 @@ docker run -it ubuntu bash
 \end{lstlisting}
 
 \begin{itemize}
-    \item \texttt{-it}: Tryb interaktywny z terminalem.
-    \item \texttt{ubuntu}: Obraz bazowy Ubuntu.
-    \item \texttt{bash}: Polecenie do uruchomienia w kontenerze.
+    \item \texttt{-it}: Tryb interaktywny z terminalem, umożliwia pracę z kontenerem jak z lokalnym terminalem.
+    \item \texttt{ubuntu}: Wskazuje na obraz bazowy Ubuntu.
+    \item \texttt{bash}: Polecenie uruchomienia interpretera bash wewnątrz kontenera.
 \end{itemize}
 
 \textbf{Uruchomienie kontenera z konkretną wersją Pythona:}
+Docker to również przydatne narzędzie gdy potrzebna jest konkretna wersja oprogramowania, która nie jest dostępna na systemie operacyjnym, a jego instalacja mogłaby spowodować konflikt zależności. Oprogramowanie uruchomione w kontenerze Docker jest w izolowanym środowisku i nie ma wpływu na inne procesy w systemie operacyjnym. 
 
 \noindent\begin{lstlisting}
 docker run -it python:3.8 bash
 \end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{-it}: Tryb interaktywny z terminalem.
+    \item \texttt{python:3.8}: Wskazuje na obraz Python w wersji 3.8.
+    \item \texttt{bash}: Uruchamia interpreter bash w kontenerze.
+\end{itemize}
 
 Studenci mogą sprawdzić wersję Pythona za pomocą komendy \texttt{python --version}.
 
@@ -60,6 +67,8 @@ Studenci mogą sprawdzić wersję Pythona za pomocą komendy \texttt{python --ve
 
 \textbf{Teoria:}  
 Docker umożliwia tworzenie własnych obrazów kontenerów, które zawierają wszystkie zależności potrzebne do uruchomienia aplikacji. Obraz kontenera jest budowany na podstawie pliku \texttt{Dockerfile}, który definiuje kroki budowy obrazu. Kolejność tych kroków ma kluczowe znaczenie w optymalizacji procesu budowy, ponieważ Docker używa mechanizmu cache do ponownego wykorzystania wcześniej wykonanych kroków.
+
+Studenci powinni napisać prostą aplikację webową w Pythonie, wykorzystując framework Flask. Następnie zostanie zbudowany obraz Docker, który będzie uruchamiał tę aplikację.
 
 \textbf{Przygotowanie Dockerfile:}
 
@@ -90,11 +99,21 @@ Kolejność poleceń w Dockerfile ma kluczowe znaczenie ze względu na sposób, 
 docker build -t my-flask-app .
 \end{lstlisting}
 
+\begin{itemize}
+    \item \texttt{-t my-flask-app}: Nazwa i tag dla obrazu, który zostanie zbudowany.
+    \item \texttt{.}: Wskazuje na bieżący katalog jako lokalizację pliku \texttt{Dockerfile}.
+\end{itemize}
+
 \textbf{Uruchomienie kontenera:}
 
 \noindent\begin{lstlisting}
 docker run -p 5000:5000 my-flask-app
 \end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{-p 5000:5000}: Mapowanie portu 5000 na porcie hosta do portu 5000 w kontenerze, na którym działa aplikacja.
+    \item \texttt{my-flask-app}: Nazwa obrazu, który ma być uruchomiony.
+\end{itemize}
 
 \textbf{Wymiana kontenerów między komputerami:}
 
@@ -104,11 +123,21 @@ Eksportowanie kontenera do pliku \texttt{.tar.gz}:
 docker save my-flask-app | gzip > my-flask-app.tar.gz
 \end{lstlisting}
 
+\begin{itemize}
+    \item \texttt{docker save}: Eksportuje obraz kontenera do pliku tar.
+    \item \texttt{gzip}: Kompresuje plik \texttt{.tar} do formatu \texttt{.tar.gz}.
+\end{itemize}
+
 Importowanie kontenera na innym komputerze:
 
 \noindent\begin{lstlisting}
 gunzip -c my-flask-app.tar.gz | docker load
 \end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{gunzip -c}: Dekompresuje plik \texttt{.tar.gz} i przekazuje jego zawartość do polecenia \texttt{docker load}.
+    \item \texttt{docker load}: Wczytuje obraz kontenera z pliku tar.
+\end{itemize}
 
 \section{Docker Volumes - Trwałość danych z Postgres}
 
@@ -124,7 +153,13 @@ docker run -d --name postgres-db \
   postgres
 \end{lstlisting}
 
-Wolumeny są używane do przechowywania danych poza kontenerem, aby dane mogły przetrwać restart lub usunięcie kontenera.
+\begin{itemize}
+    \item \texttt{-d}: Uruchamia kontener w trybie "daemon" (w tle).
+    \item \texttt{--name postgres-db}: Nazwa dla kontenera.
+    \item \texttt{-e POSTGRES\_PASSWORD=mysecretpassword}: Ustawia zmienną środowiskową dla hasła bazy danych.
+    \item \texttt{-v postgres-data:/var/lib/postgresql/data}: Tworzy wolumen o nazwie \texttt{postgres-data}, który przechowuje dane Postgres.
+    \item \texttt{postgres}: Obraz bazy danych Postgres.
+\end{itemize}
 
 \section{Sieć między kontenerami}
 
@@ -137,6 +172,10 @@ Kontenery działające w Dockerze mogą komunikować się ze sobą, jeśli znajd
 docker network create mynetwork
 \end{lstlisting}
 
+\begin{itemize}
+    \item \texttt{docker network create mynetwork}: Tworzy nową sieć o nazwie \texttt{mynetwork}.
+\end{itemize}
+
 \textbf{Uruchomienie Postgres w tle:}
 
 \noindent\begin{lstlisting}
@@ -146,6 +185,10 @@ docker run -d --name postgres-db \
   postgres
 \end{lstlisting}
 
+\begin{itemize}
+    \item \texttt{--network mynetwork}: Dołącza kontener do sieci o nazwie \texttt{mynetwork}.
+\end{itemize}
+
 \textbf{Uruchomienie klienta PostgreSQL w trybie interaktywnym:}
 
 \noindent\begin{lstlisting}
@@ -153,12 +196,16 @@ docker run -it --network mynetwork \
   --rm postgres psql -h postgres-db -U postgres
 \end{lstlisting}
 
-Studenci mogą teraz połączyć się z bazą danych Postgres uruchomioną w drugim kontenerze.
+\begin{itemize}
+    \item \texttt{--rm}: Usuwa kontener po zakończeniu pracy.
+    \item \texttt{psql}: Uruchamia klienta PostgreSQL wewnątrz kontenera.
+    \item \texttt{-h postgres-db}: Wskazuje hosta bazy danych Postgres.
+    \item \texttt{-U postgres}: Używa użytkownika o nazwie \texttt{postgres}.
+\end{itemize}
 
 \section{Zadanie główne: Redmine z bazą danych Postgres}
 
-\textbf{Opis zadania:}
-
+\textbf{Opis zadania:}  
 Redmine to popularne narzędzie do zarządzania projektami, które wykorzystuje bazę danych Postgres do przechowywania danych. Celem zadania jest skonfigurowanie dwóch kontenerów: jednego z Redmine oraz drugiego z bazą danych Postgres. Kontenery te muszą działać w jednej sieci i być skonfigurowane w taki sposób, aby dane były przechowywane w sposób trwały, co oznacza, że reset żadnego z kontenerów nie może spowodować utraty danych.
 
 \textbf{Wymagania:}
