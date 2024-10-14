@@ -17,7 +17,7 @@ poniedziałki, 16:50
    - Przegląd narzędzi: Ansible, Puppet, Chef
    - Zarządzanie konfiguracją w środowiskach lokalnych i chmurowych  
 
-   [prezentacja](/jwozniak/lectures/0-intro.pdf)  
+   [slajdy](/jwozniak/lectures/0-intro.pdf)  
 
 2. #### Kontenery aplikacyjne
    - Wprowadzenie do wirtualizacji i rys historyczny
@@ -27,7 +27,7 @@ poniedziałki, 16:50
    - Nawiązanie do problemów w logistyce
    - Docker jako kontener aplikacyjny
 
-   [prezentacja](/jwozniak/lectures/1-docker.pdf)
+   [slajdy](/jwozniak/lectures/1-docker.pdf)
 
 3. #### Kubernetes: Orkiestracja i zarządzanie kontenerami
    - Wprowadzenie do Kubernetes: Podstawy i komponenty (Pod, Node, Cluster)
