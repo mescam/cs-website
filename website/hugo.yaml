@@ -30,4 +30,10 @@ params:
       url: /jwozniak/zsr-wyklady
     - name: "zsr lab"
       url: /jwozniak/zsr-lab
-
+  social:
+    - name: linkedin
+      url: https://www.linkedin.com/in/wozniakjakub
+    - name: medium
+      url: https://medium.com/@jakubwozniak
+    - name: github
+      url: https://github.com/mescam
