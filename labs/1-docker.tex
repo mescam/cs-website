@@ -230,6 +230,16 @@ Redmine to popularne narzędzie do zarządzania projektami, które wykorzystuje 
     \item Po restarcie kontenerów, aplikacja Redmine nadal łączy się z bazą danych Postgres.
     \item Studenci muszą samodzielnie wyjaśnić, dlaczego dane są trwałe (wolumeny) oraz jak ich konfiguracja zapewnia tę trwałość.
 \end{itemize}
+Weryfikacja polega na wykonaniu następujących kroków:
+\begin{itemize}
+    \item Zalogowanie na http://localhost:3000 przy pomocy użytkownika \texttt{admin} i hasła \texttt{admin}.
+    \item Zmiana hasła użytkownika \texttt{admin} na inne.
+    \item Dodanie nowego projektu w Redmine.
+    \item Zatrzymanie kontenerów redmine i postgres przy pomocy polecenia \texttt{docker stop}.
+    \item Usunięcie kontenerów redmine i postgres przy pomocy polecenia \texttt{docker rm}.
+    \item Ponowne stworzenie kontenerów redmine i postgres.
+    \item Sprawdzenie, czy dane są nadal dostępne po restarcie kontenerów.
+\end{itemize}
 
 \end{document}
 
