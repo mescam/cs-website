@@ -36,9 +36,11 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
    - **Wymagania**: Kubernetes (Minikube lub chmura)
    - **Zadania**:
      - Instalacja Kubernetes
-     - Tworzenie i zarządzanie klastrem
-     - Tworzenie aplikacji w Kubernetes
-     - Skalowanie aplikacji z HPA
+     - Pod, Deployment, Service
+     - PersistentVolume i PVC
+     - Secrets i ConfigMaps
+     - HPA
+   - [skrypt](/jwozniak/labs/2-kubernetes.pdf)
 
 4. #### Monitorowanie z Prometheus i Grafana
    - **Wymagania**: Prometheus, Grafana
