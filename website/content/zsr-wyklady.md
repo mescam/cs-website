@@ -31,9 +31,12 @@ poniedziałki, 16:50
 
 3. #### Kubernetes: Orkiestracja i zarządzanie kontenerami
    - Wprowadzenie do Kubernetes: Podstawy i komponenty (Pod, Node, Cluster)
-   - Skalowanie aplikacji, HPA i VPA
-   - Deployment, StatefulSets, DaemonSets
-   - Zaawansowane zarządzanie Kubernetes: Namespaces, QoS, zasoby
+   - Architektura Kubernetes
+   - Definicje YAML
+   - Podstawowe obiekty
+   - Monitoring i bezpieczeństwo
+
+   [slajdy](/jwozniak/lectures/2-kubernetes.pdf)
 
 4. #### Monitorowanie i zarządzanie logami w systemach rozproszonych
    - Monitorowanie aplikacji i infrastruktury: Prometheus, Grafana
