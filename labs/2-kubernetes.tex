@@ -366,14 +366,14 @@ metadata:
 spec:
   containers:
   - name: json-app
-    image: ubuntu:24.04
+    image: curlimages/curl:8.10.1
     env:
     - name: API_KEY
       valueFrom:
         secretKeyRef:
           name: api-secret
           key: api-key
-    command: ["sh", "-c", "curl -H 'Authorization: Bearer $API_KEY' https://jsonplaceholder.typicode.com/posts"]
+    command: ["sh", "-c", "curl -d \"api-key=$API_KEY\" https://jsonplaceholder.typicode.com/posts"]
 \end{lstlisting}
 
 \textbf{Wyjaśnienie nowych elementów YAML:}
