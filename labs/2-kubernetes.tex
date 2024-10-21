@@ -37,6 +37,10 @@ curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 minikube start --driver=virtualbox
 \end{lstlisting}
+Oprogramowanie \texttt{kubectl} jest wbudowane w pakiet \texttt{minikube}, dlatego polecany jest alias w \texttt{bash}, który można dodać do \texttt{.bashrc} lub podobnego.
+\begin{lstlisting}
+alias kubectl="minikube kubectl --"
+\end{lstlisting}
 
 Po instalacji warto sprawdzić, czy klaster Kubernetes został poprawnie uruchomiony, za pomocą:
 \begin{lstlisting}
