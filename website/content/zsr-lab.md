@@ -42,63 +42,71 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - HPA
    - [skrypt](/jwozniak/labs/2-kubernetes.pdf)
 
-4. #### Monitorowanie z Prometheus i Grafana
+4. #### Kubernetes: LivenessProbe, StatefulSet i Ingress
+   - **Wymagania**: Kubernetes (minikube lub chmura)
+   - **Zadania**:
+     - Deployment nginx z livenessProbe
+     - Baza danych przy użyciu StatefulSet
+     - Konfiguracja Ingress na NGINX
+   - [skrypt](/jwozniak/labs/3-kubernetes-2.pdf)
+
+5. #### Monitorowanie z Prometheus i Grafana
    - **Wymagania**: Prometheus, Grafana
    - **Zadania**:
      - Konfiguracja Prometheus
      - Zbieranie metryk z aplikacji
      - Tworzenie dashboardów monitorujących w Grafana
 
-5. #### Zarządzanie logami z ELK Stack
+6. #### Zarządzanie logami z ELK Stack
    - **Wymagania**: Elasticsearch, Logstash, Kibana
    - **Zadania**:
      - Konfiguracja ELK stack
      - Centralizacja logów z aplikacji rozproszonych
      - Analiza logów w Kibana
 
-6. #### Terraform: Tworzenie infrastruktury chmurowej
+7. #### Terraform: Tworzenie infrastruktury chmurowej
    - **Wymagania**: Terraform, AWS/Azure/GCP
    - **Zadania**:
      - Tworzenie prostych zasobów chmurowych (np. instancje EC2)
      - Automatyzacja zarządzania infrastrukturą
 
-7. #### GitOps z ArgoCD
+8. #### GitOps z ArgoCD
    - **Wymagania**: Kubernetes, ArgoCD
    - **Zadania**:
      - Konfiguracja GitOps za pomocą ArgoCD
      - Automatyzacja wdrożeń aplikacji Kubernetes
 
-8. #### Bezpieczeństwo w Kubernetes
+9. #### Bezpieczeństwo w Kubernetes
    - **Wymagania**: Kubernetes, narzędzia skanujące (np. Trivy)
    - **Zadania**:
      - Skany bezpieczeństwa obrazów Docker
      - Konfiguracja RBAC i Network Policies w Kubernetes
 
-9. #### High Availability i Disaster Recovery
+10. #### High Availability i Disaster Recovery
     - **Wymagania**: Kubernetes, Terraform
     - **Zadania**:
       - Tworzenie klastra o wysokiej dostępności
       - Implementacja planów Disaster Recovery
 
-10. #### Serverless: Tworzenie i wdrażanie funkcji
+11. #### Serverless: Tworzenie i wdrażanie funkcji
     - **Wymagania**: AWS Lambda lub Google Cloud Functions
     - **Zadania**:
       - Tworzenie funkcji serverless
       - Integracja funkcji z innymi usługami chmurowymi
 
-11. #### Praktyczne zastosowania CI/CD
+12. #### Praktyczne zastosowania CI/CD
     - **Wymagania**: Jenkins/GitLab CI
     - **Zadania**:
       - Konfiguracja pipeline CI/CD
       - Automatyzacja testów i wdrożeń
 
-12. #### Zaawansowane monitorowanie i logowanie
+13. #### Zaawansowane monitorowanie i logowanie
     - **Wymagania**: Prometheus, Grafana, ELK Stack
     - **Zadania**:
       - Tworzenie zaawansowanych dashboardów
       - Integracja logowania i monitorowania
 
-13. #### Kolokwium zaliczeniowe
+14. #### Kolokwium zaliczeniowe
     - **Wymagania**: Wiedza i szczęście
     - **Zadania**:
       - :)
