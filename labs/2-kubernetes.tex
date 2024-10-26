@@ -219,20 +219,97 @@ spec:
       storage: 1Gi
 \end{lstlisting}
 
+Następnie tak przygotowany wolumen możemy zastosować przy wdrożeniu bazy danych typu MySQL (lub dowolnej innej), gdzie trwałość danych jest kluczowa. Tak przygotowany Pod przypomina bezstanowy, gdyż stan (dane) są przechowywane w osobnym typie zasobu. Oczywiście, bazy danych (szczególnie w przypadku więcej niż jednego węzła) są dużo trudniejszym zagadnienie.
+
+Oto przykład definicji Deploymentu dla bazy danych MySQL
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "password"
+        volumeMounts:
+        - mountPath: "/var/lib/mysql"
+          name: mysql-storage
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+\end{lstlisting}
+
+W powyższej definicji Deploymentu aplikacja MySQL korzysta z PersistentVolumeClaim o nazwie \texttt{mysql-pvc}, który został zamontowany w ścieżce \texttt{/var/lib/mysql}, gdzie baza danych przechowuje swoje dane. Dzięki temu dane nie zostaną utracone po restarcie Poda, gdyż są przechowywane na trwałym wolumenie.
+
 \textbf{Kroki wdrożenia i sprawdzenia:}
 \begin{itemize}
   \item Uruchom PersistentVolume i PersistentVolumeClaim:
   \begin{lstlisting}
   kubectl apply -f pv.yaml
   kubectl apply -f pvc.yaml
+  kubectl apply -f mysql.yaml
   \end{lstlisting}
   \item Sprawdź status PV i PVC:
   \begin{lstlisting}
   kubectl get pv
   kubectl get pvc
+  kubectl get deployment
   \end{lstlisting}
-  Pomyślne przyznanie zasobów oznacza, że PVC zostało poprawnie podłączone do PV.
+  Pomyślne przyznanie zasobów oznacza, że PVC zostało poprawnie podłączone do PV, a deployment MySQL uruchomił się bez problemów.
 \end{itemize}
+
+\subsection{Różnice między PersistentVolume i PersistentVolumeClaim}
+
+\begin{itemize}
+    \item \textbf{PersistentVolume (PV)}: Jest to zasób przydzielony na poziomie klastra, który zapewnia fizyczną przestrzeń dyskową. PV mogą być tworzone ręcznie przez administratora lub dynamicznie przez system na podstawie żądań użytkowników.
+    \item \textbf{PersistentVolumeClaim (PVC)}: Jest to żądanie na poziomie aplikacji, które określa wymagania dotyczące przechowywania, takie jak pojemność i tryb dostępu. PVC jest automatycznie wiązane z dostępnym PV, który spełnia zadane kryteria.
+\end{itemize}
+
+\subsection{Typowe tryby dostępu w PersistentVolume}
+
+\begin{itemize}
+    \item \textbf{ReadWriteOnce (RWO)}: Wolumen może być zamontowany tylko na jednym węźle i być używany do odczytu i zapisu.
+    \item \textbf{ReadOnlyMany (ROX)}: Wolumen może być zamontowany na wielu węzłach, ale tylko do odczytu.
+    \item \textbf{ReadWriteMany (RWX)}: Wolumen może być zamontowany na wielu węzłach i używany do odczytu oraz zapisu.
+\end{itemize}
+
+\subsection{Dynamiczne przydzielanie zasobów}
+
+W Kubernetes istnieje możliwość dynamicznego przydzielania wolumenów dzięki wykorzystaniu klas przechowywania (StorageClass). Definiując StorageClass, możemy określić, jakiego rodzaju wolumeny mają być tworzone i jakie mają mieć parametry, takie jak typ dysku, szybkość odczytu i zapisu itp. Dzięki temu możemy automatyzować proces tworzenia PV na podstawie żądań PVC.
+
+Przykład definicji StorageClass:
+\begin{lstlisting}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+\end{lstlisting}
+
+Podczas tworzenia PersistentVolumeClaim można wskazać nazwę StorageClass, co spowoduje dynamiczne utworzenie PV spełniającego zadane kryteria.
+
+\subsection{Podsumowanie}
+
+PersistentVolume i PersistentVolumeClaim są kluczowymi elementami zapewniającymi trwałość danych w klastrach Kubernetes. Dzięki nim aplikacje mogą niezawodnie przechowywać swoje dane, niezależnie od cyklu życia Podów, co jest szczególnie istotne w przypadku aplikacji stanowych, takich jak bazy danych. Poprawne zarządzanie zasobami przechowywania oraz zrozumienie mechanizmów ich przydzielania jest niezbędne do skutecznej pracy z Kubernetes.
+
 
 \section{ConfigMap i Secret – Przechowywanie konfiguracji i wrażliwych danych}
 
