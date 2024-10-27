@@ -44,6 +44,8 @@ poniedziałki, 16:50
    - Zarządzanie logami: ELK Stack, Fluentd
    - Centralizacja logów i analiza
 
+   [slajdy](/jwozniak/lectures/3-monitoring.pdf)
+
 5. #### Infrastructure as Code (IaC) i automatyzacja z Terraform
    - Wprowadzenie do IaC: Koncepcje i korzyści
    - Terraform: tworzenie infrastruktury chmurowej (AWS, Azure, Google Cloud)
