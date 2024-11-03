@@ -1,0 +1,653 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{fontspec}
+\usepackage{xurl}
+\setlength{\parindent}{0pt}
+
+% YAML code color settings for listings package
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{orange}{rgb}{1,0.5,0}
+\lstset{
+    language=bash,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false
+}
+
+
+\title{Zarządzanie Systemami Rozproszonymi\\Laboratoria z Prometheus i Grafana}
+\author{mgr inż. Jakub Woźniak}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Wprowadzenie}
+W systemach rozproszonych monitoring stanowi istotne wyzwanie ze względu na złożoność środowiska i dynamikę jego zmian. W typowych produkcyjnych klastrach mikroserwisów aplikacje mogą skalować się horyzontalnie, co oznacza, że jedna usługa może działać na wielu instancjach jednocześnie. Monitorowanie pojedynczego Poda dostarcza jedynie wycinkowej informacji o stanie systemu, dlatego wymagane są narzędzia, które pozwolą zbierać, przetwarzać i agregować dane metryczne na poziomie całego klastra. Dzięki odpowiednim analizom statystycznym możliwe jest śledzenie zmian i reagowanie na potencjalne problemy w skali systemu.
+
+\texttt{Prometheus} i \texttt{Grafana} są obecnie standardem monitorowania klastrów Kubernetes. Prometheus, jako system monitorowania i zbierania metryk, umożliwia elastyczne konfigurowanie reguł zbierania danych oraz definiowanie alertów. Grafana natomiast służy do wizualizacji i analizy zebranych danych, co pozwala na tworzenie intuicyjnych dashboardów prezentujących stan systemu w czasie rzeczywistym. Dzięki swojej wszechstronności narzędzia te są często obecne również w środowiskach, gdzie stosowane są komercyjne rozwiązania monitorujące – integrują się one z Prometheus i Grafana, oferując bardziej dedykowane rozwiązania dla monitorowania kontenerów i mikroserwisów.
+
+\subsection{Cel}
+Celem zajęć jest przybliżenie studentom praktyk związanych z monitorowaniem klastra oraz analizą metryk systemowych i aplikacyjnych. Uczestnicy zajęć nauczą się konfigurować Prometheus oraz Grafana w środowisku Kubernetes, a także integrować je z własną aplikacją, aby monitorować jej stan. Podczas ćwiczeń zostanie wykorzystana wiedza zdobyta na poprzednich zajęciach z Docker i Kubernetes.
+
+\subsection{Przygotowanie środowiska}
+Do przeprowadzenia ćwiczeń wymagany jest klaster Kubernetes, zainstalowany przy pomocy \texttt{minikube}. Instrukcja instalacji oraz konfiguracji klastra znajduje się w skrypcie do poprzednich laboratoriów z Kubernetes. Upewnij się, że Minikube działa poprawnie, a dostęp do klastra można uzyskać za pomocą polecenia \texttt{kubectl}. Prometheus i Grafana zostaną zainstalowane jako aplikacje wewnątrz klastra przy użyciu Helm.
+
+\section{Wprowadzenie do Helma}
+
+\texttt{Helm} to popularny menedżer pakietów dla Kubernetes, który pozwala na instalację, aktualizację i zarządzanie aplikacjami w klastrze Kubernetes. Helm wykorzystuje tzw. „chart” – paczkę zawierającą wszystkie zasoby i konfiguracje niezbędne do wdrożenia aplikacji. Dzięki Helm można zarządzać bardziej złożonymi aplikacjami i ich zależnościami w jednym pliku konfiguracji.
+
+\subsection{Podstawowe polecenia Helm}
+\begin{itemize}
+    \item \texttt{helm repo add [nazwa] [adres\_repozytorium]} – dodaje nowe repozytorium wykresów Helm, np. repozytorium Prometheus.
+    \item \texttt{helm repo update} – aktualizuje listę wykresów w repozytorium.
+    \item \texttt{helm install [nazwa\_instalacji] [repozytorium/wykres] --namespace [namespace]} – instaluje aplikację w klastrze Kubernetes. Przykład: \texttt{helm install grafana prometheus-community/grafana --namespace monitoring}.
+    \item \texttt{helm uninstall [nazwa\_instalacji] --namespace [namespace]} – usuwa zainstalowaną aplikację z klastra.
+\end{itemize}
+
+\subsection{Struktura wykresu Helm}
+Każdy wykres Helm (chart) składa się z następujących elementów:
+\begin{itemize}
+    \item \textbf{Chart.yaml} – główny plik wykresu zawierający informacje o wersji aplikacji, nazwie, opisie i zależnościach.
+    \item \textbf{values.yaml} – plik konfiguracyjny, gdzie można zmieniać domyślne wartości konfiguracji aplikacji.
+    \item \textbf{templates/} – katalog zawierający szablony YAML dla Kubernetes, które Helm przekształca na pliki konfiguracyjne dla klastra podczas wdrożenia.
+\end{itemize}
+
+Helm ułatwia instalację i zarządzanie aplikacjami wieloskładnikowymi, automatyzując tworzenie, aktualizację i zarządzanie konfiguracją wielu zasobów Kubernetes w jednym pakiecie.
+
+\section{Zadania}
+
+\subsection{Instalacja Helm}
+1. Zainstaluj Helm, jeśli jeszcze tego nie zrobiłeś, korzystając z instrukcji dostępnych na stronie projektu Helm: \url{https://helm.sh/docs/intro/install/}.
+2. Zaktualizuj repozytoria Helm, aby pobrać najnowsze wersje wykresów Helm:
+   \begin{lstlisting}
+   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+   helm repo add grafana https://grafana.github.io/helm-charts
+   helm repo update
+   \end{lstlisting}
+
+\subsection{Instalacja Prometheus i Grafana}
+1. Użyj Helm, aby zainstalować Prometheus i Grafana na klastrze:
+   \begin{lstlisting}
+   helm install prometheus prometheus-community/prometheus --namespace monitoring --create-namespace
+   helm install grafana grafana/grafana --namespace monitoring
+   \end{lstlisting}
+2. Po instalacji uzyskaj hasło administratora dla Grafana, używając poniższego polecenia:
+   \begin{lstlisting}
+   kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode; echo
+   \end{lstlisting}
+3. Uzyskaj dostęp do interfejsu Grafana, przekierowując port:
+   \begin{lstlisting}
+   kubectl port-forward --namespace monitoring service/grafana 3000:80
+   \end{lstlisting}
+
+\subsubsection{Wyjaśnienie polecenia \texttt{port-forward}}
+Polecenie \texttt{port-forward} służy do przekierowania portu z klastra Kubernetes na lokalny komputer, co pozwala na dostęp do usług działających w klastrze bez potrzeby wystawiania ich na zewnątrz. W powyższym przykładzie polecenie:
+\begin{lstlisting}
+kubectl port-forward --namespace monitoring service/grafana 3000:80
+\end{lstlisting}
+przekierowuje ruch z portu \texttt{3000} na lokalnej maszynie na port \texttt{80} usługi \texttt{grafana} działającej w klastrze w przestrzeni nazw \texttt{monitoring}. Dzięki temu możemy uzyskać dostęp do interfejsu Grafana poprzez \url{http://localhost:3000}.
+
+\subsection{Instalacja node-exporter i serwera metryk}
+
+Aby monitorować klaster Kubernetes, potrzebujemy dostępu do podstawowych metryk dotyczących zasobów systemowych oraz stanu węzłów i podów. W tym celu wykorzystamy narzędzia takie jak \texttt{node-exporter} oraz \texttt{metrics-server}.
+
+\texttt{node-exporter} to komponent Prometheus, który umożliwia zbieranie szczegółowych metryk systemowych bezpośrednio z węzłów Kubernetes. Zbierane metryki obejmują informacje o zużyciu CPU, pamięci, obciążeniu sieci, a także statystyki dyskowe. Dzięki \texttt{node-exporter} możemy śledzić stan infrastruktury klastra i szybko reagować na problemy związane z zasobami systemowymi. Jest to szczególnie przydatne w środowiskach rozproszonych, gdzie monitorowanie zasobów systemowych ma kluczowe znaczenie dla stabilności aplikacji.
+
+\texttt{metrics-server} to dodatek Kubernetes, który dostarcza metryki dotyczące zasobów na poziomie podów oraz węzłów. Jest wykorzystywany m.in. do realizacji horyzontalnego autoskalowania (HPA) i do monitorowania zużycia zasobów przez aplikacje. \texttt{metrics-server} jest lekkim serwerem, który dostarcza podstawowe metryki klastra, takie jak zużycie procesora i pamięci przez poszczególne pody oraz węzły. Jest to standardowy komponent w klastrach Kubernetes, który umożliwia użytkownikom analizowanie podstawowych wskaźników wydajności klastra.
+
+\subsubsection{Instalacja metrics-server}
+Aby włączyć \texttt{metrics-server} w klastrze Kubernetes przy pomocy Minikube, wykonaj następujące polecenie:
+
+\begin{lstlisting}
+minikube addons enable metrics-server
+\end{lstlisting}
+
+Po włączeniu \texttt{metrics-server} klaster będzie zbierał metryki o zużyciu procesora i pamięci przez pody oraz węzły. Metryki te będą dostępne do przeglądania i analizy, a także mogą być używane do skalowania aplikacji w klastrze.
+
+\subsubsection{Instalacja node-exporter}
+Aby zainstalować \texttt{node-exporter} w klastrze, użyj następujących kroków:
+
+1. Wykonaj instalację \texttt{node-exporter} przy pomocy Helm w przestrzeni nazw \texttt{monitoring}:
+   \begin{lstlisting}
+   helm install node-exporter prometheus-community/prometheus-node-exporter --namespace monitoring --create-namespace
+   \end{lstlisting}
+
+Po zakończeniu instalacji \texttt{node-exporter} zacznie zbierać i udostępniać metryki systemowe węzłów. Dzięki integracji z Prometheus, te metryki będą dostępne do analizy w Grafana, co pozwoli na bardziej kompleksowy monitoring zasobów klastra.
+
+\subsection{Generowanie sztucznego obciążenia w klastrze Kubernetes}
+
+Aby przeprowadzić testy monitorowania i zobaczyć reakcje systemu na zwiększone zużycie zasobów, wykorzystamy narzędzie \texttt{stress-ng}. Jest to popularne narzędzie do generowania sztucznego obciążenia procesora, pamięci oraz innych zasobów systemowych. Umożliwia symulację różnych scenariuszy obciążeniowych, co pozwala na testowanie wydajności klastra oraz efektywności zbierania i analizowania metryk.
+
+W naszym laboratorium użyjemy obrazu \texttt{polinux/stress-ng}, który został przygotowany specjalnie do testowania wydajności w środowiskach kontenerowych. Dzięki \texttt{stress-ng} będziemy mogli wygenerować różnorodne obciążenie, które pozwoli nam na zweryfikowanie działania konfiguracji monitoringu oraz obserwację wpływu obciążenia na metryki zbierane przez Prometheus i wyświetlane w Grafana.
+
+\textbf{Przykład zastosowania}
+
+W poniższych przykładach stworzymy dwa różne Deploymenty:\\
+1. Pierwszy Deployment będzie generował obciążenie procesora (CPU).\\
+2. Drugi Deployment będzie obciążał pamięć.\\
+\\
+Dzięki zastosowaniu wielu replik, oba deploymenty będą generować istotne obciążenie na poziomie klastra.
+
+\subsubsection{Generowanie obciążenia CPU}
+
+W pierwszym przykładzie stwórzmy Deployment z kilkoma replikami, które będą generować obciążenie na procesorze.
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-stress-test
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cpu-stress
+  template:
+    metadata:
+      labels:
+        app: cpu-stress
+    spec:
+      containers:
+      - name: stress-ng
+        image: polinux/stress
+        command: ["stress", "--cpu", "4", "--timeout", "600s"]
+\end{lstlisting}
+
+W powyższym przykładzie:
+\begin{itemize}
+  \item Ustawiliśmy trzy repliki dla Deploymentu, aby wygenerować skumulowane obciążenie na CPU.
+  \item Każdy kontener wykonuje polecenie `stress --cpu 4 --timeout 600s`, co oznacza, że generuje obciążenie na 4 rdzeniach procesora przez 10 minut.
+\end{itemize}
+
+\subsubsection{Generowanie obciążenia pamięci}
+
+W drugim przykładzie skonfigurujemy Deployment, który obciąży pamięć klastra. 
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memory-stress-test
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: memory-stress
+  template:
+    metadata:
+      labels:
+        app: memory-stress
+    spec:
+      containers:
+      - name: stress-ng
+        image: polinux/stress
+        command: ["stress", "--vm", "2", "--vm-bytes", "512M", "--timeout", "600s"]
+\end{lstlisting}
+
+W powyższym przykładzie:
+\begin{itemize}
+  \item Również używamy trzech replik.
+  \item Każdy kontener wykonuje polecenie `stress --vm 2 --vm-bytes 512M --timeout 600s`, które generuje obciążenie pamięci, tworząc dwa procesy zajmujące po 512 MB każdy przez 10 minut.
+\end{itemize}
+
+Oba powyższe Deploymenty pozwolą wygenerować sztuczne obciążenie, które może być monitorowane przez system Prometheus i wizualizowane w Grafana. Dzięki temu będziemy mogli zaobserwować zmiany w zużyciu CPU i pamięci w klastrze oraz zweryfikować poprawność konfiguracji monitoringu.
+\subsection{Wdrożenie NGINX z metrykami i generowanie ruchu przy użyciu Apache Benchmark}
+
+Aby wygenerować rzeczywiste dane metryczne, wdrożymy serwer NGINX, który obsługuje żądania HTTP. Dodatkowo zainstalujemy eksporter metryk dla NGINX, aby Prometheus mógł monitorować wydajność serwera, a następnie użyjemy narzędzia \texttt{Apache Benchmark} (\texttt{ab}) w osobnym podzie, aby wygenerować ruch.
+
+\subsubsection{Wdrożenie serwera NGINX z eksportem metryk}
+
+Eksporter metryk NGINX pozwala Prometheus na zbieranie danych, takich jak liczba obsługiwanych żądań, czas odpowiedzi, oraz wykorzystanie zasobów. Zastosujemy dwa kontenery w jednym podzie: jeden z NGINX oraz drugi z eksporterem metryk dla NGINX.
+
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9113"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: config
+      - name: nginx-exporter
+        image: nginx/nginx-prometheus-exporter
+        args:
+        - -nginx.scrape-uri=http://127.0.0.1:80/stub_status
+        ports:
+        - containerPort: 9113
+      volumes:
+      - name: config
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location / {
+            root /usr/share/nginx/html;
+        }
+        location /stub_status {
+            stub_status on;
+            access_log off;
+            allow all;
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+\end{lstlisting}
+
+W tym przykładzie dodaliśmy trzy kluczowe adnotacje do metadanych szablonu podów NGINX:
+\begin{itemize}
+\item \texttt{prometheus.io/scrape: "true"}: informuje Prometheus, że pod powinien być monitorowany.
+\item \texttt{prometheus.io/port: "9113"}: określa port, na którym Prometheus powinien zbierać metryki (w tym przypadku port eksportera NGINX).
+\item \texttt{prometheus.io/path: "/metrics"}: definiuje ścieżkę, z której Prometheus pobiera metryki.
+\end{itemize}
+
+Te adnotacje umożliwiają Prometheus automatyczne wykrywanie eksportera metryk na kontenerze NGINX, dzięki czemu nie ma potrzeby ręcznego modyfikowania konfiguracji \texttt{prometheus.yml}. Metryki z serwera NGINX powinny być teraz automatycznie dostępne do monitorowania i wizualizacji w Prometheus oraz Grafana.
+
+\paragraph{Kontenery sidecar}
+
+Kontener \textit{sidecar} to dodatkowy kontener uruchomiony w tym samym Podzie co główna aplikacja. Działa jako pomocniczy proces wspierający funkcjonalność głównej aplikacji. W Kubernetes sidecar jest używany m.in. do zbierania metryk, logów lub do innych zadań pomocniczych, które wspierają działanie głównego kontenera.
+
+Ponieważ kontenery działające w jednym Podzie współdzielą zasoby, takie jak sieć i system plików (przez współdzielone wolumeny), sidecar ma bezpośredni dostęp do tych zasobów. To umożliwia łatwe monitorowanie i współpracę między kontenerami. Przykładem sidecara jest \texttt{PostgreSQL Exporter}, który działa obok bazy danych PostgreSQL i zbiera jej metryki.
+
+W powyższym przykładzie kontener \texttt{nginx-exporter} łączy się po \texttt{localhost} (ze względu na współdzielenie interfejsu) z głównym kontenerem \texttt{nginx} w celu pobrania metryk systemowych. Następnie sam wystawia te metryki na innym porcie, już w formacie zgodnym z \texttt{Prometheus}. \textbf{Sidecar} to popularny wzorzec projektowy w kontekście kontenerów, który pozwala na łatwe rozszerzanie funkcjonalności aplikacji poprzez dodawanie dodatkowych kontenerów w jednym Podzie.
+
+\subsubsection{Wdrożenie Apache Benchmark jako generatora ruchu}
+
+Aby wygenerować ruch do serwera NGINX, wdrożymy prosty pod z Apache Benchmark. Narzędzie \texttt{ab} będzie cyklicznie wysyłać żądania do NGINX, generując obciążenie, które możemy monitorować w Prometheus.
+
+\begin{lstlisting}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: apache-benchmark
+spec:
+  containers:
+  - name: apache-benchmark
+    image: jordi/ab
+    command: ["sh", "-c", "while true; do ab -n 100 -c 10 http://nginx.default.svc.cluster.local/; done"]
+\end{lstlisting}
+
+W powyższym przykładzie:
+\begin{itemize}
+  \item tworzymy pod z narzędziem \texttt{Apache Benchmark}, które wykonuje cykliczne testy obciążeniowe.
+  \item \texttt{ab} wysyła 100 żądań z 10 jednoczesnymi połączeniami do usługi NGINX dostępnej w klastrze Kubernetes.
+\end{itemize}
+
+Podczas uruchomienia tego scenariusza Prometheus będzie zbierać metryki z serwera NGINX, a w Grafana będziemy mogli obserwować dane dotyczące wydajności serwera, w tym liczbę obsłużonych żądań oraz wykorzystanie zasobów. Dzięki temu uzyskamy pełne środowisko monitorowania z symulowanym ruchem i rzeczywistymi danymi.
+
+
+
+\section{Korzystanie z Prometheus do monitorowania metryk}
+
+Prometheus to zaawansowane narzędzie do monitorowania metryk w środowisku Kubernetes. Działa na zasadzie time-series, co oznacza, że dane zbierane są jako szereg czasowy, dzięki czemu można je analizować na bieżąco i śledzić trendy historyczne. Prometheus oferuje również język zapytań PromQL, który pozwala na analizę i agregację danych metrycznych.
+
+\subsection{Dostęp do interfejsu Prometheus}
+
+Aby uzyskać dostęp do interfejsu Prometheus, należy użyć polecenia \texttt{port-forward}, aby przekierować porty na lokalny komputer:
+
+\begin{lstlisting}
+kubectl port-forward --namespace monitoring service/prometheus-server 9090:80
+\end{lstlisting}
+
+Po wykonaniu tego polecenia można otworzyć interfejs Prometheus w przeglądarce, przechodząc pod adres \url{http://localhost:9090}. Interfejs umożliwia wykonanie zapytań w języku PromQL oraz przeglądanie wyników w formie tabelarycznej lub graficznej.
+
+\subsection{Przykłady zapytań PromQL}
+
+Poniżej znajdują się przykłady zapytań, które można wykonać w Prometheus, aby analizować metryki generowane przez nasze usługi (NGINX oraz \texttt{stress-ng}).
+
+1. \textbf{Sprawdzenie stanu monitorowanych instancji}: Wyświetla wszystkie monitorowane instancje oraz informację, czy są one dostępne (1 - dostępne, 0 - niedostępne).
+\begin{lstlisting}
+up
+\end{lstlisting}
+
+2. \textbf{Średnie obciążenie CPU generowane przez \texttt{stress-ng}}: Wyświetla średnie zużycie CPU na wszystkich węzłach, na których działa \texttt{stress-ng}, w ciągu ostatnich 5 minut.
+\begin{lstlisting}
+avg(rate(node_cpu_seconds_total{job="stress-ng", mode!="idle"}[5m]))
+\end{lstlisting}
+To zapytanie wyświetla średnie obciążenie CPU, pomijając tryb bezczynności (idle), aby uzyskać lepszy obraz faktycznego obciążenia.
+
+3. \textbf{Liczba żądań HTTP do serwera NGINX}: Wyświetla całkowitą liczbę żądań HTTP obsłużonych przez serwer NGINX, co pozwala monitorować ruch generowany przez Apache Benchmark.
+\begin{lstlisting}
+sum(nginx_http_requests_total)
+\end{lstlisting}
+
+4. \textbf{Średni czas odpowiedzi serwera NGINX}: Wyświetla średni czas odpowiedzi serwera NGINX, co pozwala śledzić wydajność aplikacji w przypadku dużego obciążenia.
+\begin{lstlisting}
+avg(nginx_http_response_time_seconds)
+\end{lstlisting}
+
+
+\subsection{Zadania samodzielne}
+
+Poniższe zadania pomogą Ci lepiej zrozumieć język zapytań PromQL oraz analizę metryk zbieranych przez Prometheus.
+
+\begin{enumerate}
+    \item \textbf{Oblicz sumaryczne obciążenie CPU na wszystkich węzłach klastra}: Stwórz zapytanie, które wyświetli łączne zużycie CPU przez wszystkie węzły klastra, z wyłączeniem trybu bezczynności.
+
+    \item \textbf{Oblicz średnią liczbę obsługiwanych żądań HTTP na sekundę przez NGINX}: Użyj odpowiedniego zapytania, aby obliczyć średnią liczbę żądań HTTP obsługiwanych przez serwer NGINX na sekundę w ciągu ostatnich 5 minut.
+
+\end{enumerate}
+
+Dokumentacja dotycząca języka zapytań Prometheus (PromQL) jest dostępna pod adresem: \url{https://prometheus.io/docs/prometheus/latest/querying/basics/}
+
+\section{Korzystanie z Grafana do wizualizacji metryk}
+
+\texttt{Grafana} to narzędzie służące do wizualizacji danych i monitorowania w czasie rzeczywistym, szczególnie przydatne w połączeniu z Prometheus. Dzięki Grafana można tworzyć intuicyjne i interaktywne dashboardy, które pozwalają na lepsze zrozumienie stanu systemu oraz jego metryk.
+
+\subsection{Dostęp do interfejsu Grafana}
+
+Aby uzyskać dostęp do interfejsu Grafana, należy przekierować port na lokalny komputer, podobnie jak w przypadku Prometheus:
+
+\begin{lstlisting}
+kubectl port-forward --namespace monitoring service/grafana 3000:80
+\end{lstlisting}
+
+Po wykonaniu tego polecenia, interfejs Grafana będzie dostępny pod adresem \url{http://localhost:3000}. Domyślny login to \texttt{admin}, a hasło można pobrać za pomocą komendy:
+
+\begin{lstlisting}
+kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode; echo
+\end{lstlisting}
+
+\subsection{Konfiguracja Prometheus jako źródła danych}
+
+Aby Grafana mogła wizualizować dane z Prometheus, konieczne jest dodanie Prometheus jako źródła danych:
+
+\begin{enumerate}
+    \item Przejdź do interfejsu Grafana i wybierz opcję \textbf{Configuration} (ikona trybika) w menu bocznym, a następnie kliknij \textbf{Data sources}.
+    \item Kliknij przycisk \textbf{Add data source}.
+    \item Wybierz \texttt{Prometheus} z listy dostępnych źródeł.
+    \item W polu \textbf{URL} wpisz \texttt{http://prometheus-server.monitoring.svc.cluster.local:80} (to wewnętrzny adres URL serwera Prometheus w klastrze Kubernetes).
+    \item Zatwierdź konfigurację, klikając \textbf{Save \& Test}, aby upewnić się, że Grafana poprawnie połączyła się z Prometheus.
+\end{enumerate}
+
+\subsection{Tworzenie własnych dashboardów}
+
+Grafana pozwala użytkownikom na dużą swobodę w tworzeniu dashboardów, dzięki czemu mogą dostosować sposób wyświetlania metryk do swoich potrzeb. Poniżej znajdują się podstawowe kroki oraz wytyczne do samodzielnego skonfigurowania dashboardów:
+
+1. W interfejsie Grafana wybierz opcję \textbf{Create} (ikona plusa) w menu bocznym, a następnie kliknij \textbf{Dashboard}.
+2. Dodaj nowy panel klikając \textbf{Add new panel}.
+3. W polu \textbf{Metrics} wpisz zapytania PromQL, korzystając z metryk poznanych w poprzednich sekcjach. Przykładowe metryki to:
+\begin{itemize}
+\item \texttt{sum(nginx\_http\_requests\_total)} – całkowita liczba żądań HTTP obsłużonych przez NGINX.
+\item \texttt{avg(rate(node\_cpu\_seconds\_total\{job="stress-ng", mode!="idle"\}[5m]))} – średnie zużycie CPU przez \texttt{stress-ng}.
+\end{itemize}
+4. Eksperymentuj z różnymi typami wizualizacji (np. linia, wykres słupkowy, wskaźnik) oraz opcjami dostosowania wyglądu paneli, aby zobaczyć, jak najlepiej przedstawić dane.
+
+\subsection{Zadania samodzielne}
+
+W celu zdobycia doświadczenia w pracy z Grafana, studenci powinni samodzielnie stworzyć przynajmniej trzy różne panele na jednym dashboardzie, używając poznanych metryk. 
+
+Przykładowe zadania:
+\begin{itemize}
+    \item Stwórz panel wyświetlający średnie obciążenie CPU dla wszystkich węzłów klastra.
+    \item Skonfiguruj wskaźnik, który pokazuje bieżącą dostępność pamięci na wybranym węźle.
+    \item Stwórz wykres pokazujący liczbę obsłużonych żądań HTTP przez NGINX w czasie.
+    \item Spróbuj stworzyć wykresy liczby Podów w systemie.
+\end{itemize}
+
+Grafana to doskonałe narzędzie zapewniające obserwowalność klastra. Spróbuj modyfikować liczbę replik \texttt{nginx}, parametry \texttt{ab} i \texttt{stress-ng}, aby zobaczyć, jak zmiany wpływają na metryki i wizualizacje w Grafanie.
+
+\section{Konfiguracja Alertmanager i MailHog do monitorowania alertów}
+
+\texttt{Alertmanager} jest integralną częścią ekosystemu Prometheus, odpowiedzialną za zarządzanie alertami oraz ich eskalację. Pozwala na wysyłanie powiadomień w odpowiedzi na wcześniej zdefiniowane alerty, co umożliwia szybkie reagowanie na kluczowe zdarzenia w systemie. \texttt{Alertmanager} wspiera integracje z popularnymi systemami powiadomień, takimi jak Slack, e-mail, PagerDuty, oraz różne kanały webhooks, co czyni go elastycznym i przydatnym narzędziem w środowiskach produkcyjnych.
+
+W tej sekcji skonfigurujemy Alertmanager, aby wysyłał powiadomienia przez email przy użyciu narzędzia \texttt{MailHog}. MailHog działa jako serwer SMTP, przechwytując wszystkie wysłane maile i wyświetlając je w przeglądarce. Dzięki temu możemy bezpiecznie testować konfigurację powiadomień, bez potrzeby wysyłania alertów do prawdziwego serwera pocztowego.
+
+\subsection{Instalacja Alertmanager}
+
+Aby zainstalować Alertmanager w klastrze Kubernetes, użyjemy Helm. Upewnij się, że repozytorium Prometheus jest zaktualizowane:
+
+\begin{lstlisting}
+helm repo update
+helm install alertmanager prometheus-community/alertmanager --namespace monitoring --create-namespace
+\end{lstlisting}
+
+Po wdrożeniu Alertmanager można uzyskać dostęp do jego interfejsu przez przekierowanie portu:
+
+\begin{lstlisting}
+kubectl port-forward --namespace monitoring service/alertmanager 9093:80
+\end{lstlisting}
+
+Interfejs Alertmanager będzie dostępny pod adresem \url{http://localhost:9093}. W tym interfejsie można przeglądać aktywne alerty, zarządzać nimi oraz weryfikować wysyłane powiadomienia.
+
+\subsection{Instalacja MailHog}
+
+\texttt{MailHog} to narzędzie przeznaczone do przechwytywania i wyświetlania wiadomości e-mail. Działa jako lokalny serwer SMTP, który przechowuje wszystkie otrzymane wiadomości i udostępnia je w prostym interfejsie webowym. MailHog jest szczególnie przydatny do testowania systemów powiadomień, ponieważ umożliwia przechwycenie maili bez wysyłania ich na prawdziwe adresy email.
+
+W celu instalacji MailHog w klastrze Kubernetes, użyjemy następującej definicji Deploymentu oraz Service:
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailhog
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailhog
+  template:
+    metadata:
+      labels:
+        app: mailhog
+    spec:
+      containers:
+      - name: mailhog
+        image: mailhog/mailhog
+        ports:
+        - containerPort: 1025 # SMTP port
+        - containerPort: 8025 # HTTP UI port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailhog
+  namespace: monitoring
+spec:
+  selector:
+    app: mailhog
+  ports:
+    - name: smtp
+      protocol: TCP
+      port: 1025
+      targetPort: 1025
+    - name: http
+      protocol: TCP
+      port: 8025
+      targetPort: 8025
+\end{lstlisting}
+
+Po wdrożeniu MailHog można uzyskać dostęp do interfejsu webowego przez przekierowanie portu:
+
+\begin{lstlisting}
+kubectl port-forward --namespace monitoring service/mailhog 8025:8025
+\end{lstlisting}
+
+Interfejs MailHog będzie dostępny pod adresem \url{http://localhost:8025}, gdzie wszystkie e-maile wysyłane przez Alertmanager będą przechwytywane i wyświetlane.
+
+\subsection{Konfiguracja Alertmanager do pracy z MailHog}
+
+Aby Alertmanager mógł wysyłać powiadomienia email do MailHog, zaktualizujemy konfigurację Alertmanager, tak aby wszystkie alerty były kierowane do serwera SMTP MailHog.
+
+\begin{lstlisting}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    route:
+      receiver: 'email-notifications'
+    receivers:
+      - name: 'email-notifications'
+        email_configs:
+          - to: 'student@example.com'
+            from: 'alertmanager@example.com'
+            smarthost: 'mailhog.monitoring.svc.cluster.local:1025'
+            headers:
+              Subject: "Alert: {{ .CommonLabels.alertname }}"
+\end{lstlisting}
+
+W tej konfiguracji:
+- \texttt{route} kieruje wszystkie alerty do odbiorcy \texttt{email-notifications}.
+- \texttt{email\_configs} definiuje konfigurację SMTP dla MailHog:
+  - \texttt{to} jest adresem email, na który Alertmanager wysyła powiadomienia (w przypadku MailHog nie ma to znaczenia, ale warto dodać dla spójności).
+  - \texttt{smarthost} wskazuje na usługę MailHog w klastrze Kubernetes, która przechwytuje wiadomości email.
+  - \texttt{headers} pozwala na ustawienie niestandardowego tematu wiadomości.
+
+Po zapisaniu konfiguracji zaktualizuj ConfigMap w klastrze:
+
+\begin{lstlisting}
+kubectl apply -f alertmanager-config.yaml
+kubectl rollout restart deployment alertmanager -n monitoring
+\end{lstlisting}
+
+\subsection{Tworzenie reguł alertów w Prometheus}
+
+Aby Alertmanager mógł reagować na określone zdarzenia, musimy zdefiniować reguły alertów w Prometheus. Poniżej znajdują się dwa przykłady alertów oraz instrukcje wywołania zdarzeń dla tych alertów.
+
+\textbf{Alert wysokiego zużycia CPU}: Generuje alert, gdy zużycie CPU przekracza 80\% przez więcej niż 5 minut.
+\begin{lstlisting}
+- alert: HighCPUUsage
+  expr: avg(rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.8
+  for: 5m
+  labels:
+    severity: critical
+  annotations:
+    summary: "High CPU usage detected"
+    description: "The CPU usage is over 80% for the last 5 minutes."
+\end{lstlisting}
+
+Aby wywołać ten alert, zmniejsz liczbę replik w Deployment \texttt{stress-ng} do zera, a następnie przywróć je, co wygeneruje gwałtowny wzrost zużycia CPU.
+
+\textbf{Alert wysokiego czasu odpowiedzi NGINX}: Generuje alert, gdy średni czas odpowiedzi serwera NGINX przekracza 500 ms.
+\begin{lstlisting}
+- alert: HighResponseTime
+  expr: avg(nginx_http_response_time_seconds) > 0.5
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "High response time detected"
+    description: "Average NGINX response time exceeds 500 ms over 5 minutes."
+\end{lstlisting}
+
+Ten alert można wywołać, generując intensywny ruch do NGINX przy użyciu Apache Benchmark (AB), co zwiększy czas odpowiedzi.
+
+
+\subsection{Zadanie samodzielne}
+
+Skonfiguruj dodatkowy alert, który monitoruje zużycie pamięci na poziomie klastra. Twoje zapytanie powinno zwracać alert, gdy dostępna pamięć RAM na węzłach klastra spadnie poniżej 20\%. Skorzystaj z interfejsu MailHog, aby zobaczyć powiadomienie w momencie wystąpienia zdarzenia.
+
+\section{Monitorowanie bazy danych PostgreSQL za pomocą PostgreSQL Exporter}
+
+W tym zadaniu skonfigurujesz bazę danych PostgreSQL w klastrze Kubernetes oraz kontener sidecar \texttt{PostgreSQL Exporter}, który będzie udostępniał metryki bazy danych na endpointzie \texttt{/metrics}. Dzięki temu będziesz mógł monitorować wydajność bazy danych w Prometheus i Grafana oraz skonfigurować alerty na podstawie wybranych metryk.
+
+\subsection{Cel}
+\begin{itemize}
+    \item Skonfigurować PostgreSQL w klastrze Kubernetes z \texttt{PostgreSQL Exporter} jako sidecar.
+    \item Zbierać metryki dotyczące bazy danych PostgreSQL.
+    \item Stworzyć dashboard w Grafana, który będzie wizualizował te metryki.
+    \item Skonfigurować alert w Prometheus, który powiadomi o nadmiernym obciążeniu bazy danych.
+\end{itemize}
+
+\subsection{Krok 1: Instalacja PostgreSQL z PostgreSQL Exporter jako sidecar}
+
+\begin{enumerate}
+    \item Stwórz plik YAML dla Deploymentu PostgreSQL z kontenerem sidecar \texttt{PostgreSQL Exporter}. Upewnij się, że kontener \texttt{postgresql} uruchamia bazę danych, a kontener \texttt{postgres-exporter} działa jako sidecar, łącząc się z bazą danych przy użyciu zmiennych środowisk wg dokumentacji. Do zbierania metryk wykorzystaj następujący obraz:\\
+      \url{https://hub.docker.com/r/prometheuscommunity/postgres-exporter/}.
+    \item Zastosuj plik YAML, aby wdrożyć Deployment:
+    \begin{lstlisting}
+    kubectl apply -f postgresql-deployment.yaml
+    \end{lstlisting}
+
+    \item Utwórz Service dla PostgreSQL Exporter, aby \texttt{Prometheus} mógł zbierać metryki z \texttt{PostgreSQL Exporter}.
+    
+    \item Zastosuj plik YAML dla Service:
+    \begin{lstlisting}
+    kubectl apply -f postgres-exporter-service.yaml
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Krok 2: Konfiguracja Prometheus do monitorowania metryk PostgreSQL}
+
+\begin{enumerate}
+  \item Dodaj odpowiednie adnotacje do definicji YAML aby umożliwić autodiscovery przez Prometheusa.
+  \item Zaktualizuj konfigurację Prometheus i zrestartuj go, aby uwzględnić nową konfigurację.
+\end{enumerate}
+
+\subsection{Krok 3: Tworzenie dashboardu w Grafana}
+
+\begin{enumerate}
+    \item Skonfiguruj Grafana, aby wyświetlała metryki PostgreSQL, dodając nowe panele dla następujących metryk:
+    \begin{itemize}
+        \item Liczba aktywnych połączeń do bazy danych PostgreSQL.
+        \item Użycie pamięci przez PostgreSQL.
+        \item Czas odpowiedzi zapytań SQL.
+        \item Liczba operacji odczytu i zapisu.
+    \end{itemize}
+
+    \item Eksperymentuj z różnymi typami wizualizacji, takimi jak wykresy liniowe, liczby (gauge) i histogramy, aby uzyskać pełniejszy obraz działania bazy danych.
+\end{enumerate}
+
+\subsection{Krok 4: Skonfigurowanie alertów w Prometheus}
+
+\begin{enumerate}
+    \item Dodaj regułę alertu dla liczby aktywnych połączeń, która będzie wywoływana, gdy liczba aktywnych połączeń przekroczy 80\% maksymalnej liczby połączeń.
+    
+    \item Zastosuj konfigurację alertu i upewnij się, że alert pojawi się w momencie przekroczenia wartości progowej.
+\end{enumerate}
+
+\subsection{Zadanie dodatkowe}
+
+Skonfiguruj dodatkowy alert, który monitoruje czas odpowiedzi zapytań SQL w PostgreSQL. Skonfiguruj alert, który zostanie wywołany, gdy średni czas odpowiedzi przekroczy 500 ms przez okres 5 minut. Sprawdź, czy alert pojawia się w MailHog, gdy obciążenie bazy danych jest wysokie.
+
+\end{document}
