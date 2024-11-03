@@ -56,7 +56,7 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - Konfiguracja Prometheus
      - Zbieranie metryk z aplikacji
      - Tworzenie dashboardów monitorujących w Grafana
-  - [skrypt](/jwozniak/labs/4-monitoring.pdf)
+   - [skrypt](/jwozniak/labs/4-monitoring.pdf)
 
 6. #### Zarządzanie logami z ELK Stack
    - **Wymagania**: Elasticsearch, Logstash, Kibana
