@@ -66,28 +66,31 @@ Helm ułatwia instalację i zarządzanie aplikacjami wieloskładnikowymi, automa
 \section{Zadania}
 
 \subsection{Instalacja Helm}
-1. Zainstaluj Helm, jeśli jeszcze tego nie zrobiłeś, korzystając z instrukcji dostępnych na stronie projektu Helm: \url{https://helm.sh/docs/intro/install/}.
-2. Zaktualizuj repozytoria Helm, aby pobrać najnowsze wersje wykresów Helm:
+\begin{enumerate}
+  \item Zainstaluj Helm, jeśli jeszcze tego nie zrobiłeś, korzystając z instrukcji dostępnych na stronie projektu Helm: \url{https://helm.sh/docs/intro/install/}.
+  \item Zaktualizuj repozytoria Helm, aby pobrać najnowsze wersje wykresów Helm:
    \begin{lstlisting}
    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
    helm repo add grafana https://grafana.github.io/helm-charts
    helm repo update
    \end{lstlisting}
-
+\end{enumerate}
 \subsection{Instalacja Prometheus i Grafana}
-1. Użyj Helm, aby zainstalować Prometheus i Grafana na klastrze:
+\begin{enumerate}
+  \item Użyj Helm, aby zainstalować Prometheus i Grafana na klastrze:
    \begin{lstlisting}
    helm install prometheus prometheus-community/prometheus --namespace monitoring --create-namespace
    helm install grafana grafana/grafana --namespace monitoring
    \end{lstlisting}
-2. Po instalacji uzyskaj hasło administratora dla Grafana, używając poniższego polecenia:
+ \item Po instalacji uzyskaj hasło administratora dla Grafana, używając poniższego polecenia:
    \begin{lstlisting}
    kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode; echo
    \end{lstlisting}
-3. Uzyskaj dostęp do interfejsu Grafana, przekierowując port:
+ \item Uzyskaj dostęp do interfejsu Grafana, przekierowując port:
    \begin{lstlisting}
    kubectl port-forward --namespace monitoring service/grafana 3000:80
    \end{lstlisting}
+\end{enumerate}
 
 \subsubsection{Wyjaśnienie polecenia \texttt{port-forward}}
 Polecenie \texttt{port-forward} służy do przekierowania portu z klastra Kubernetes na lokalny komputer, co pozwala na dostęp do usług działających w klastrze bez potrzeby wystawiania ich na zewnątrz. W powyższym przykładzie polecenie:
@@ -114,9 +117,7 @@ minikube addons enable metrics-server
 Po włączeniu \texttt{metrics-server} klaster będzie zbierał metryki o zużyciu procesora i pamięci przez pody oraz węzły. Metryki te będą dostępne do przeglądania i analizy, a także mogą być używane do skalowania aplikacji w klastrze.
 
 \subsubsection{Instalacja node-exporter}
-Aby zainstalować \texttt{node-exporter} w klastrze, użyj następujących kroków:
-
-1. Wykonaj instalację \texttt{node-exporter} przy pomocy Helm w przestrzeni nazw \texttt{monitoring}:
+Aby zainstalować \texttt{node-exporter} w klastrze, wykonaj instalację \texttt{node-exporter} przy pomocy Helm w przestrzeni nazw \texttt{monitoring}:
    \begin{lstlisting}
    helm install node-exporter prometheus-community/prometheus-node-exporter --namespace monitoring --create-namespace
    \end{lstlisting}
@@ -289,9 +290,7 @@ W tym przykładzie dodaliśmy trzy kluczowe adnotacje do metadanych szablonu pod
 
 Te adnotacje umożliwiają Prometheus automatyczne wykrywanie eksportera metryk na kontenerze NGINX, dzięki czemu nie ma potrzeby ręcznego modyfikowania konfiguracji \texttt{prometheus.yml}. Metryki z serwera NGINX powinny być teraz automatycznie dostępne do monitorowania i wizualizacji w Prometheus oraz Grafana.
 
-\paragraph{Kontenery sidecar}
-
-Kontener \textit{sidecar} to dodatkowy kontener uruchomiony w tym samym Podzie co główna aplikacja. Działa jako pomocniczy proces wspierający funkcjonalność głównej aplikacji. W Kubernetes sidecar jest używany m.in. do zbierania metryk, logów lub do innych zadań pomocniczych, które wspierają działanie głównego kontenera.
+\paragraph{Kontener Sidecar} to dodatkowy kontener uruchomiony w tym samym Podzie co główna aplikacja. Działa jako pomocniczy proces wspierający funkcjonalność głównej aplikacji. W Kubernetes sidecar jest używany m.in. do zbierania metryk, logów lub do innych zadań pomocniczych, które wspierają działanie głównego kontenera.
 
 Ponieważ kontenery działające w jednym Podzie współdzielą zasoby, takie jak sieć i system plików (przez współdzielone wolumeny), sidecar ma bezpośredni dostęp do tych zasobów. To umożliwia łatwe monitorowanie i współpracę między kontenerami. Przykładem sidecara jest \texttt{PostgreSQL Exporter}, który działa obok bazy danych PostgreSQL i zbiera jej metryki.
 
@@ -340,28 +339,28 @@ Po wykonaniu tego polecenia można otworzyć interfejs Prometheus w przeglądarc
 \subsection{Przykłady zapytań PromQL}
 
 Poniżej znajdują się przykłady zapytań, które można wykonać w Prometheus, aby analizować metryki generowane przez nasze usługi (NGINX oraz \texttt{stress-ng}).
-
-1. \textbf{Sprawdzenie stanu monitorowanych instancji}: Wyświetla wszystkie monitorowane instancje oraz informację, czy są one dostępne (1 - dostępne, 0 - niedostępne).
+\begin{enumerate}
+  \item \textbf{Sprawdzenie stanu monitorowanych instancji}: Wyświetla wszystkie monitorowane instancje oraz informację, czy są one dostępne (1 - dostępne, 0 - niedostępne).
 \begin{lstlisting}
 up
 \end{lstlisting}
 
-2. \textbf{Średnie obciążenie CPU generowane przez \texttt{stress-ng}}: Wyświetla średnie zużycie CPU na wszystkich węzłach, na których działa \texttt{stress-ng}, w ciągu ostatnich 5 minut.
+\item \textbf{Średnie obciążenie CPU generowane przez \texttt{stress-ng}}: Wyświetla średnie zużycie CPU na wszystkich węzłach, na których działa \texttt{stress-ng}, w ciągu ostatnich 5 minut.
 \begin{lstlisting}
 avg(rate(node_cpu_seconds_total{job="stress-ng", mode!="idle"}[5m]))
 \end{lstlisting}
 To zapytanie wyświetla średnie obciążenie CPU, pomijając tryb bezczynności (idle), aby uzyskać lepszy obraz faktycznego obciążenia.
 
-3. \textbf{Liczba żądań HTTP do serwera NGINX}: Wyświetla całkowitą liczbę żądań HTTP obsłużonych przez serwer NGINX, co pozwala monitorować ruch generowany przez Apache Benchmark.
+\item \textbf{Liczba żądań HTTP do serwera NGINX}: Wyświetla całkowitą liczbę żądań HTTP obsłużonych przez serwer NGINX, co pozwala monitorować ruch generowany przez Apache Benchmark.
 \begin{lstlisting}
 sum(nginx_http_requests_total)
 \end{lstlisting}
 
-4. \textbf{Średni czas odpowiedzi serwera NGINX}: Wyświetla średni czas odpowiedzi serwera NGINX, co pozwala śledzić wydajność aplikacji w przypadku dużego obciążenia.
+\item \textbf{Średni czas odpowiedzi serwera NGINX}: Wyświetla średni czas odpowiedzi serwera NGINX, co pozwala śledzić wydajność aplikacji w przypadku dużego obciążenia.
 \begin{lstlisting}
 avg(nginx_http_response_time_seconds)
 \end{lstlisting}
-
+\end{enumerate}
 
 \subsection{Zadania samodzielne}
 
@@ -410,15 +409,16 @@ Aby Grafana mogła wizualizować dane z Prometheus, konieczne jest dodanie Prome
 
 Grafana pozwala użytkownikom na dużą swobodę w tworzeniu dashboardów, dzięki czemu mogą dostosować sposób wyświetlania metryk do swoich potrzeb. Poniżej znajdują się podstawowe kroki oraz wytyczne do samodzielnego skonfigurowania dashboardów:
 
-1. W interfejsie Grafana wybierz opcję \textbf{Create} (ikona plusa) w menu bocznym, a następnie kliknij \textbf{Dashboard}.
-2. Dodaj nowy panel klikając \textbf{Add new panel}.
-3. W polu \textbf{Metrics} wpisz zapytania PromQL, korzystając z metryk poznanych w poprzednich sekcjach. Przykładowe metryki to:
-\begin{itemize}
-\item \texttt{sum(nginx\_http\_requests\_total)} – całkowita liczba żądań HTTP obsłużonych przez NGINX.
-\item \texttt{avg(rate(node\_cpu\_seconds\_total\{job="stress-ng", mode!="idle"\}[5m]))} – średnie zużycie CPU przez \texttt{stress-ng}.
-\end{itemize}
-4. Eksperymentuj z różnymi typami wizualizacji (np. linia, wykres słupkowy, wskaźnik) oraz opcjami dostosowania wyglądu paneli, aby zobaczyć, jak najlepiej przedstawić dane.
-
+\begin{enumerate}
+  \item W interfejsie Grafana wybierz opcję \textbf{Create} (ikona plusa) w menu bocznym, a następnie kliknij \textbf{Dashboard}.
+  \item Dodaj nowy panel klikając \textbf{Add new panel}.
+  \item W polu \textbf{Metrics} wpisz zapytania PromQL, korzystając z metryk poznanych w poprzednich sekcjach. Przykładowe metryki to:
+  \begin{itemize}
+    \item \texttt{sum(nginx\_http\_requests\_total)} – całkowita liczba żądań HTTP obsłużonych przez NGINX.
+    \item \texttt{avg(rate(node\_cpu\_seconds\_total\{job="stress-ng", mode!="idle"\}[5m]))} – średnie zużycie CPU przez \texttt{stress-ng}.
+  \end{itemize}
+  \item Eksperymentuj z różnymi typami wizualizacji (np. linia, wykres słupkowy, wskaźnik) oraz opcjami dostosowania wyglądu paneli, aby zobaczyć, jak najlepiej przedstawić dane.
+\end{enumerate}
 \subsection{Zadania samodzielne}
 
 W celu zdobycia doświadczenia w pracy z Grafana, studenci powinni samodzielnie stworzyć przynajmniej trzy różne panele na jednym dashboardzie, używając poznanych metryk. 
@@ -537,12 +537,15 @@ data:
 \end{lstlisting}
 
 W tej konfiguracji:
-- \texttt{route} kieruje wszystkie alerty do odbiorcy \texttt{email-notifications}.
-- \texttt{email\_configs} definiuje konfigurację SMTP dla MailHog:
-  - \texttt{to} jest adresem email, na który Alertmanager wysyła powiadomienia (w przypadku MailHog nie ma to znaczenia, ale warto dodać dla spójności).
-  - \texttt{smarthost} wskazuje na usługę MailHog w klastrze Kubernetes, która przechwytuje wiadomości email.
-  - \texttt{headers} pozwala na ustawienie niestandardowego tematu wiadomości.
-
+\begin{itemize}
+\item \texttt{route} kieruje wszystkie alerty do odbiorcy \texttt{email-notifications}.
+\item \texttt{email\_configs} definiuje konfigurację SMTP dla MailHog:
+  \begin{itemize}
+    \item \texttt{to} jest adresem email, na który Alertmanager wysyła powiadomienia (w przypadku MailHog nie ma to znaczenia, ale warto dodać dla spójności).
+    \item \texttt{smarthost} wskazuje na usługę MailHog w klastrze Kubernetes, która przechwytuje wiadomości email.
+    \item \texttt{headers} pozwala na ustawienie niestandardowego tematu wiadomości.
+    \end{itemize}
+\end{itemize}
 Po zapisaniu konfiguracji zaktualizuj ConfigMap w klastrze:
 
 \begin{lstlisting}
@@ -567,7 +570,7 @@ Aby Alertmanager mógł reagować na określone zdarzenia, musimy zdefiniować r
 \end{lstlisting}
 
 Aby wywołać ten alert, zmniejsz liczbę replik w Deployment \texttt{stress-ng} do zera, a następnie przywróć je, co wygeneruje gwałtowny wzrost zużycia CPU.
-
+\\
 \textbf{Alert wysokiego czasu odpowiedzi NGINX}: Generuje alert, gdy średni czas odpowiedzi serwera NGINX przekracza 500 ms.
 \begin{lstlisting}
 - alert: HighResponseTime
