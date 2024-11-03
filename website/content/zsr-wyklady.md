@@ -52,6 +52,8 @@ poniedziałki, 16:50
    - Modułowość w Terraform: Moduły wielokrotnego użytku, stan infrastruktury
    - Automatyzacja zarządzania infrastrukturą z Terraform Cloud
 
+   [slajdy](/jwozniak/lectures/4-iac.pdf)
+
 6. #### GitOps: Deklaratywne zarządzanie infrastrukturą
    - Wprowadzenie do GitOps: zasady i korzyści
    - Narzędzia GitOps: ArgoCD, Flux
