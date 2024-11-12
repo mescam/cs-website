@@ -345,9 +345,9 @@ Poniżej znajdują się przykłady zapytań, które można wykonać w Prometheus
 up
 \end{lstlisting}
 
-\item \textbf{Średnie obciążenie CPU generowane przez \texttt{stress-ng}}: Wyświetla średnie zużycie CPU na wszystkich węzłach, na których działa \texttt{stress-ng}, w ciągu ostatnich 5 minut.
+\item \textbf{Średnie obciążenie CPU generowane przez \texttt{stress-ng}}: Wyświetla średnie zużycie CPU na wszystkich węzłach w ciągu ostatnich 5 minut.
 \begin{lstlisting}
-avg(rate(node_cpu_seconds_total{job="stress-ng", mode!="idle"}[5m]))
+avg(rate(node_cpu_seconds_total{mode!="idle"}[5m]))
 \end{lstlisting}
 To zapytanie wyświetla średnie obciążenie CPU, pomijając tryb bezczynności (idle), aby uzyskać lepszy obraz faktycznego obciążenia.
 
@@ -356,10 +356,6 @@ To zapytanie wyświetla średnie obciążenie CPU, pomijając tryb bezczynności
 sum(nginx_http_requests_total)
 \end{lstlisting}
 
-\item \textbf{Średni czas odpowiedzi serwera NGINX}: Wyświetla średni czas odpowiedzi serwera NGINX, co pozwala śledzić wydajność aplikacji w przypadku dużego obciążenia.
-\begin{lstlisting}
-avg(nginx_http_response_time_seconds)
-\end{lstlisting}
 \end{enumerate}
 
 \subsection{Zadania samodzielne}
@@ -369,7 +365,7 @@ Poniższe zadania pomogą Ci lepiej zrozumieć język zapytań PromQL oraz anali
 \begin{enumerate}
     \item \textbf{Oblicz sumaryczne obciążenie CPU na wszystkich węzłach klastra}: Stwórz zapytanie, które wyświetli łączne zużycie CPU przez wszystkie węzły klastra, z wyłączeniem trybu bezczynności.
 
-    \item \textbf{Oblicz średnią liczbę obsługiwanych żądań HTTP na sekundę przez NGINX}: Użyj odpowiedniego zapytania, aby obliczyć średnią liczbę żądań HTTP obsługiwanych przez serwer NGINX na sekundę w ciągu ostatnich 5 minut.
+    \item \textbf{Oblicz średnią liczbę obsługiwanych połączeń HTTP na sekundę przez NGINX}: Użyj odpowiedniego zapytania, aby obliczyć średnią liczbę połączeń HTTP obsługiwanych przez serwer NGINX na sekundę w ciągu ostatnich 5 minut.
 
 \end{enumerate}
 
@@ -413,9 +409,9 @@ Grafana pozwala użytkownikom na dużą swobodę w tworzeniu dashboardów, dzię
   \item W interfejsie Grafana wybierz opcję \textbf{Create} (ikona plusa) w menu bocznym, a następnie kliknij \textbf{Dashboard}.
   \item Dodaj nowy panel klikając \textbf{Add new panel}.
   \item W polu \textbf{Metrics} wpisz zapytania PromQL, korzystając z metryk poznanych w poprzednich sekcjach. Przykładowe metryki to:
-  \begin{itemize}
+    \begin{itemize}
     \item \texttt{sum(nginx\_http\_requests\_total)} – całkowita liczba żądań HTTP obsłużonych przez NGINX.
-    \item \texttt{avg(rate(node\_cpu\_seconds\_total\{job="stress-ng", mode!="idle"\}[5m]))} – średnie zużycie CPU przez \texttt{stress-ng}.
+    \item \texttt{avg(rate(node\_cpu\_seconds\_total\{mode!="idle"\}[5m]))} – średnie zużycie CPU przez pody.
   \end{itemize}
   \item Eksperymentuj z różnymi typami wizualizacji (np. linia, wykres słupkowy, wskaźnik) oraz opcjami dostosowania wyglądu paneli, aby zobaczyć, jak najlepiej przedstawić dane.
 \end{enumerate}
@@ -440,18 +436,14 @@ Grafana to doskonałe narzędzie zapewniające obserwowalność klastra. Spróbu
 W tej sekcji skonfigurujemy Alertmanager, aby wysyłał powiadomienia przez email przy użyciu narzędzia \texttt{MailHog}. MailHog działa jako serwer SMTP, przechwytując wszystkie wysłane maile i wyświetlając je w przeglądarce. Dzięki temu możemy bezpiecznie testować konfigurację powiadomień, bez potrzeby wysyłania alertów do prawdziwego serwera pocztowego.
 
 \subsection{Instalacja Alertmanager}
-
-Aby zainstalować Alertmanager w klastrze Kubernetes, użyjemy Helm. Upewnij się, że repozytorium Prometheus jest zaktualizowane:
-
+% TODO: juz byl zainstalowany
+Alertmanager powinien już być zainstalowany na klastrze. Upewnij się, sprawdzając to poleceniem:
 \begin{lstlisting}
-helm repo update
-helm install alertmanager prometheus-community/alertmanager --namespace monitoring --create-namespace
+kubectl get statefulsets -n monitoring
 \end{lstlisting}
-
-Po wdrożeniu Alertmanager można uzyskać dostęp do jego interfejsu przez przekierowanie portu:
-
+Powyższe polecenie powinno zwrócić informację o \texttt{StatefulSets} w przestrzeni nazw \texttt{monitoring}. Jeżeli znajduje się tam wpis o \texttt{alertmanager} - wszystko działa prawidłowo. Możesz przejść do przekierowania portu:
 \begin{lstlisting}
-kubectl port-forward --namespace monitoring service/alertmanager 9093:80
+kubectl port-forward --namespace monitoring service/alertmanager 9093:9093
 \end{lstlisting}
 
 Interfejs Alertmanager będzie dostępny pod adresem \url{http://localhost:9093}. W tym interfejsie można przeglądać aktywne alerty, zarządzać nimi oraz weryfikować wysyłane powiadomienia.
@@ -548,14 +540,71 @@ W tej konfiguracji:
 \end{itemize}
 Po zapisaniu konfiguracji zaktualizuj ConfigMap w klastrze:
 
+% TODO: zmienilem deployment na stateful set, sprawdzic czy dobra nazwa
 \begin{lstlisting}
 kubectl apply -f alertmanager-config.yaml
-kubectl rollout restart deployment alertmanager -n monitoring
+kubectl rollout restart statefulset alertmanager -n monitoring
 \end{lstlisting}
 
 \subsection{Tworzenie reguł alertów w Prometheus}
 
 Aby Alertmanager mógł reagować na określone zdarzenia, musimy zdefiniować reguły alertów w Prometheus. Poniżej znajdują się dwa przykłady alertów oraz instrukcje wywołania zdarzeń dla tych alertów.
+
+
+\subsubsection{Dodawanie alertów w Prometheus zainstalowanym przez Helm}
+
+Aby dodać alerty w Prometheus zainstalowanym za pomocą Helm, należy skonfigurować reguły alertów i dodać je do pliku wartości (\texttt{values.yaml}). Poniżej znajdują się szczegółowe instrukcje.
+
+\begin{enumerate}
+    \item \textbf{Znajdź i edytuj plik \texttt{values.yaml}} \\
+    Jeżeli masz lokalną kopię pliku \texttt{values.yaml} używanego do instalacji Prometheus przez Helm, możesz go edytować bezpośrednio. Jeśli nie, pobierz domyślny plik wartości z repozytorium Helm Prometheus:
+    \begin{lstlisting}
+    helm show values prometheus-community/prometheus > values.yaml
+    \end{lstlisting}
+
+    \item \textbf{Dodaj reguły alertów do pliku \texttt{values.yaml}} \\
+    W pliku \texttt{values.yaml} znajdź sekcję \texttt{serverFiles} i dodaj własne reguły alertów do pliku \texttt{alerting\_rules.yml}. Poniżej znajduje się przykładowa konfiguracja dla monitorowania wysokiego zużycia CPU:
+    \begin{lstlisting}
+    serverFiles:
+      alerts:
+        alertmanager.yml: |-
+          global:
+            resolve_timeout: 5m
+          route:
+            receiver: 'default'
+          receivers:
+          - name: 'default'
+      alerting_rules.yml: |-
+        groups:
+          - name: example-alert-rules
+            rules:
+              - alert: HighCPUUsage
+                expr: node_cpu_seconds_total{mode="idle"} < 0.2
+                for: 5m
+                labels:
+                  severity: critical
+                annotations:
+                  summary: "Wysokie zużycie CPU"
+                  description: "Użycie CPU przekroczyło próg 80% przez ostatnie 5 minut"
+    \end{lstlisting}
+    
+    W tym przykładzie:
+    \begin{itemize}
+        \item \texttt{HighCPUUsage} to nazwa alertu.
+        \item \texttt{expr} definiuje wyrażenie PromQL, które uruchamia alert, gdy czas procesora w trybie bezczynności jest mniejszy niż 20\% przez 5 minut.
+        \item \texttt{labels} i \texttt{annotations} dostarczają dodatkowych informacji o alertach.
+    \end{itemize}
+
+    \item \textbf{Zaktualizuj wdrożenie Prometheus za pomocą Helm} \\
+    Po zapisaniu zmian w pliku \texttt{values.yaml}, zaktualizuj wdrożenie Prometheus w namespace \texttt{monitoring}, aby załadować nowe reguły alertów:
+    \begin{lstlisting}
+    helm upgrade prometheus prometheus-community/prometheus -f values.yaml -n monitoring
+    \end{lstlisting}
+
+    \item \textbf{Sprawdź nowe reguły w interfejsie Prometheus} \\
+    Przejdź do interfejsu Prometheus, zazwyczaj dostępnego na \texttt{/alerts} w UI Prometheus. Tam możesz zweryfikować, czy dodane reguły są widoczne w sekcji alertów.
+\end{enumerate}
+
 
 \textbf{Alert wysokiego zużycia CPU}: Generuje alert, gdy zużycie CPU przekracza 80\% przez więcej niż 5 minut.
 \begin{lstlisting}
