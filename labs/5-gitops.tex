@@ -1,0 +1,441 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{fontspec}
+\usepackage[pdftex]{hyperref}
+\setlength{\parindent}{0pt}
+
+% YAML code color settings for listings package
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{orange}{rgb}{1,0.5,0}
+\lstset{
+    language=bash,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false
+}
+
+
+\title{Zarządzanie Systemami Rozproszonymi\\Laboratoria z ArgoCD i GitOps}
+\author{mgr inż. Jakub Woźniak}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Wprowadzenie do GitOps i ArgoCD}
+
+\subsection{Czym jest GitOps?}
+
+GitOps to podejście do zarządzania infrastrukturą i aplikacjami w Kubernetes z wykorzystaniem repozytorium Git jako jedynego źródła prawdy (\textit{single source of truth}). W GitOps wszystkie zmiany infrastruktury i aplikacji są definiowane jako kod, przechowywane w repozytorium Git i automatycznie synchronizowane z klastrem Kubernetes.
+
+\textbf{Kluczowe założenia GitOps:}
+\begin{itemize}
+    \item \textbf{Deklaratywność:} Stan infrastruktury i aplikacji jest definiowany w sposób deklaratywny w plikach konfiguracyjnych YAML.
+    \item \textbf{Automatyczna synchronizacja:} Narzędzia GitOps automatycznie synchronizują stan klastra Kubernetes z repozytorium Git.
+    \item \textbf{Zarządzanie przez pull requesty:} Zmiany są wprowadzane poprzez pull requesty, co zapewnia pełną historię zmian i mechanizm zatwierdzania (\textit{code review}).
+    \item \textbf{Obserwowalność:} GitOps zapewnia pełną widoczność stanu klastra i aplikacji dzięki porównaniu stanu bieżącego z wersją w repozytorium.
+\end{itemize}
+
+\subsection{Dlaczego GitOps?}
+
+\textbf{Korzyści z GitOps:}
+\begin{itemize}
+    \item \textbf{Spójność:} Repozytorium Git jest jedynym źródłem prawdy, co zapewnia spójność stanu środowiska.
+    \item \textbf{Automatyzacja:} Proces wdrożenia i synchronizacji jest w pełni zautomatyzowany, co redukuje ryzyko błędów ludzkich.
+    \item \textbf{Wersjonowanie:} Wszystkie zmiany są zapisywane w historii Git, co umożliwia łatwe śledzenie i przywracanie poprzednich wersji.
+    \item \textbf{Bezpieczeństwo:} Zmiany są wprowadzane w sposób kontrolowany poprzez pull requesty, co pozwala na ich przegląd i zatwierdzenie przed wdrożeniem.
+    \item \textbf{Obserwowalność:} Narzędzia GitOps, takie jak ArgoCD, umożliwiają monitorowanie stanu klastra i szybkie wykrywanie odchyleń od pożądanego stanu.
+\end{itemize}
+
+\subsection{ArgoCD: Wprowadzenie}
+
+ArgoCD to jedno z najpopularniejszych narzędzi GitOps, stworzone specjalnie do zarządzania aplikacjami Kubernetes. Umożliwia automatyczną synchronizację stanu klastra z konfiguracją przechowywaną w repozytorium Git.
+
+\textbf{Najważniejsze funkcje ArgoCD:}
+\begin{itemize}
+    \item \textbf{Automatyczna synchronizacja:} ArgoCD monitoruje repozytorium Git i automatycznie synchronizuje stan klastra z deklaratywną konfiguracją.
+    \item \textbf{Obsługa wielu klastrów:} ArgoCD pozwala zarządzać wieloma klastrami Kubernetes z jednego interfejsu.
+    \item \textbf{Wsparcie dla Helm i Kustomize:} Oprócz plików YAML, ArgoCD wspiera konfiguracje Helm Charts oraz Kustomize.
+    \item \textbf{Historia synchronizacji:} Rejestruje wszystkie operacje synchronizacji i zmiany w stanie klastra.
+    \item \textbf{Przyjazny interfejs:} Graficzny interfejs użytkownika (GUI) umożliwia łatwe zarządzanie aplikacjami i obserwowanie ich stanu.
+\end{itemize}
+
+\subsection{Architektura ArgoCD}
+
+ArgoCD działa w klastrze Kubernetes jako zestaw kontrolerów, które stale monitorują repozytorium Git i synchronizują stan klastra z jego zawartością. 
+
+\textbf{Główne komponenty ArgoCD:}
+\begin{itemize}
+    \item \textbf{API Server:} Serwer API zarządzający komunikacją z interfejsem użytkownika i CLI.
+    \item \textbf{Repository Server:} Obsługuje połączenia z repozytorium Git i pobiera konfiguracje aplikacji.
+    \item \textbf{Application Controller:} Monitoruje stan aplikacji w klastrze i synchronizuje go z repozytorium Git.
+    \item \textbf{User Interface (UI):} Przyjazny interfejs graficzny do zarządzania aplikacjami i klastrami.
+\end{itemize}
+
+ArgoCD umożliwia szybkie i niezawodne wdrożenia aplikacji oraz ich automatyczne synchronizowanie, co czyni je idealnym narzędziem do realizacji filozofii GitOps.
+
+
+
+\section{Przygotowanie środowiska}
+
+W tej sekcji studenci przygotują środowisko do pracy z GitOps za pomocą ArgoCD. Proces obejmuje instalację ArgoCD na klastrze Minikube, konfigurację narzędzi CLI oraz utworzenie repozytorium Git w GitLab.
+
+\subsection{Wymagane narzędzia}
+
+Do wykonania ćwiczeń wymagane są następujące narzędzia:
+\begin{itemize}
+    \item \textbf{Minikube:} Klaster Kubernetes działający na lokalnej maszynie. Instalację Minikube można przeprowadzić zgodnie z instrukcjami dostępnymi na stronie \texttt{https://minikube.sigs.k8s.io/docs/start/}.
+    \item \textbf{kubectl:} Narzędzie CLI do zarządzania klastrem Kubernetes. Można je pobrać ze strony \texttt{https://kubernetes.io/docs/tasks/tools/install-kubectl/}.
+    \item \textbf{ArgoCD CLI:} Narzędzie do interakcji z ArgoCD z poziomu terminala. Plik binarny możesz pobrać stąd: \url{https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64}.
+    \item \textbf{Git:} Do klonowania i zarządzania repozytoriami Git. Większość systemów Linux ma preinstalowane Git, ale można je zainstalować przez \texttt{apt}, \texttt{yum} lub \texttt{brew}.
+\end{itemize}
+
+\subsection{Dlaczego GitLab?}
+
+W GitOps repozytorium Git pełni rolę jedynego źródła prawdy (\textit{single source of truth}). GitLab jest jednym z najpopularniejszych narzędzi tego typu, zapewniającym:
+\begin{itemize}
+    \item Wersjonowanie plików konfiguracyjnych aplikacji Kubernetes.
+    \item Łatwy mechanizm przeglądu zmian (\textit{code review}) przez pull requesty.
+    \item Publiczne repozytoria bez konieczności konfiguracji serwera Git.
+\end{itemize}
+
+GitLab umożliwia studentom szybki dostęp do gotowych repozytoriów oraz łatwe zarządzanie konfiguracjami aplikacji Kubernetes.
+
+\subsection{Instalacja ArgoCD na Minikube}
+
+ArgoCD musi zostać zainstalowane jako zestaw komponentów w klastrze Kubernetes. Proces instalacji składa się z następujących kroków:
+
+\begin{enumerate}
+    \item \textbf{Utwórz namespace dla ArgoCD:}
+    \begin{lstlisting}
+    kubectl create namespace argocd
+    \end{lstlisting}
+
+    \item \textbf{Zainstaluj ArgoCD za pomocą oficjalnych manifestów:}
+    Oficjalny manifest: \url{https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml}
+    \begin{lstlisting}
+    kubectl apply -n argocd -f <adres pliku>
+    \end{lstlisting}
+    Powyższe polecenie pobiera oficjalne manifesty YAML i instaluje wszystkie komponenty ArgoCD w namespace \texttt{argocd}.
+
+    \item \textbf{Sprawdź status komponentów ArgoCD:}
+    \begin{lstlisting}
+    kubectl get pods -n argocd
+    \end{lstlisting}
+    Upewnij się, że wszystkie Pody są w stanie \texttt{Running}.
+
+    \item \textbf{Uzyskaj hasło administratora ArgoCD:}
+    Domyślne hasło znajduje się w \texttt{argocd-initial-admin-secret}. Odczytaj je poleceniem:
+    \begin{lstlisting}
+    kubectl -n argocd get secret argocd-initial-admin-secret \
+      -o jsonpath="{.data.password}" | base64 -d; echo
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Utworzenie repozytorium Git}
+
+Repozytorium Git będzie przechowywać deklaratywną konfigurację aplikacji Kubernetes.
+
+\begin{enumerate}
+    \item \textbf{Zaloguj się na platformie GitLab i utwórz nowe repozytorium:}
+    Przejdź na \texttt{https://gitlab.com} i utwórz nowe repozytorium o nazwie \texttt{argo-gitops-demo}.
+    Ustaw widoczność na \texttt{publiczne}.
+
+    \item \textbf{Sklonuj repozytorium na swój komputer lokalny:}
+    \begin{lstlisting}
+    git clone https://gitlab.com/<twoja-nazwa-użytkownika>/argo-gitops-demo.git
+    \end{lstlisting}
+
+    \item \textbf{Utwórz foldery i pliki dla aplikacji Kubernetes:}
+    \begin{lstlisting}
+    mkdir -p apps/nginx
+    touch apps/nginx/deployment.yaml
+    touch apps/nginx/service.yaml
+    \end{lstlisting}
+
+    \item \textbf{Dodaj pliki YAML dla aplikacji:}
+    \textbf{Deployment aplikacji NGINX:}
+    \begin{lstlisting}
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: nginx
+      labels:
+        app: nginx
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: nginx
+      template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+          containers:
+          - name: nginx
+            image: nginx:latest
+            ports:
+            - containerPort: 80
+    \end{lstlisting}
+
+    \textbf{Service dla aplikacji NGINX:}
+    \begin{lstlisting}
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: nginx-service
+    spec:
+      selector:
+        app: nginx
+      ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 80
+      type: NodePort
+    \end{lstlisting}
+
+    \item \textbf{Zatwierdź zmiany i wypchnij je do repozytorium:}
+    \begin{lstlisting}
+    git add .
+    git commit -m "Add initial Kubernetes manifests for NGINX app"
+    git push
+    \end{lstlisting}
+\end{enumerate}
+
+\textbf{Ważne:} Nie wykonuj \texttt{kubectl apply} na tych plikach!
+
+Po zakończeniu tego kroku środowisko jest gotowe do użycia z ArgoCD i dalszych ćwiczeń związanych z GitOps.
+
+\section{Automatyzacja wdrożeń aplikacji Kubernetes}
+
+W tej sekcji studenci skonfigurują ArgoCD do automatycznego zarządzania wdrożeniami aplikacji w klastrze Kubernetes. Wykorzystamy wcześniej utworzone repozytorium Git oraz aplikację NGINX.
+
+\subsection{Podłączenie ArgoCD do repozytorium Git}
+
+Aby ArgoCD mogło monitorować zmiany w repozytorium i synchronizować stan aplikacji, należy podłączyć repozytorium do ArgoCD.
+
+\begin{enumerate}
+    \item \textbf{Dodaj repozytorium Git w ArgoCD:}
+    \begin{itemize}
+        \item Zaloguj się do interfejsu ArgoCD pod adresem \texttt{https://localhost:8080}.
+        \item Przejdź do zakładki \texttt{Settings > Repositories}.
+        \item Kliknij \texttt{Connect Repo} i wprowadź:
+            \begin{itemize}
+                \item \textbf{URL:} \texttt{https://gitlab.com/<twoja-nazwa-użytkownika>/argo-gitops-demo.git}
+                \item \textbf{Typ:} Publiczne repozytorium.
+            \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Zweryfikuj połączenie:} Repozytorium powinno być widoczne na liście podłączonych repozytoriów.
+\end{enumerate}
+
+\subsection{Tworzenie aplikacji w ArgoCD}
+
+Teraz skonfigurujemy aplikację w ArgoCD, która będzie monitorować stan aplikacji NGINX w repozytorium Git.
+
+\begin{enumerate}
+    \item \textbf{Utwórz aplikację w ArgoCD:}
+    \begin{itemize}
+        \item Przejdź do zakładki \texttt{Applications} i kliknij \texttt{Create Application}.
+        \item Wypełnij formularz:
+            \begin{itemize}
+                \item \textbf{Application Name:} \texttt{nginx-app}
+                \item \textbf{Project:} \texttt{default}
+                \item \textbf{Sync Policy:} \texttt{Manual} (na początek).
+                \item \textbf{Repository URL:} \texttt{https://gitlab.com/<twoja-nazwa-użytkownika>/argo-gitops-demo.git}
+                \item \textbf{Revision:} \texttt{HEAD}
+                \item \textbf{Path:} \texttt{apps/nginx}
+                \item \textbf{Cluster:} \texttt{https://kubernetes.default.svc}
+                \item \textbf{Namespace:} \texttt{default}
+            \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Zatwierdź konfigurację:} Kliknij przycisk \texttt{Create}.
+\end{enumerate}
+
+\subsection{Synchronizacja aplikacji}
+
+Synchronizacja aplikacji w ArgoCD polega na porównaniu bieżącego stanu klastra z konfiguracją w repozytorium Git i zastosowaniu brakujących zmian.
+
+\begin{enumerate}
+    \item \textbf{Ręczna synchronizacja:}
+    \begin{itemize}
+        \item W interfejsie aplikacji kliknij przycisk \texttt{Sync}.
+        \item Wybierz opcję \texttt{Prune resources} i kliknij \texttt{Synchronize}.
+    \end{itemize}
+    
+    \item \textbf{Obserwacja wdrożenia:} Sprawdź, czy aplikacja została wdrożona:
+    \begin{lstlisting}
+    kubectl get pods
+    kubectl get svc
+    \end{lstlisting}
+    Sprawdź dostępność usługi NGINX za pomocą adresu \texttt{NodePort} wyświetlonego w wyniku komendy.
+
+    \item \textbf{Automatyczna synchronizacja:}
+    \begin{itemize}
+        \item Zmień \textbf{Sync Policy} aplikacji na \texttt{Automatic}.
+        \item Wprowadź zmiany w repozytorium Git, np. zmień liczbę replik w pliku \texttt{deployment.yaml}:
+        \begin{lstlisting}
+        spec:
+          replicas: 3
+        \end{lstlisting}
+        \item Wypchnij zmiany do repozytorium:
+        \begin{lstlisting}
+        git add .
+        git commit -m "Update replicas to 3"
+        git push
+        \end{lstlisting}
+        \item Obserwuj automatyczne zastosowanie zmian w ArgoCD i klastrze Kubernetes.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Zadania samodzielne}
+
+Po skonfigurowaniu podstawowej aplikacji studenci mogą wykonać poniższe zadania samodzielnie:
+
+\begin{itemize}
+    \item \textbf{Dodanie drugiej aplikacji:} Utwórz nową aplikację, np. Redis, w tym samym repozytorium i dodaj ją do ArgoCD.
+    \item \textbf{Testowanie zmian:} Zmień wersję obrazu Dockera (np. \texttt{nginx:alpine}) i zaobserwuj proces wdrożenia.
+    \item \textbf{Symulacja awarii:} Usuń Pod aplikacji NGINX i sprawdź, jak ArgoCD synchronizuje zmiany i przywraca stan aplikacji.
+\end{itemize}
+
+Dzięki automatyzacji wdrożeń z ArgoCD, studenci mogą zobaczyć w praktyce, jak zmiany w repozytorium Git wpływają na stan klastra Kubernetes w czasie rzeczywistym.
+\section{Zadania samodzielne}
+
+W tej sekcji studenci wykonają zadania samodzielne, polegające na wykorzystaniu zdobytej wiedzy do wdrożenia aplikacji Redmine za pomocą ArgoCD.
+
+\subsection{Wdrożenie aplikacji Redmine}
+
+Redmine to popularne narzędzie do zarządzania projektami, które wymaga bazy danych jako backendu. Zadanie polega na przygotowaniu konfiguracji aplikacji i jej wdrożeniu za pomocą GitOps.
+
+\subsubsection{Wymagania}
+\begin{itemize}
+    \item Użyj publicznego obrazu \texttt{redmine} z Docker Hub (\texttt{docker.io/library/redmine}).
+    \item Wykorzystaj PostgreSQL jako bazę danych. Użyj obrazu \texttt{postgres} z Docker Hub (\texttt{docker.io/library/postgres}).
+    \item Skonfiguruj aplikację tak, aby była dostępna przez Service typu \texttt{NodePort}.
+    \item Utwórz PersistentVolumeClaim (PVC) dla danych PostgreSQL, aby zapewnić trwałość danych.
+\end{itemize}
+
+\subsubsection{Kroki do wykonania}
+
+\begin{enumerate}
+    \item \textbf{Przygotuj repozytorium Git:}
+    \begin{itemize}
+        \item Utwórz nowy folder \texttt{apps/redmine} w repozytorium Git.
+        \item Dodaj pliki konfiguracyjne YAML dla Deployment, Service oraz PersistentVolumeClaim aplikacji Redmine i PostgreSQL.
+    \end{itemize}
+
+    \item \textbf{Skonfiguruj aplikację PostgreSQL:}
+    \begin{itemize}
+        \item Utwórz Deployment dla PostgreSQL, definiując:
+        \begin{itemize}
+            \item Nazwę użytkownika (\texttt{POSTGRES\_USER}).
+            \item Hasło (\texttt{POSTGRES\_PASSWORD}).
+            \item Bazę danych (\texttt{POSTGRES\_DB}).
+        \end{itemize}
+        \item Powiąż Deployment z PVC w celu przechowywania danych.
+    \end{itemize}
+
+    \item \textbf{Skonfiguruj aplikację Redmine:}
+    \begin{itemize}
+        \item Utwórz Deployment dla Redmine, ustawiając zmienne środowiskowe umożliwiające połączenie z bazą PostgreSQL (\texttt{DB\_HOST}, \texttt{DB\_USER}, \texttt{DB\_PASSWORD}, \texttt{DB\_NAME}).
+        \item Powiąż aplikację z Service typu \texttt{NodePort}, aby była dostępna w klastrze.
+    \end{itemize}
+
+    \item \textbf{Dodaj aplikację do ArgoCD:}
+    \begin{itemize}
+        \item W interfejsie ArgoCD utwórz nową aplikację:
+        \begin{itemize}
+            \item Repozytorium: adres Twojego repozytorium Git.
+            \item Path: \texttt{apps/redmine}.
+            \item Namespace: \texttt{default}.
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Sprawdź wdrożenie:}
+    \begin{itemize}
+        \item Upewnij się, że aplikacja Redmine i baza PostgreSQL są uruchomione.
+        \item Zaloguj się do aplikacji Redmine przez przeglądarkę, używając adresu uzyskanego z polecenia \texttt{kubectl get svc}.
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Kryteria zaliczenia}
+
+\begin{itemize}
+    \item Redmine jest dostępny przez Service typu \texttt{NodePort}.
+    \item Dane PostgreSQL są przechowywane na PersistentVolume.
+    \item Aplikacja automatycznie synchronizuje się z repozytorium Git po wprowadzeniu zmian.
+\end{itemize}
+
+\subsection{Dodatkowe zadanie (opcjonalne)}
+
+\begin{itemize}
+    \item Zmodyfikuj Deployment Redmine, aby dodać zmienną środowiskową \texttt{REDMINE\_LANG} ustawioną na \texttt{pl}.
+    \item Obserwuj proces synchronizacji i sprawdź, czy zmiana została poprawnie wdrożona.
+\end{itemize}
+
+\section{Podsumowanie i wnioski}
+
+Laboratoria z GitOps z wykorzystaniem ArgoCD pozwoliły studentom na praktyczne zapoznanie się z nowoczesnym podejściem do zarządzania aplikacjami i infrastrukturą w Kubernetes. W trakcie zajęć studenci mieli okazję:
+
+\begin{itemize}
+    \item Zrozumieć podstawowe koncepcje GitOps, w tym rolę repozytorium Git jako jedynego źródła prawdy (\textit{single source of truth}).
+    \item Poznać architekturę i funkcje ArgoCD jako narzędzia wspierającego automatyczne wdrożenia.
+    \item Samodzielnie skonfigurować i wdrożyć aplikacje Kubernetes, takie jak Redmine, przy użyciu podejścia GitOps.
+    \item Zobaczyć w praktyce, jak zmiany w repozytorium Git są automatycznie synchronizowane z klastrem Kubernetes.
+    \item Zrozumieć kluczowe korzyści GitOps, takie jak automatyzacja, spójność, audytowalność i łatwość przywracania zmian.
+\end{itemize}
+
+\subsection{Korzyści z GitOps}
+
+Podejście GitOps oferuje liczne zalety w zarządzaniu infrastrukturą i aplikacjami:
+\begin{itemize}
+    \item \textbf{Automatyzacja:} Eliminacja ręcznych procesów wdrożeniowych zmniejsza ryzyko błędów i przyspiesza dostarczanie zmian.
+    \item \textbf{Przejrzystość:} Repozytorium Git pozwala na pełne śledzenie historii zmian oraz łatwe identyfikowanie i rozwiązywanie problemów.
+    \item \textbf{Zwiększona wydajność zespołu:} Wprowadzenie zmian za pomocą pull requestów umożliwia zespołom współpracę w kontrolowany sposób.
+    \item \textbf{Szybkie przywracanie środowiska:} Możliwość łatwego odtworzenia poprzedniego stanu systemu na podstawie historii Git.
+    \item \textbf{Skalowalność:} Wsparcie dla dużych i dynamicznych środowisk z wieloma aplikacjami i klastrami Kubernetes.
+\end{itemize}
+
+\subsection{Wyzwania i potencjalne problemy}
+
+Choć GitOps i ArgoCD oferują znaczące korzyści, warto pamiętać o potencjalnych wyzwaniach:
+\begin{itemize}
+    \item \textbf{Złożoność konfiguracji:} Początkowe wdrożenie i konfiguracja GitOps może być czasochłonne i wymagać odpowiednich umiejętności.
+    \item \textbf{Zarządzanie konfliktami:} W przypadku zmian wprowadzanych bezpośrednio w klastrze może dojść do konfliktu z repozytorium Git.
+    \item \textbf{Bezpieczeństwo:} Publiczne repozytoria wymagają szczególnej uwagi w kwestii przechowywania danych wrażliwych, takich jak klucze i hasła.
+    \item \textbf{Wydajność przy dużych klastrach:} Synchronizacja dużych ilości danych lub złożonych aplikacji może wymagać optymalizacji.
+\end{itemize}
+
+\subsection{Praktyczne zastosowania}
+
+GitOps z ArgoCD znajduje zastosowanie w wielu scenariuszach:
+\begin{itemize}
+    \item Zarządzanie mikroserwisami w dużych środowiskach Kubernetes.
+    \item Automatyzacja procesów wdrożeniowych i integracja z pipeline'ami CI/CD.
+    \item Utrzymanie spójności między środowiskami (np. dev, staging, prod).
+    \item Ułatwienie migracji aplikacji między różnymi platformami chmurowymi.
+\end{itemize}
+
+\subsection{Wnioski końcowe}
+
+GitOps z ArgoCD to podejście, które upraszcza zarządzanie aplikacjami w Kubernetes poprzez pełną automatyzację i integrację z Git. Studenci zyskali praktyczną wiedzę na temat:
+\begin{itemize}
+    \item Tworzenia i wdrażania aplikacji w modelu GitOps.
+    \item Konfigurowania i zarządzania ArgoCD.
+    \item Automatycznego synchronizowania stanu aplikacji z repozytorium Git.
+\end{itemize}
+
+Podejście GitOps jest kluczowym elementem nowoczesnych procesów DevOps, szczególnie w środowiskach rozproszonych, i stanowi ważny krok w kierunku większej automatyzacji oraz niezawodności zarządzania aplikacjami i infrastrukturą.
+
+\end{document}
