@@ -58,24 +58,25 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - Tworzenie dashboardów monitorujących w Grafana
    - [skrypt](/jwozniak/labs/4-monitoring.pdf)
 
-6. #### Zarządzanie logami z ELK Stack
+6. #### GitOps z ArgoCD
+   - **Wymagania**: Kubernetes, ArgoCD
+   - **Zadania**:
+     - Konfiguracja GitOps za pomocą ArgoCD
+     - Automatyzacja wdrożeń aplikacji Kubernetes
+   - [skrypt](/jwozniak/labs/5-gitops.pdf)
+
+7. #### Zarządzanie logami z ELK Stack
    - **Wymagania**: Elasticsearch, Logstash, Kibana
    - **Zadania**:
      - Konfiguracja ELK stack
      - Centralizacja logów z aplikacji rozproszonych
      - Analiza logów w Kibana
 
-7. #### Terraform: Tworzenie infrastruktury chmurowej
+8. #### Terraform: Tworzenie infrastruktury chmurowej
    - **Wymagania**: Terraform, AWS/Azure/GCP
    - **Zadania**:
      - Tworzenie prostych zasobów chmurowych (np. instancje EC2)
      - Automatyzacja zarządzania infrastrukturą
-
-8. #### GitOps z ArgoCD
-   - **Wymagania**: Kubernetes, ArgoCD
-   - **Zadania**:
-     - Konfiguracja GitOps za pomocą ArgoCD
-     - Automatyzacja wdrożeń aplikacji Kubernetes
 
 9. #### Bezpieczeństwo w Kubernetes
    - **Wymagania**: Kubernetes, narzędzia skanujące (np. Trivy)
