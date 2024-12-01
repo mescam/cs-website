@@ -65,12 +65,13 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - Automatyzacja wdrożeń aplikacji Kubernetes
    - [skrypt](/jwozniak/labs/5-gitops.pdf)
 
-7. #### Zarządzanie logami z ELK Stack
-   - **Wymagania**: Elasticsearch, Logstash, Kibana
+7. #### Service Mesh z Istio
+   - **Wymagania**: Kubernetes, Istio
    - **Zadania**:
-     - Konfiguracja ELK stack
-     - Centralizacja logów z aplikacji rozproszonych
-     - Analiza logów w Kibana
+     - Instalacja i konfiguracja Istio
+     - Monitorowanie ruchu sieciowego
+     - Konfiguracja Ingress i Egress Gateway
+   - [skrypt](/jwozniak/labs/6-servicemesh.pdf)
 
 8. #### Terraform: Tworzenie infrastruktury chmurowej
    - **Wymagania**: Terraform, AWS/Azure/GCP
