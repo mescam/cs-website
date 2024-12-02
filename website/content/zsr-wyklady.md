@@ -54,14 +54,9 @@ poniedziałki, 16:50
 
    [slajdy](/jwozniak/lectures/4-iac.pdf)
 
-6. #### GitOps: Deklaratywne zarządzanie infrastrukturą
-   - Wprowadzenie do GitOps: zasady i korzyści
-   - Narzędzia GitOps: ArgoCD, Flux
-   - Automatyzacja wdrożeń w Kubernetes za pomocą GitOps
-   - Przykłady wdrożeń i zarządzania zmianami w produkcji
+6. #### High Availability i Disaster Recovery
+   - Wprowadzenie do HA i DR
+   - Wyzwania w architekturze rozproszonej
+   - Strategie HA i DR
 
-7. #### Bezpieczeństwo, High Availability i Disaster Recovery
-   - Bezpieczeństwo w Kubernetes: RBAC, Network Policies
-   - Skany bezpieczeństwa kontenerów (Trivy)
-   - Tworzenie systemów o wysokiej dostępności (HA) w Kubernetes
-   - Disaster Recovery: strategie backupu i przywracania w chmurze
+   [slajdy](/jwozniak/lectures/5-ha.pdf)
