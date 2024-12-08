@@ -60,3 +60,9 @@ poniedziałki, 16:50
    - Strategie HA i DR
 
    [slajdy](/jwozniak/lectures/5-ha.pdf)
+
+7. #### Compliance na przykładzie ISO 27001
+   - Wprowadzenie do standardu ISO
+   - Proces certyfikacji
+   - Wybrane kontrole bezpieczeństwa
+   - Korzyści z certyfikacji
