@@ -1,0 +1,547 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{fontspec}
+\usepackage{xurl}
+\usepackage[pdftex]{hyperref}
+\setlength{\parindent}{0pt}
+
+% YAML code color settings for listings package
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{orange}{rgb}{1,0.5,0}
+\lstset{
+    language=bash,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false
+}
+
+
+\title{Zarządzanie Systemami Rozproszonymi\\Laboratoria z Microsoft Azure i Terraform}
+\author{mgr inż. Jakub Woźniak}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Wprowadzenie do Microsoft Azure}
+Microsoft Azure to publiczna platforma chmurowa oferująca szeroki zakres usług, takich jak obliczenia, przechowywanie danych, sieci, bazy danych i wiele innych. W tej sekcji studenci poznają podstawowe pojęcia związane z platformą Azure oraz nauczą się korzystać z interfejsu użytkownika, aby stworzyć pierwsze zasoby.
+
+\subsection{Podstawowe pojęcia}
+\begin{itemize}
+    \item \textbf{Subscription} – Plan subskrypcyjny określający limit zasobów i sposób ich płatności.
+    \item \textbf{Tenant} – Logiczna przestrzeń w Microsoft Entra ID (Azure Active Directory), umożliwiająca zarządzanie użytkownikami i zasobami.
+    \item \textbf{Resource Group (RG)} – Kontener, który grupuje powiązane zasoby, takie jak maszyny wirtualne, sieci i bazy danych.
+\end{itemize}
+
+\subsection{Interfejs użytkownika}
+Azure oferuje dwa główne sposoby interakcji:
+\begin{itemize}
+    \item \textbf{Azure Portal} – Graficzny interfejs użytkownika dostępny w przeglądarce.
+    \item \textbf{Azure CLI} – Narzędzie wiersza poleceń umożliwiające automatyzację i skryptowanie.
+\end{itemize}
+
+\subsection{Ćwiczenie 1: Tworzenie Resource Group}
+\textbf{Cel:} Stworzenie pierwszej Resource Group w Azure Portal.
+
+\begin{enumerate}
+    \item Zaloguj się do Azure Portal (\url{https://portal.azure.com}).
+    \item Kliknij \texttt{Create a resource}, a następnie wybierz \texttt{Resource Group}.
+    \item Wprowadź nazwę grupy, np. \texttt{example-rg}, oraz wybierz region, np. \texttt{West Europe}.
+    \item Kliknij \texttt{Review + Create}, a następnie \texttt{Create}.
+\end{enumerate}
+
+\subsection{Ćwiczenie 2: Tworzenie maszyny wirtualnej w Resource Group}
+\textbf{Cel:} Utworzenie maszyny wirtualnej z systemem Ubuntu w stworzonej Resource Group.
+
+\begin{enumerate}
+    \item W Resource Group \texttt{example-rg}, kliknij \texttt{+ Add}, a następnie wybierz \texttt{Virtual Machine}.
+    \item Wprowadź następujące dane:
+    \begin{itemize}
+        \item \textbf{Name:} \texttt{example-vm}.
+        \item \textbf{Image:} \texttt{Ubuntu Server 24.04 LTS}.
+        \item \textbf{Size:} \texttt{Standard\_B1s}.
+        \item \textbf{Authentication type:} Hasło lub klucz SSH.
+    \end{itemize}
+    \item Kliknij \texttt{Review + Create}, a następnie \texttt{Create}.
+    \item Po utworzeniu, połącz się z maszyną wirtualną za pomocą SSH:
+    \begin{lstlisting}
+ssh azureuser@<public-ip>
+    \end{lstlisting}
+    \item Sprawdź działanie maszyny wirtualnej, np. wykonując polecenie \texttt{uptime}.
+\end{enumerate}
+
+
+\section{Wprowadzenie do Terraform}
+Terraform to narzędzie typu Infrastructure as Code (IaC), które umożliwia deklaratywne zarządzanie infrastrukturą w chmurze, w tym w Microsoft Azure. W tej sekcji studenci poznają podstawy działania Terraform oraz nauczą się przygotowywać środowisko do pracy z tym narzędziem.
+
+\subsection{Podstawowe informacje o Terraform}
+\begin{itemize}
+    \item \textbf{Czym jest Terraform?}
+    \begin{itemize}
+        \item Narzędzie open-source opracowane przez firmę HashiCorp.
+        \item Pozwala na deklaratywne definiowanie infrastruktury w plikach konfiguracyjnych.
+        \item Wspiera wiele dostawców chmurowych, takich jak Azure, AWS, Google Cloud.
+    \end{itemize}
+    \item \textbf{Zalety Terraform:}
+    \begin{itemize}
+        \item Powtarzalność konfiguracji – eliminacja błędów manualnych.
+        \item Możliwość wersjonowania infrastruktury.
+        \item Szybkie skalowanie i zarządzanie zasobami.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Instalacja Terraform}
+\textbf{Kroki instalacji Terraform:}
+\begin{enumerate}
+    \item Pobierz Terraform z oficjalnej strony: \url{https://www.terraform.io/downloads}.
+    \item Rozpakuj archiwum i skopiuj plik wykonywalny do katalogu dostępnego w \texttt{PATH}, np. \texttt{/usr/local/bin}.
+    \item Sprawdź instalację, uruchamiając polecenie:
+    \begin{lstlisting}
+terraform version
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Przygotowanie środowiska do pracy z Azure}
+Terraform wymaga integracji z Microsoft Azure, co można osiągnąć za pomocą narzędzia Azure CLI.
+
+\begin{enumerate}
+    \item Zainstaluj Azure CLI, postępując zgodnie z instrukcją na stronie: \url{https://learn.microsoft.com/en-us/cli/azure/install-azure-cli}.
+    \item Zaloguj się do Azure za pomocą polecenia:
+    \begin{lstlisting}
+az login
+    \end{lstlisting}
+    \item Skonfiguruj domyślną subskrypcję (opcjonalnie):
+    \begin{lstlisting}
+az account set --subscription <subscription-id>
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Pierwsze kroki z Terraform}
+\textbf{Tworzenie projektu Terraform:}
+\begin{enumerate}
+    \item Utwórz nowy katalog projektu:
+    \begin{lstlisting}
+mkdir terraform-azure && cd terraform-azure
+    \end{lstlisting}
+    \item Utwórz plik \texttt{main.tf} z następującą konfiguracją:
+    \begin{lstlisting}
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "example-rg"
+  location = "West Europe"
+}
+    \end{lstlisting}
+    \item Zainicjalizuj Terraform w katalogu projektu:
+    \begin{lstlisting}
+terraform init
+    \end{lstlisting}
+    \item Sprawdź, jakie zmiany zostaną wprowadzone:
+    \begin{lstlisting}
+terraform plan
+    \end{lstlisting}
+    \item Utwórz Resource Group, wykonując polecenie:
+    \begin{lstlisting}
+terraform apply
+    \end{lstlisting}
+    \item Po zakończeniu pracy usuń zasoby:
+    \begin{lstlisting}
+terraform destroy
+    \end{lstlisting}
+\end{enumerate}
+
+
+\section{Zmienne i zaawansowane przykłady w Terraform}
+Terraform umożliwia dynamiczne zarządzanie konfiguracją za pomocą zmiennych. Dzięki temu można zwiększyć elastyczność i powtarzalność kodu. W tej sekcji studenci nauczą się definiować zmienne, używać ich w zasobach oraz tworzyć bardziej zaawansowane konfiguracje.
+
+\subsection{Definiowanie zmiennych w Terraform}
+\textbf{Zmienne w Terraform:}
+\begin{itemize}
+    \item Zmienne są definiowane w pliku \texttt{variables.tf}.
+    \item Umożliwiają dynamiczne przypisywanie wartości do konfiguracji.
+    \item Mogą być przekazywane jako parametry wiersza poleceń, pliki \texttt{.tfvars} lub mieć wartości domyślne.
+\end{itemize}
+
+\textbf{Przykład definicji zmiennej:}
+\begin{lstlisting}
+variable "resource_group_name" {
+  default = "example-rg"
+}
+
+variable "location" {
+  default = "East US"
+}
+\end{lstlisting}
+
+\textbf{Użycie zmiennych w konfiguracji:}
+\begin{lstlisting}
+resource "azurerm_resource_group" "example" {
+  name     = var.resource_group_name
+  location = var.location
+}
+\end{lstlisting}
+
+\subsection{Ćwiczenie: Tworzenie Resource Group za pomocą zmiennych}
+\begin{enumerate}
+    \item Utwórz plik \texttt{variables.tf} i dodaj następujące zmienne:
+    \begin{lstlisting}
+variable "resource_group_name" {
+  default = "example-rg"
+}
+
+variable "location" {
+  default = "East US"
+}
+    \end{lstlisting}
+    \item Zaktualizuj plik \texttt{main.tf}, aby używał zmiennych:
+    \begin{lstlisting}
+resource "azurerm_resource_group" "example" {
+  name     = var.resource_group_name
+  location = var.location
+}
+    \end{lstlisting}
+    \item Zainicjalizuj Terraform:
+    \begin{lstlisting}
+terraform init
+    \end{lstlisting}
+    \item Przeanalizuj plan:
+    \begin{lstlisting}
+terraform plan
+    \end{lstlisting}
+    \item Utwórz Resource Group:
+    \begin{lstlisting}
+terraform apply
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Zaawansowane przykłady: Tworzenie maszyn wirtualnych z dynamiczną konfiguracją}
+\textbf{Cel:} Wykorzystanie zmiennych do tworzenia kilku maszyn wirtualnych w oparciu o dynamiczną listę.
+
+\textbf{Przykład konfiguracji:}
+\begin{lstlisting}
+variable "vm_names" {
+  default = ["vm1", "vm2", "vm3"]
+}
+
+resource "azurerm_virtual_machine" "example" {
+  count                = length(var.vm_names)
+  name                 = var.vm_names[count.index]
+  location             = azurerm_resource_group.example.location
+  resource_group_name  = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example[count.index].id]
+  vm_size              = "Standard_B1s"
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  admin_username = "azureuser"
+  admin_password = "P@ssw0rd1234!"
+}
+\end{lstlisting}
+
+\textbf{Ćwiczenie:}
+\begin{enumerate}
+    \item Zdefiniuj listę maszyn w pliku \texttt{variables.tf}.
+    \item Uruchom \texttt{terraform apply}, aby stworzyć maszyny.
+    \item Zaktualizuj listę maszyn w pliku \texttt{variables.tf}, dodając nową nazwę.
+    \item Wykonaj ponownie \texttt{terraform apply} i zweryfikuj zmiany.
+\end{enumerate}
+
+\subsection{Wykorzystanie zmiennych w sieciach i Storage Account}
+\textbf{Przykład zmiennych dla sieci:}
+\begin{lstlisting}
+variable "vnet_address_space" {
+  default = ["10.0.0.0/16"]
+}
+
+resource "azurerm_virtual_network" "vnet" {
+  name                = "example-vnet"
+  address_space       = var.vnet_address_space
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+\end{lstlisting}
+
+\textbf{Ćwiczenie:}
+\begin{enumerate}
+    \item Skonfiguruj zmienne dla sieci (\texttt{address\_space}) i Subnet (\texttt{address\_prefixes}).
+    \item Użyj zmiennych w definicji zasobów.
+    \item Przeprowadź symulację zmian (\texttt{terraform plan}) i wdrożenie (\texttt{terraform apply}).
+\end{enumerate}
+
+
+\section{Relacje między zasobami w Terraform – Storage Account i VM}
+Terraform umożliwia tworzenie zależności między zasobami w sposób deklaratywny. Dzięki temu można łatwo integrować różne usługi w chmurze. W tej sekcji studenci nauczą się, jak połączyć Storage Account z maszyną wirtualną w ramach jednej infrastruktury.
+
+\subsection{Przykład relacji: Storage Account i maszyna wirtualna}
+\textbf{Cel:} Utworzenie Storage Account, a następnie skonfigurowanie maszyny wirtualnej, aby korzystała z klucza dostępu do tego Storage Account.
+
+\subsection{Konfiguracja Storage Account}
+\begin{lstlisting}
+resource "azurerm_storage_account" "storage" {
+  name                     = "examplestorage"
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  tags = {
+    environment = "dev"
+  }
+}
+\end{lstlisting}
+
+\subsection{Konfiguracja maszyny wirtualnej z dostępem do Storage Account}
+\begin{lstlisting}
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_B1s"
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  admin_username = "azureuser"
+  admin_password = "P@ssw0rd1234!"
+
+  tags = {
+    environment = "dev"
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "STORAGE_KEY=${azurerm_storage_account.storage.primary_access_key}" >> /etc/environment
+    EOT
+  }
+}
+\end{lstlisting}
+
+\subsection{Ćwiczenie: Utworzenie infrastruktury i weryfikacja połączenia}
+\begin{enumerate}
+    \item Utwórz plik \texttt{main.tf} zawierający Resource Group, Storage Account oraz maszynę wirtualną.
+    \item Użyj klucza dostępu do Storage Account w konfiguracji maszyny wirtualnej:
+    \begin{itemize}
+        \item Klucz \texttt{primary\_access\_key} jest odczytywany dynamicznie z zasobu \texttt{azurerm\_storage\_account}.
+        \item Zmienna środowiskowa \texttt{STORAGE\_KEY} zostaje zapisana w systemie maszyny wirtualnej.
+    \end{itemize}
+    \item Wykonaj \texttt{terraform apply}, aby wdrożyć infrastrukturę.
+    \item Połącz się z maszyną wirtualną za pomocą SSH:
+    \begin{lstlisting}
+ssh azureuser@<public-ip>
+    \end{lstlisting}
+    \item Zweryfikuj obecność zmiennej środowiskowej:
+    \begin{lstlisting}
+cat /etc/environment | grep STORAGE_KEY
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Przykład z użyciem dynamicznych zmiennych dla Storage Account}
+Aby ułatwić skalowanie i elastyczność, można zdefiniować zmienną na poziomie nazwy Storage Account:
+\begin{lstlisting}
+variable "storage_account_name" {
+  default = "examplestorage"
+}
+
+resource "azurerm_storage_account" "storage" {
+  name                     = var.storage_account_name
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+\end{lstlisting}
+
+\textbf{Ćwiczenie:} Zaktualizuj konfigurację Terraform tak, aby nazwa Storage Account była przekazywana jako zmienna. Przetestuj wprowadzone zmiany, uruchamiając:
+\begin{lstlisting}
+terraform plan
+terraform apply
+\end{lstlisting}
+
+
+\section{Konfiguracja PostgreSQL i integracja z maszyną wirtualną}
+W tej sekcji studenci nauczą się tworzyć zarządzaną bazę danych PostgreSQL w Microsoft Azure oraz łączyć ją z maszyną wirtualną. W ramach zadania studenci skonfigurują serwer PostgreSQL, dostosują reguły zapory sieciowej oraz przetestują połączenie z poziomu maszyny wirtualnej.
+
+\subsection{Tworzenie zarządzanego serwera PostgreSQL}
+\textbf{Cel:} Utworzenie zarządzanej bazy danych PostgreSQL w Azure.
+
+\begin{lstlisting}
+resource "azurerm_postgresql_server" "postgresql" {
+  name                = "example-postgresql"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  administrator_login = "psqladmin"
+  administrator_login_password = "P@ssw0rd1234!"
+  sku_name            = "GP_Gen5_2"
+  version             = "11"
+
+  storage_mb = 5120
+  ssl_enforcement_enabled = false
+  auto_grow_enabled = true
+}
+
+resource "azurerm_postgresql_database" "exampledb" {
+  name                = "exampledb"
+  resource_group_name = azurerm_resource_group.example.name
+  server_name         = azurerm_postgresql_server.postgresql.name
+  charset             = "UTF8"
+  collation           = "English_United States.1252"
+}
+\end{lstlisting}
+
+\subsection{Konfiguracja reguł zapory sieciowej PostgreSQL}
+\textbf{Cel:} Skonfigurowanie dostępu do serwera PostgreSQL dla maszyny wirtualnej.
+
+\begin{lstlisting}
+resource "azurerm_postgresql_firewall_rule" "allow_vm" {
+  name                = "allow-vm"
+  resource_group_name = azurerm_resource_group.example.name
+  server_name         = azurerm_postgresql_server.postgresql.name
+  start_ip_address    = azurerm_public_ip.vm.public_ip_address
+  end_ip_address      = azurerm_public_ip.vm.public_ip_address
+}
+\end{lstlisting}
+
+\textbf{Wyjaśnienie:}
+\begin{itemize}
+    \item Reguła zapory zezwala na połączenie do PostgreSQL z określonego adresu IP.
+    \item W tym przypadku IP publiczne maszyny wirtualnej (\texttt{azurerm\_public\_ip.vm.public\_ip\_address}) jest używane jako źródło.
+\end{itemize}
+
+\subsection{Integracja maszyny wirtualnej z PostgreSQL}
+\textbf{Cel:} Skonfigurowanie maszyny wirtualnej do połączenia z PostgreSQL.
+
+\begin{lstlisting}
+resource "azurerm_virtual_machine" "example" {
+  name                  = "example-vm"
+  location              = azurerm_resource_group.example.location
+  resource_group_name   = azurerm_resource_group.example.name
+  network_interface_ids = [azurerm_network_interface.example.id]
+  vm_size               = "Standard_B1s"
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  admin_username = "azureuser"
+  admin_password = "P@ssw0rd1234!"
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt update",
+      "sudo apt install postgresql-client -y",
+      "echo 'export DB_HOST=${azurerm_postgresql_server.postgresql.fqdn}' >> ~/.bashrc",
+      "echo 'export DB_USER=psqladmin' >> ~/.bashrc",
+      "echo 'export DB_PASSWORD=P@ssw0rd1234!' >> ~/.bashrc",
+      "source ~/.bashrc"
+    ]
+  }
+}
+\end{lstlisting}
+
+\textbf{Wyjaśnienie:}
+\begin{itemize}
+    \item Klient PostgreSQL jest instalowany na maszynie wirtualnej.
+    \item Zmienna środowiskowa \texttt{DB\_HOST} zawiera pełną nazwę domenową PostgreSQL (\texttt{fqdn}).
+    \item Użytkownik i hasło są zapisane jako zmienne środowiskowe.
+\end{itemize}
+
+\subsection{Ćwiczenie: Testowanie połączenia z PostgreSQL}
+\begin{enumerate}
+    \item Po wdrożeniu infrastruktury połącz się z maszyną wirtualną za pomocą SSH:
+    \begin{lstlisting}
+ssh azureuser@<public-ip>
+    \end{lstlisting}
+    \item Zweryfikuj zmienne środowiskowe:
+    \begin{lstlisting}
+echo $DB_HOST
+echo $DB_USER
+echo $DB_PASSWORD
+    \end{lstlisting}
+    \item Przetestuj połączenie z bazą danych za pomocą klienta PostgreSQL:
+    \begin{lstlisting}
+psql -h $DB_HOST -U $DB_USER -d exampledb
+    \end{lstlisting}
+    \item Wylistuj dostępne tabele w bazie danych:
+    \begin{lstlisting}
+\dt
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Podsumowanie zadania}
+\textbf{Cele osiągnięte w tym zadaniu:}
+\begin{itemize}
+    \item Tworzenie zarządzanej bazy danych PostgreSQL.
+    \item Konfiguracja reguł zapory sieciowej.
+    \item Integracja maszyny wirtualnej z bazą danych PostgreSQL.
+    \item Testowanie połączenia z bazy danych za pomocą klienta \texttt{psql}.
+\end{itemize}
+
+
+\section{Podsumowanie}
+Podczas tych zajęć zostały omówione kluczowe zagadnienia związane z wykorzystaniem Terraform oraz integracją zasobów w chmurze Microsoft Azure. Główne punkty realizowane podczas zajęć to:
+
+\begin{itemize}
+    \item \textbf{Podstawy platformy Microsoft Azure:} Tworzenie Resource Group oraz zarządzanie zasobami za pomocą Azure Portal i Azure CLI.
+    \item \textbf{Podstawy Terraform:} Wprowadzenie do Infrastructure as Code, instalacja Terraform i jego integracja z Azure.
+    \item \textbf{Tworzenie zasobów:} Automatyzacja tworzenia Resource Group, maszyn wirtualnych, sieci i Storage Account przy użyciu Terraform.
+    \item \textbf{Relacje między zasobami:} Łączenie zasobów, takich jak Storage Account i maszyny wirtualne, za pomocą referencji.
+    \item \textbf{Zarządzana baza danych PostgreSQL:} Konfiguracja serwera PostgreSQL w Azure, reguł zapory sieciowej oraz integracja z maszyną wirtualną.
+\end{itemize}
+
+\subsection{Wnioski}
+Terraform pozwala na deklaratywne zarządzanie infrastrukturą, co znacząco upraszcza procesy wdrożeniowe w systemach rozproszonych. Kluczowe wnioski:
+\begin{itemize}
+    \item Automatyzacja tworzenia zasobów w chmurze pozwala na większą efektywność i eliminację błędów manualnych.
+    \item Integracja różnych typów zasobów, takich jak bazy danych i maszyny wirtualne, umożliwia budowę skalowalnej infrastruktury.
+    \item Testowanie połączeń i funkcjonalności zintegrowanych zasobów pozwala na weryfikację poprawności konfiguracji.
+\end{itemize}
+
+\subsection{Kroki na przyszłość}
+Aby poszerzyć wiedzę, warto:
+\begin{itemize}
+    \item Eksperymentować z bardziej zaawansowanymi funkcjami Terraform, takimi jak moduły czy zdalny stan.
+    \item Poznać inne usługi Azure, takie jak Load Balancer czy Azure Kubernetes Service (AKS).
+    \item Zapoznać się z technikami monitorowania zasobów w chmurze oraz integracji z narzędziami, takimi jak Prometheus.
+\end{itemize}
+
+Podczas zajęć zdobyto praktyczne umiejętności w zarządzaniu infrastrukturą chmurową, co jest kluczowym elementem nowoczesnych metod zarządzania systemami rozproszonymi.
+\end{document}

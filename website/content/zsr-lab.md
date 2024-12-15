@@ -76,40 +76,9 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
 8. #### Terraform: Tworzenie infrastruktury chmurowej
    - **Wymagania**: Terraform, AWS/Azure/GCP
    - **Zadania**:
+     - Wprowadzenie do chmury Microsoft Azure
      - Tworzenie prostych zasobów chmurowych (np. instancje EC2)
      - Automatyzacja zarządzania infrastrukturą
+    - [skrypt](/jwozniak/labs/7-azuretf.pdf)
 
-9. #### Bezpieczeństwo w Kubernetes
-   - **Wymagania**: Kubernetes, narzędzia skanujące (np. Trivy)
-   - **Zadania**:
-     - Skany bezpieczeństwa obrazów Docker
-     - Konfiguracja RBAC i Network Policies w Kubernetes
 
-10. #### High Availability i Disaster Recovery
-    - **Wymagania**: Kubernetes, Terraform
-    - **Zadania**:
-      - Tworzenie klastra o wysokiej dostępności
-      - Implementacja planów Disaster Recovery
-
-11. #### Serverless: Tworzenie i wdrażanie funkcji
-    - **Wymagania**: AWS Lambda lub Google Cloud Functions
-    - **Zadania**:
-      - Tworzenie funkcji serverless
-      - Integracja funkcji z innymi usługami chmurowymi
-
-12. #### Praktyczne zastosowania CI/CD
-    - **Wymagania**: Jenkins/GitLab CI
-    - **Zadania**:
-      - Konfiguracja pipeline CI/CD
-      - Automatyzacja testów i wdrożeń
-
-13. #### Zaawansowane monitorowanie i logowanie
-    - **Wymagania**: Prometheus, Grafana, ELK Stack
-    - **Zadania**:
-      - Tworzenie zaawansowanych dashboardów
-      - Integracja logowania i monitorowania
-
-14. #### Kolokwium zaliczeniowe
-    - **Wymagania**: Wiedza i szczęście
-    - **Zadania**:
-      - :)
