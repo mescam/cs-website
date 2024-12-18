@@ -31,7 +31,42 @@
 \begin{document}
 
 \maketitle
+\section{Wprowadzenie do chmury publicznej}
 
+\subsection{Historia Rozwoju: Od Kolokacji do Chmury}
+Na początku ery internetu firmy inwestowały we własną infrastrukturę sprzętową, którą umieszczano w centrach danych (kolokacja). Organizacje wynajmowały fizyczne miejsce na serwery, jednak zarządzanie sprzętem i oprogramowaniem pozostawało po ich stronie. Takie rozwiązanie było kosztowne, nieelastyczne i wymagało specjalistycznych zespołów.
+
+Pojawienie się wirtualizacji zrewolucjonizowało rynek i dało początek \textbf{chmurze obliczeniowej}. Pierwszym krokiem był model \textbf{Infrastructure as a Service (IaaS)}. W 2006 roku Amazon uruchomił usługę EC2, umożliwiając firmom wynajem mocy obliczeniowej na żądanie. Wkrótce pojawiły się inne modele:
+\begin{itemize}
+    \item \textbf{Platform as a Service (PaaS)} – np. Azure App Service, eliminujący konieczność zarządzania systemem operacyjnym.
+    \item \textbf{Software as a Service (SaaS)} – np. Microsoft 365, w pełni gotowe oprogramowanie dostępne dla użytkowników.
+\end{itemize}
+
+Dziś chmura publiczna, jak \textbf{Microsoft Azure} czy \textbf{AWS}, zapewnia elastyczność, skalowalność i dostęp do zaawansowanych usług przy minimalnych inwestycjach w infrastrukturę.
+
+\subsection{Model Współdzielonej Odpowiedzialności (Shared Responsibility)}
+W chmurze publicznej odpowiedzialność za bezpieczeństwo i zarządzanie zasobami jest podzielona między dostawcę usługi a klienta. Jest to tzw. \textbf{Shared Responsibility Model}.
+
+\subsubsection*{Podział odpowiedzialności w zależności od modelu usług}
+\begin{itemize}
+    \item \textbf{IaaS (Infrastructure as a Service):} Dostawca (np. Microsoft Azure) odpowiada za infrastrukturę fizyczną, ale użytkownik zarządza systemem operacyjnym, aktualizacjami i aplikacjami.
+    \item \textbf{PaaS (Platform as a Service):} Dostawca zarządza infrastrukturą i systemem operacyjnym, a użytkownik odpowiada za aplikacje oraz ich konfigurację.
+    \item \textbf{SaaS (Software as a Service):} Całość (od sprzętu po aplikacje) jest zarządzana przez dostawcę, a użytkownik odpowiada jedynie za dane i konfigurację kont.
+\end{itemize}
+
+\textbf{Przykład:} W usłudze \textit{Azure App Service}, użytkownik implementuje aplikację, a dostawca zajmuje się infrastrukturą i systemem operacyjnym.
+
+\subsection{Demokratyzacja Technologii}
+Chmura publiczna odegrała kluczową rolę w \textbf{demokratyzacji technologii}. Usługi takie jak \textbf{Azure Cognitive Services} czy \textbf{AWS Rekognition} umożliwiają dostęp do zaawansowanych funkcji sztucznej inteligencji (AI) dla firm każdej wielkości.
+
+\subsubsection*{Dlaczego to ważne?}
+Alternatywą dla chmury były wcześniej drogie, ręcznie implementowane rozwiązania, które wymagały zespołów specjalistów, infrastruktury i dużych inwestycji czasowych. Dzięki chmurze:
+\begin{itemize}
+    \item Start-up może wykorzystać \textbf{Azure Computer Vision} do analizy obrazu bez trenowania własnych modeli AI.
+    \item Firmy płacą tylko za rzeczywiste zużycie zasobów, co radykalnie obniża koszty i próg wejścia.
+\end{itemize}
+
+Demokratyzacja technologii przyspiesza innowacje i otwiera rynek dla małych organizacji, które wcześniej nie miały dostępu do zaawansowanych rozwiązań. Dzięki chmurze wystarczy pomysł, aby korzystać z narzędzi na poziomie globalnych korporacji.
 \section{Wprowadzenie do Microsoft Azure}
 Microsoft Azure to publiczna platforma chmurowa oferująca szeroki zakres usług, takich jak obliczenia, przechowywanie danych, sieci, bazy danych i wiele innych. W tej sekcji studenci poznają podstawowe pojęcia związane z platformą Azure oraz nauczą się korzystać z interfejsu użytkownika, aby stworzyć pierwsze zasoby.
 
@@ -67,8 +102,9 @@ Azure oferuje dwa główne sposoby interakcji:
     \item Wprowadź następujące dane:
     \begin{itemize}
         \item \textbf{Name:} \texttt{example-vm}.
+        \item \textbf{Region:} użyj innych regionów niż Europe West, może być przepełniony.
         \item \textbf{Image:} \texttt{Ubuntu Server 24.04 LTS}.
-        \item \textbf{Size:} \texttt{Standard\_B1s}.
+        \item \textbf{Size:} poszukaj czegoś taniego, najlepiej \texttt{B1s}.
         \item \textbf{Authentication type:} Hasło lub klucz SSH.
     \end{itemize}
     \item Kliknij \texttt{Review + Create}, a następnie \texttt{Create}.
@@ -77,6 +113,7 @@ Azure oferuje dwa główne sposoby interakcji:
 ssh azureuser@<public-ip>
     \end{lstlisting}
     \item Sprawdź działanie maszyny wirtualnej, np. wykonując polecenie \texttt{uptime}.
+    \item Usuń wszystkie zasoby, aby uniknąć kosztów. Najlepiej usunąć całą \texttt{Resource Group}.
 \end{enumerate}
 
 
@@ -111,7 +148,7 @@ terraform version
 \end{enumerate}
 
 \subsection{Przygotowanie środowiska do pracy z Azure}
-Terraform wymaga integracji z Microsoft Azure, co można osiągnąć za pomocą narzędzia Azure CLI.
+Terraform wymaga integracji z Microsoft Azure, co można osiągnąć za pomocą narzędzia Azure CLI. Poniższe kroki można pominąć przez wybranie Azure Cloud Shell (ikonka terminala po prawej stronie wyszukiwarki w Azure Portal). Wszystkie polecenia są już zainstalowane w Cloud Shell. Pamiętaj o konfiguracji subskrypcji, jeśli masz więcej niż jedną.
 
 \begin{enumerate}
     \item Zainstaluj Azure CLI, postępując zgodnie z instrukcją na stronie: \url{https://learn.microsoft.com/en-us/cli/azure/install-azure-cli}.
@@ -140,7 +177,7 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "example" {
   name     = "example-rg"
-  location = "West Europe"
+  location = "West Europe" 
 }
     \end{lstlisting}
     \item Zainicjalizuj Terraform w katalogu projektu:
@@ -229,43 +266,42 @@ terraform apply
 \textbf{Cel:} Wykorzystanie zmiennych do tworzenia kilku maszyn wirtualnych w oparciu o dynamiczną listę.
 
 \textbf{Przykład konfiguracji:}
+Zaczynamy od stworzenia warstwy sieciowej w Microsoft Azure. Użyjemy do tego \texttt{Resource Group} z poprzednich ćwiczeń oraz \texttt{Virtual Network} i \texttt{Subnet}.
 \begin{lstlisting}
-variable "vm_names" {
-  default = ["vm1", "vm2", "vm3"]
+resource "azurerm_virtual_network" "example" {
+  name                = "example-network"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+}
+resource "azurerm_subnet" "example" {
+  name                 = "internal"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = ["10.0.2.0/24"]
 }
 
-resource "azurerm_virtual_machine" "example" {
-  count                = length(var.vm_names)
-  name                 = var.vm_names[count.index]
-  location             = azurerm_resource_group.example.location
-  resource_group_name  = azurerm_resource_group.example.name
-  network_interface_ids = [azurerm_network_interface.example[count.index].id]
-  vm_size              = "Standard_B1s"
+\end{lstlisting}
 
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+Przetestuj konfigurację, wykonując polecenie \texttt{terraform apply}. Zauważ referencję zasobu \texttt{Subnet} do nazwy \texttt{Virtual Network}.
+
+Następnie utworzymy interfejsy sieciowe dla 3 maszyn wirtualnych. Użyjemy do tego parametru \texttt{count}, który pozwala na tworzenie wielu instancji zasobu na podstawie jednej definicji. Iterator \texttt{count.index} pozwala na dynamiczne przypisanie adresów IP i rozróżnienie instancji.
+
+\begin{lstlisting}
+resource "azurerm_network_interface" "example" {
+  name                = "example-nic-${count.index}"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = "Dynamic"
   }
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  admin_username = "azureuser"
-  admin_password = "P@ssw0rd1234!"
 }
 \end{lstlisting}
 
-\textbf{Ćwiczenie:}
-\begin{enumerate}
-    \item Zdefiniuj listę maszyn w pliku \texttt{variables.tf}.
-    \item Uruchom \texttt{terraform apply}, aby stworzyć maszyny.
-    \item Zaktualizuj listę maszyn w pliku \texttt{variables.tf}, dodając nową nazwę.
-    \item Wykonaj ponownie \texttt{terraform apply} i zweryfikuj zmiany.
-\end{enumerate}
+Zaaplikuj konfigurację i obserwuj jak tworzą się interfejsy sieciowe. Następnie przy pomocy dokumentacji dostępnej na \url{https://registry.terraform.io} znajdź dokumentację dla providera \texttt{azurerm} i poszukaj jak napisać definicję maszyny wirtualnej. Przy pisaniu definicji uwzględniej parametr \texttt{count} i odnieś się do interfejsów sieciowych przez odpowiedni parametr, np. \texttt{network\_interface\_ids}.
 
 \subsection{Wykorzystanie zmiennych w sieciach i Storage Account}
 \textbf{Przykład zmiennych dla sieci:}
