@@ -79,6 +79,13 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - Wprowadzenie do chmury Microsoft Azure
      - Tworzenie prostych zasobów chmurowych (np. instancje EC2)
      - Automatyzacja zarządzania infrastrukturą
-    - [skrypt](/jwozniak/labs/7-azuretf.pdf)
+   - [skrypt](/jwozniak/labs/7-azuretf.pdf)
 
-
+9. #### Terraform: moduły, zmienne i stan zdalny
+   - **Wymagania**: Terraform, Microsoft Azure
+   - **Zadania**:
+     - Tworzenie modułów w Terraform
+     - Użycie stanu zdalnego
+     - Napisanie modułu maszyny wirtualnej
+     - Stworzenie bazy danych
+   - [skrypt](/jwozniak/labs/8-terraform.pdf)
