@@ -12,7 +12,7 @@ poniedziałki, 18:15
 
 ### Zaliczenie
 
-Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach (lub w terminie uzgodnionym przez prowadzących).
+Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (według planu zajęć). 
 
 ### Plan laboratoriów
 
@@ -89,3 +89,12 @@ Zaliczenie na podstawie kolokwium, które odbędzie się na ostatnich zajęciach
      - Napisanie modułu maszyny wirtualnej
      - Stworzenie bazy danych
    - [skrypt](/jwozniak/labs/8-terraform.pdf)
+
+10. #### AKS i Terraform - podsumowanie
+   - **Wymagania**: Terraform, Microsoft Azure, Kubernetes
+   - **Zadania**:
+     - Stworzenie infrastruktury w Microsoft Azure
+     - Konfiguracja klastra Kubernetes
+     - Wystawienie aplikacji na świat
+     - Zapewnienie ciągłego wdrażania
+   - [skrypt](/jwozniak/labs/9-final.pdf)

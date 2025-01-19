@@ -1,0 +1,132 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{fontspec}
+\usepackage{xurl}
+\usepackage[pdftex]{hyperref}
+\setlength{\parindent}{0pt}
+\usepackage{xcolor}
+
+
+\title{Zarządzanie Systemami Rozproszonymi\\Laboratoria z Terraform i AKS}
+\author{mgr inż. Jakub Woźniak}
+\date{}
+
+\lstdefinelanguage{HCL}{
+  morekeywords={resource,variable,output,provider,module,terraform,backend},
+  sensitive=true,
+  morestring=[b]"
+}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    rulecolor=\color{black},
+    tabsize=2,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green},
+    stringstyle=\color{red},
+    escapeinside={\%*}{*)},
+    morekeywords={*,resource,provider,variable,module,backend}
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Wprowadzenie}
+Celem tych zajęć jest wdrożenie praktyk Infrastructure as Code (IaC) z wykorzystaniem Terraform oraz automatyzacja wdrożeń aplikacji Kubernetes przy użyciu GitOps z Argo CD. Podczas zajęć zostaną omówione i zrealizowane następujące elementy:
+\begin{itemize}
+    \item Tworzenie infrastruktury w chmurze Azure z Terraform.
+    \item Zarządzanie klastrem AKS i aplikacjami Kubernetes.
+    \item Integracja Terraform z Kubernetes przy użyciu providera Kubernetes.
+    \item Automatyzacja wdrożeń za pomocą Argo CD.
+\end{itemize}
+
+\subsection{Zakres zajęć}
+\begin{enumerate}
+    \item Konfiguracja Terraform z remote state w Azure.
+    \item Tworzenie klastra AKS.
+    \item Instalacja Argo CD na klastrze Kubernetes.
+    \item Tworzenie infrastruktury z Terraform z wykorzystaniem bazy danych Azure SQL.
+    \item Wdrożenie aplikacji Redmine z Load Balancerem.
+    \item Automatyzacja wdrożeń z Argo CD.
+\end{enumerate}
+
+\subsection{Wymagane narzędzia}
+\begin{itemize}
+    \item \textbf{Terraform:} Zarządzanie infrastrukturą jako kodem.
+    \item \textbf{Azure CLI:} Do logowania i interakcji z Azure.
+    \item \textbf{kubectl:} Zarządzanie klastrem Kubernetes.
+    \item \textbf{Argo CD CLI:} Zarządzanie projektami GitOps.
+    \item \textbf{Git:} Przechowywanie definicji infrastruktury.
+\end{itemize}
+
+\section{Przygotowanie środowiska}
+\subsection{Konfiguracja zdalnego stanu w Terraform}
+Terraform wymaga zdalnego backendu do przechowywania stanu. W Azure można użyć Azure Blob Storage.
+
+\textbf{Kroki:}
+\begin{enumerate}
+    \item Utwórz Resource Group
+    \item Utwórz Storage Account
+    \item Skonfiguruj backend Terraform
+    \item Inicjalizuj Terraform
+\end{enumerate}
+
+\section{Zadania samodzielne}
+Poniżej opisano zadania do samodzielnego wykonania. 
+
+\subsection{Tworzenie klastra AKS}
+\begin{itemize}
+    \item Wykorzystaj Terraform do stworzenia klastra AKS.
+    \item Dokumentacja: \url{https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster}
+\end{itemize}
+
+\subsection{Instalacja Argo CD}
+\begin{itemize}
+    \item Zainstaluj Argo CD na klastrze AKS.
+    \item Skonfiguruj dostęp do interfejsu UI Argo CD przy użyciu \texttt{kubectl port-forward}.
+    \item Dokumentacja: \url{https://argo-cd.readthedocs.io/}
+\end{itemize}
+
+\subsection{Wdrożenie SQL}
+\begin{itemize}
+    \item Utwórz bazę danych Azure MySQL przy pomocy Terraform.
+    \item Skonfiguruj reguły zapory umożliwiające dostęp z klastra Kubernetes.
+\end{itemize}
+
+\subsection{Definicje Kubernetes w Terraform}
+\begin{itemize}
+    \item Wykorzystaj provider Kubernetes w Terraform do utworzenia Deployment i Service dla Redmine.
+    \item Skonfiguruj Load Balancer do wystawienia aplikacji na świat.
+    \item Dokumentacja: \url{https://registry.terraform.io/providers/hashicorp/kubernetes/latest}
+\end{itemize}
+
+\subsection{Automatyzacja wdrożeń z Argo CD}
+\begin{itemize}
+    \item Skonfiguruj Argo CD, aby automatycznie wdrażał aplikację z repozytorium Git.
+    \item Dokumentacja: \url{https://argo-cd.readthedocs.io/en/stable/user-guide/}
+\end{itemize}
+
+\section{Podsumowanie}
+Podczas tych zajęć zrealizowano kompleksowe wdrożenie infrastruktury chmurowej w Azure, zarządzanej przy pomocy Terraform i zautomatyzowanej dzięki Argo CD. Kluczowe elementy to:
+\begin{itemize}
+    \item Konfiguracja i zarządzanie zdalnym stanem w Terraform.
+    \item Modularne podejście do definicji infrastruktury.
+    \item Automatyzacja wdrożeń aplikacji Kubernetes za pomocą GitOps.
+\end{itemize}
+\end{document}
