@@ -16,7 +16,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
 
 ### Plan laboratoriów
 
-1. #### Ansible: Automatyzacja konfiguracji
+#### 1. Ansible: Automatyzacja konfiguracji
   - **Wymagania**: Ansible
   - **Zadania**:
     - Instalacja i konfiguracja Ansible
@@ -24,7 +24,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Automatyzacja konfiguracji serwerów
   - [skrypt](/jwozniak/labs/0-ansible.pdf)  
 
-2. #### Docker: Konteneryzacja aplikacji
+#### 2. Docker: Konteneryzacja aplikacji
   - **Wymagania**: Docker
   - **Zadania**:
     - Tworzenie obrazów Docker
@@ -32,7 +32,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Tworzenie aplikacji wielokontenerowych
   - [skrypt](/jwozniak/labs/1-docker.pdf)
 
-3. #### Kubernetes: Tworzenie klastra i skalowanie
+#### 3. Kubernetes: Tworzenie klastra i skalowanie
   - **Wymagania**: Kubernetes (Minikube lub chmura)
   - **Zadania**:
     - Instalacja Kubernetes
@@ -42,7 +42,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - HPA
   - [skrypt](/jwozniak/labs/2-kubernetes.pdf)
 
-4. #### Kubernetes: LivenessProbe, StatefulSet i Ingress
+#### 4. Kubernetes: LivenessProbe, StatefulSet i Ingress
   - **Wymagania**: Kubernetes (minikube lub chmura)
   - **Zadania**:
     - Deployment nginx z livenessProbe
@@ -50,7 +50,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Konfiguracja Ingress na NGINX
   - [skrypt](/jwozniak/labs/3-kubernetes-2.pdf)
 
-5. #### Monitorowanie z Prometheus i Grafana
+#### 5. Monitorowanie z Prometheus i Grafana
   - **Wymagania**: Prometheus, Grafana
   - **Zadania**:
     - Konfiguracja Prometheus
@@ -58,14 +58,14 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Tworzenie dashboardów monitorujących w Grafana
   - [skrypt](/jwozniak/labs/4-monitoring.pdf)
 
-6. #### GitOps z ArgoCD
+#### 6. GitOps z ArgoCD
   - **Wymagania**: Kubernetes, ArgoCD
   - **Zadania**:
     - Konfiguracja GitOps za pomocą ArgoCD
     - Automatyzacja wdrożeń aplikacji Kubernetes
   - [skrypt](/jwozniak/labs/5-gitops.pdf)
 
-7. #### Service Mesh z Istio
+#### 7. Service Mesh z Istio
   - **Wymagania**: Kubernetes, Istio
   - **Zadania**:
     - Instalacja i konfiguracja Istio
@@ -73,7 +73,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Konfiguracja Ingress i Egress Gateway
   - [skrypt](/jwozniak/labs/6-servicemesh.pdf)
 
-8. #### Terraform: Tworzenie infrastruktury chmurowej
+#### 8. Terraform: Tworzenie infrastruktury chmurowej
   - **Wymagania**: Terraform, AWS/Azure/GCP
   - **Zadania**:
     - Wprowadzenie do chmury Microsoft Azure
@@ -81,7 +81,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Automatyzacja zarządzania infrastrukturą
   - [skrypt](/jwozniak/labs/7-azuretf.pdf)
 
-9. #### Terraform: moduły, zmienne i stan zdalny
+#### 9. Terraform: moduły, zmienne i stan zdalny
   - **Wymagania**: Terraform, Microsoft Azure
   - **Zadania**:
     - Tworzenie modułów w Terraform
@@ -90,7 +90,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Stworzenie bazy danych
   - [skrypt](/jwozniak/labs/8-terraform.pdf)
 
-10. #### AKS i Terraform - podsumowanie
+#### 10. AKS i Terraform - podsumowanie
   - **Wymagania**: Terraform, Microsoft Azure, Kubernetes
   - **Zadania**:
     - Stworzenie infrastruktury w Microsoft Azure
