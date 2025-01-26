@@ -1,8 +1,16 @@
 +++
 title = 'Projektowanie Systemów Rozproszonych - wykład'
-date = 2025-01-26T21:37:00+02:00
+date = 2025-01-25T21:37:00+02:00
 draft = false
 +++
+
+*Projektowanie Systemów Rozproszonych* pokazuje, jak skutecznie projektować i wdrażać architektury rozproszone – od tradycyjnych monolitów po mikroserwisy i rozwiązania chmurowe.
+Omawiamy kluczowe zasady skalowania, replikacji, równoważenia obciążenia oraz planowania przepływów komunikacji między usługami.
+Analizujemy popularne wzorce projektowe (np. architekturę zdarzeniową, wzorzec Sagi) i strategie migracji z monolitu do mikroserwisów.
+Przedstawiamy zagadnienia związane z bezpieczeństwem, autoryzacją i zarządzaniem danymi w środowiskach rozproszonych.
+Pokazujemy, jak wykorzystać technologie konteneryzacji, orkiestracji oraz infrastrukturę jako kod w praktyce.
+Poruszamy tematykę chmur publicznych (IaaS, PaaS, FaaS) i uczymy, kiedy warto sięgnąć po podejście serverless.
+Wreszcie omawiamy najnowsze trendy, takie jak edge computing, service mesh czy WebAssembly, aby studenci mogli świadomie rozwijać się w obszarze systemów rozproszonych.
 
 ### Informacje
 
@@ -23,7 +31,7 @@ Semestr letni 2024/25
 * Warstwy systemu – prezentacji, logiki biznesowej, danych.
 * Wzorce komunikacji – synchroniczne (HTTP/REST, gRPC) i asynchroniczne (kolejki, publish/subscribe).
 * Service registry i discovery – podstawowe mechanizmy.
-* Kluczowe pojęcia – latencja, throughput, high availability.
+* Kluczowe pojęcia – opóźnienie, przepustowość, high availability.
 * Studium przypadku – przykładowy system rozproszony w organizacji.
 
 #### Wykład 3: Komunikacja i Protokoły w Systemach Rozproszonych
