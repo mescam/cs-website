@@ -4,13 +4,7 @@ date = 2025-01-25T21:37:00+02:00
 draft = false
 +++
 
-*Projektowanie Systemów Rozproszonych* pokazuje, jak skutecznie projektować i wdrażać architektury rozproszone – od tradycyjnych monolitów po mikroserwisy i rozwiązania chmurowe.
-Omawiamy kluczowe zasady skalowania, replikacji, równoważenia obciążenia oraz planowania przepływów komunikacji między usługami.
-Analizujemy popularne wzorce projektowe (np. architekturę zdarzeniową, wzorzec Sagi) i strategie migracji z monolitu do mikroserwisów.
-Przedstawiamy zagadnienia związane z bezpieczeństwem, autoryzacją i zarządzaniem danymi w środowiskach rozproszonych.
-Pokazujemy, jak wykorzystać technologie konteneryzacji, orkiestracji oraz infrastrukturę jako kod w praktyce.
-Poruszamy tematykę chmur publicznych (IaaS, PaaS, FaaS) i uczymy, kiedy warto sięgnąć po podejście serverless.
-Wreszcie omawiamy najnowsze trendy, takie jak edge computing, service mesh czy WebAssembly, aby studenci mogli świadomie rozwijać się w obszarze systemów rozproszonych.
+Przedmiot przedstawia zasady projektowania i wdrażania nowoczesnych architektur rozproszonych, obejmujących rozwiązania monolityczne, mikroserwisowe i chmurowe. Obejmuje kluczowe zagadnienia skalowania, bezpieczeństwa, zarządzania danymi oraz przepływów komunikacji w środowiskach wieloserwerowych. Uwzględnione są strategie migracji do mikroserwisów, narzędzia konteneryzacji oraz integracja podejść PaaS i FaaS. Końcowe wykłady poruszają najnowsze trendy, takie jak serverless, multi-cloud czy edge computing, stanowiąc podsumowanie i wskazując perspektywy rozwoju w dziedzinie systemów rozproszonych.
 
 ### Informacje
 
