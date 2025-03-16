@@ -1,0 +1,710 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage[T1]{fontenc}
+\geometry{a4paper, margin=2.5cm}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codepurple},
+    stringstyle=\color{codegreen},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{Laboratorium: Aplikacja Azure Functions z Terraform\\
+\large Implementacja aplikacji z trzema endpointami w Pythonie}
+\author{mgr inż. Jakub Woźniak}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Wprowadzenie}
+
+W tym laboratorium studenci stworzą aplikację bezserwerową przy użyciu Azure Functions z trzema endpointami, zaimplementowaną w języku Python. Cała infrastruktura zostanie zdefiniowana i wdrożona przy użyciu narzędzia Terraform, zgodnie z podejściem Infrastructure as Code (IaC).
+
+\subsection{Czym są Azure Functions?}
+
+Azure Functions to usługa przetwarzania bezserwerowego (serverless), która umożliwia uruchamianie kodu w odpowiedzi na różne zdarzenia, bez konieczności zarządzania infrastrukturą bazową. Główne zalety tej usługi:
+
+\begin{itemize}
+    \item Opłaty tylko za rzeczywiście wykorzystane zasoby
+    \item Automatyczne skalowanie w zależności od obciążenia
+    \item Obsługa wielu języków programowania, w tym Pythona
+    \item Integracja z różnorodnymi usługami Azure i zewnętrznymi
+\end{itemize}
+
+\subsection{Czym jest Terraform?}
+
+Terraform to narzędzie typu open-source służące do definiowania infrastruktury jako kod (IaC). Dzięki niemu można:
+
+\begin{itemize}
+    \item Deklaratywnie definiować zasoby infrastruktury
+    \item Wersjonować zmiany w infrastrukturze
+    \item Automatyzować wdrażanie i zarządzanie zasobami
+    \item Zapewnić powtarzalność i spójność środowisk
+\end{itemize}
+
+\section{Przygotowanie środowiska laboratoryjnego}
+
+\subsection{Wymagania wstępne}
+
+Przed rozpoczęciem laboratorium, należy upewnić się, że następujące narzędzia są zainstalowane na komputerze:
+
+\begin{lstlisting}[language=bash]
+# Sprawdzenie wersji Azure CLI
+az --version  # Wymagana wersja >= 2.40.0
+
+# Sprawdzenie wersji Terraform
+terraform --version  # Wymagana wersja >= 1.0.0
+
+# Sprawdzenie wersji Python
+python --version  # Wymagana wersja >= 3.8
+
+# Azure Functions Core Tools
+func --version  # Wymagana wersja >= 4.0.0
+\end{lstlisting}
+
+\subsection{Logowanie do Azure}
+
+Logowanie do Azure CLI jest konieczne, aby Terraform mógł zarządzać zasobami w Azure:
+
+\begin{lstlisting}[language=bash]
+# Logowanie do Azure
+az login
+
+# Lista dostępnych subskrypcji
+az account list --output table
+
+# Wybór konkretnej subskrypcji (opcjonalnie)
+az account set --subscription "Nazwa_Subskrypcji_Azure"
+\end{lstlisting}
+
+\section{Definicja infrastruktury w Terraform}
+
+\subsection{Struktura projektu}
+
+Tworzymy następującą strukturę plików dla naszej konfiguracji Terraform:
+
+\begin{lstlisting}[language=bash]
+mkdir -p azure-functions-lab
+cd azure-functions-lab
+touch main.tf variables.tf outputs.tf terraform.tfvars
+\end{lstlisting}
+
+\subsection{Plik zmiennych (variables.tf)}
+
+Plik ten definiuje zmienne używane w głównym pliku konfiguracyjnym, co pozwala na łatwą parametryzację wdrożenia:
+
+\begin{lstlisting}[language=HCL]
+variable "resource_group_name" {
+  description = "Nazwa grupy zasobów"
+  type        = string
+  default     = "lab-functions-rg"
+}
+
+variable "location" {
+  description = "Lokalizacja zasobów Azure"
+  type        = string
+  default     = "West Europe"
+}
+
+variable "storage_account_name" {
+  description = "Nazwa konta storage (musi być unikalna globalnie)"
+  type        = string
+}
+
+variable "app_insights_name" {
+  description = "Nazwa Application Insights"
+  type        = string
+  default     = "lab-functions-insights"
+}
+
+variable "app_service_plan_name" {
+  description = "Nazwa App Service Plan"
+  type        = string
+  default     = "lab-functions-plan"
+}
+
+variable "function_app_name" {
+  description = "Nazwa Function App (musi być unikalna globalnie)"
+  type        = string
+}
+\end{lstlisting}
+
+\subsection{Główny plik konfiguracyjny (main.tf)}
+
+W tym pliku definiujemy wszystkie zasoby Azure, które chcemy utworzyć dla naszej aplikacji Functions. Zwróć uwagę, że tworzymy aplikację dla środowiska Linuxowego z runtime'em Python:
+
+\begin{lstlisting}[language=HCL]
+provider "azurerm" {
+  features {}
+}
+
+# Grupa zasobów
+resource "azurerm_resource_group" "rg" {
+  name     = var.resource_group_name
+  location = var.location
+}
+
+# Storage Account wymagany dla Azure Functions
+resource "azurerm_storage_account" "storage" {
+  name                     = var.storage_account_name
+  resource_group_name      = azurerm_resource_group.rg.name
+  location                 = azurerm_resource_group.rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
+# Kontener dla przechowywania kodu funkcji
+resource "azurerm_storage_container" "deployments" {
+  name                  = "function-releases"
+  storage_account_name  = azurerm_storage_account.storage.name
+  container_access_type = "private"
+}
+
+# Storage dla przechowywania plików dla Blob Trigger
+resource "azurerm_storage_container" "blob_trigger" {
+  name                  = "samples-workitems"
+  storage_account_name  = azurerm_storage_account.storage.name
+  container_access_type = "private"
+}
+
+# Application Insights do monitorowania
+resource "azurerm_application_insights" "insights" {
+  name                = var.app_insights_name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  application_type    = "web"
+}
+
+# Plan usługi dla Azure Functions
+resource "azurerm_service_plan" "app_service_plan" {
+  name                = var.app_service_plan_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  os_type             = "Linux"
+  sku_name            = "Y1" # Plan Consumption
+}
+
+# Azure Linux Function App z runtime Python
+resource "azurerm_linux_function_app" "function_app" {
+  name                = var.function_app_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+
+  storage_account_name       = azurerm_storage_account.storage.name
+  storage_account_access_key = azurerm_storage_account.storage.primary_access_key
+  service_plan_id            = azurerm_service_plan.app_service_plan.id
+  
+  site_config {
+    application_stack {
+      python_version = "3.9"
+    }
+  }
+
+  app_settings = {
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.insights.instrumentation_key
+    "FUNCTIONS_WORKER_RUNTIME"       = "python"
+    "WEBSITE_RUN_FROM_PACKAGE"       = "1"
+    "AzureWebJobsStorage"            = azurerm_storage_account.storage.primary_connection_string
+  }
+}
+\end{lstlisting}
+
+\subsection{Plik wyjść (outputs.tf)}
+
+Ten plik definiuje wartości, które chcemy wyświetlić po zakończeniu wdrażania infrastruktury:
+
+\begin{lstlisting}[language=HCL]
+output "function_app_name" {
+  value = azurerm_linux_function_app.function_app.name
+}
+
+output "function_app_default_hostname" {
+  value = azurerm_linux_function_app.function_app.default_hostname
+}
+
+output "function_app_id" {
+  value = azurerm_linux_function_app.function_app.id
+}
+
+output "storage_account_name" {
+  value = azurerm_storage_account.storage.name
+}
+
+output "storage_connection_string" {
+  value     = azurerm_storage_account.storage.primary_connection_string
+  sensitive = true
+}
+\end{lstlisting}
+
+\subsection{Plik terraform.tfvars}
+
+Ten plik zawiera faktyczne wartości zmiennych dla naszego wdrożenia:
+
+\begin{lstlisting}[language=HCL]
+storage_account_name = "labfunctstorage<ID>"
+function_app_name    = "lab-functions-app-<ID>"
+\end{lstlisting}
+
+Uwaga: Zastąp \texttt{<ID>} swoim unikalnym identyfikatorem, aby zapewnić globalną unikalność nazw w Azure.
+
+\section{Wdrażanie infrastruktury}
+
+\subsection{Inicjalizacja Terraform}
+
+Inicjalizacja pobiera wymagane providery i moduły:
+
+\begin{lstlisting}[language=bash]
+terraform init
+\end{lstlisting}
+
+Podczas inicjalizacji Terraform:
+\begin{itemize}
+    \item Pobiera wymagane providery (w tym przypadku provider azurerm)
+    \item Inicjalizuje lokalny katalog .terraform
+    \item Przygotowuje środowisko do wdrożenia
+\end{itemize}
+
+\subsection{Generowanie planu wdrożenia}
+
+Sprawdzamy, jakie zasoby zostaną utworzone:
+
+\begin{lstlisting}[language=bash]
+terraform plan
+\end{lstlisting}
+
+Podczas wykonywania planu Terraform:
+\begin{itemize}
+    \item Analizuje istniejący stan infrastruktury
+    \item Porównuje go z zadeklarowanym stanem w plikach konfiguracyjnych
+    \item Generuje plan działań (dodanie, zmiana lub usunięcie zasobów)
+\end{itemize}
+
+\subsection{Wdrożenie zasobów}
+
+Tworzymy zasoby w Azure zgodnie z konfiguracją:
+
+\begin{lstlisting}[language=bash]
+terraform apply
+\end{lstlisting}
+
+Po potwierdzeniu (wpisanie 'yes'), Terraform:
+\begin{itemize}
+    \item Tworzy grupę zasobów
+    \item Tworzy konto Storage Account
+    \item Konfiguruje kontenery Blob Storage
+    \item Tworzy Application Insights
+    \item Tworzy plan App Service dla Linux
+    \item Wdraża aplikację Function App z runtime Python
+\end{itemize}
+
+\section{Tworzenie aplikacji Azure Functions w Pythonie}
+
+\subsection{Inicjalizacja projektu Azure Functions}
+
+Tworzymy lokalny projekt funkcji:
+
+\begin{lstlisting}[language=bash]
+mkdir -p functions-code
+cd functions-code
+
+# Inicjalizacja projektu Python dla Azure Functions
+func init --worker-runtime python
+\end{lstlisting}
+
+Ta komenda tworzy:
+\begin{itemize}
+    \item Plik konfiguracyjny \texttt{host.json}
+    \item Plik \texttt{local.settings.json} z ustawieniami lokalnymi
+    \item Katalog \texttt{.venv} dla wirtualnego środowiska Python
+    \item Plik \texttt{requirements.txt} do zarządzania zależnościami
+\end{itemize}
+
+\subsection{Endpoint 1: HTTP Trigger}
+
+Tworzymy pierwszą funkcję HTTP:
+
+\begin{lstlisting}[language=bash]
+func new --name HttpTriggerFunction --template "HTTP trigger" --authlevel "function"
+\end{lstlisting}
+
+Ta komenda generuje:
+\begin{itemize}
+    \item Katalog \texttt{HttpTriggerFunction}
+    \item Plik \texttt{\_\_init\_\_.py} z kodem funkcji
+    \item Plik \texttt{function.json} z konfiguracją bindingów
+\end{itemize}
+
+Edytujemy plik \texttt{HttpTriggerFunction/\_\_init\_\_.py}:
+
+\begin{lstlisting}[language=Python]
+import logging
+import azure.functions as func
+import json
+import datetime
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+
+    name = req.params.get('name')
+    if not name:
+        try:
+            req_body = req.get_json()
+        except ValueError:
+            pass
+        else:
+            name = req_body.get('name')
+
+    if name:
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        response_data = {
+            "message": f"Witaj, {name}!",
+            "timestamp": current_time,
+            "endpoint": "HTTP Trigger"
+        }
+        return func.HttpResponse(
+            json.dumps(response_data),
+            mimetype="application/json",
+            status_code=200
+        )
+    else:
+        return func.HttpResponse(
+            json.dumps({"error": "Proszę podać parametr 'name' w query string lub w body requestu"}),
+            mimetype="application/json",
+            status_code=400
+        )
+\end{lstlisting}
+
+\subsection{Endpoint 2: Timer Trigger}
+
+Tworzymy funkcję uruchamianą według harmonogramu:
+
+\begin{lstlisting}[language=bash]
+func new --name TimerTriggerFunction --template "Timer trigger"
+\end{lstlisting}
+
+Ta komenda generuje:
+\begin{itemize}
+    \item Katalog \texttt{TimerTriggerFunction}
+    \item Plik \texttt{\_\_init\_\_.py} z kodem funkcji
+    \item Plik \texttt{function.json} z konfiguracją harmonogramu (domyślnie co 5 minut)
+\end{itemize}
+
+Edytujemy plik \texttt{TimerTriggerFunction/\_\_init\_\_.py}:
+
+\begin{lstlisting}[language=Python]
+import datetime
+import logging
+import azure.functions as func
+import os
+import json
+from azure.storage.blob import BlobServiceClient
+
+def main(mytimer: func.TimerRequest) -> None:
+    utc_timestamp = datetime.datetime.utcnow().replace(
+        tzinfo=datetime.timezone.utc).isoformat()
+
+    if mytimer.past_due:
+        logging.info('Timer jest opóźniony!')
+
+    logging.info('Python timer trigger function uruchomiona o %s', utc_timestamp)
+    
+    # Tworzymy raport z uruchomienia
+    report_data = {
+        "execution_time": utc_timestamp,
+        "status": "success",
+        "message": "Planowe uruchomienie timera"
+    }
+    
+    # Zapisujemy raport do blob storage (opcjonalne)
+    try:
+        # Połączenie z storage
+        connect_str = os.environ["AzureWebJobsStorage"]
+        blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+        
+        # Tworzenie nazwy pliku z timestampem
+        report_filename = f"timer-report-{datetime.datetime.utcnow().strftime('%Y%m%d-%H%M%S')}.json"
+        
+        # Uzyskanie klienta kontenera
+        container_client = blob_service_client.get_container_client("samples-workitems")
+        
+        # Zapis danych do bloba
+        blob_client = container_client.get_blob_client(report_filename)
+        blob_client.upload_blob(json.dumps(report_data))
+        
+        logging.info(f"Raport zapisany do blob storage: {report_filename}")
+    except Exception as e:
+        logging.error(f"Błąd podczas zapisywania raportu: {str(e)}")
+\end{lstlisting}
+
+\subsection{Endpoint 3: Blob Trigger}
+
+Tworzymy funkcję aktywowaną przez dodanie/modyfikację pliku w Blob Storage:
+
+\begin{lstlisting}[language=bash]
+func new --name BlobTriggerFunction --template "Blob trigger"
+\end{lstlisting}
+
+Ta komenda generuje:
+\begin{itemize}
+    \item Katalog \texttt{BlobTriggerFunction}
+    \item Plik \texttt{\_\_init\_\_.py} z kodem funkcji
+    \item Plik \texttt{function.json} z konfiguracją bindingu do Blob Storage
+\end{itemize}
+
+Edytujemy plik \texttt{BlobTriggerFunction/function.json}:
+
+\begin{lstlisting}[language=json]
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "myblob",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "samples-workitems/{name}",
+      "connection": "AzureWebJobsStorage"
+    }
+  ]
+}
+\end{lstlisting}
+
+Edytujemy plik \texttt{BlobTriggerFunction/\_\_init\_\_.py}:
+
+\begin{lstlisting}[language=Python]
+import logging
+import azure.functions as func
+import json
+import datetime
+
+def main(myblob: func.InputStream):
+    logging.info(f"Python Blob trigger function przetworzył blob \n"
+                 f"Nazwa: {myblob.name}\n"
+                 f"Rozmiar: {myblob.length} bajtów")
+    
+    try:
+        # Próba odczytu zawartości bloba jako JSON
+        content = myblob.read()
+        content_str = content.decode('utf-8')
+        
+        # Parsowanie JSON
+        try:
+            data = json.loads(content_str)
+            logging.info(f"Przetworzono plik JSON: {data}")
+            
+            # Tutaj możesz dodać logikę przetwarzania danych
+            # np. analizę raportów wygenerowanych przez TimerTrigger
+            
+        except json.JSONDecodeError:
+            logging.warning(f"Plik nie jest prawidłowym JSON: {content_str[:100]}...")
+            
+    except Exception as e:
+        logging.error(f"Wystąpił błąd podczas przetwarzania pliku: {str(e)}")
+\end{lstlisting}
+
+\subsection{Aktualizacja zależności}
+
+Dodajemy wymagane pakiety do pliku \texttt{requirements.txt}:
+
+\begin{lstlisting}
+azure-functions
+azure-storage-blob
+\end{lstlisting}
+
+Instalujemy zależności:
+
+\begin{lstlisting}[language=bash]
+# Aktywacja wirtualnego środowiska (jeśli nie jest aktywne)
+source .venv/bin/activate  # Na Linuxie/macOS
+# lub
+.venv\Scripts\activate     # Na Windows
+
+# Instalacja zależności
+pip install -r requirements.txt
+\end{lstlisting}
+
+\section{Wdrażanie funkcji do Azure}
+
+\subsection{Lokalne testowanie (opcjonalne)}
+
+Przed wdrożeniem możemy przetestować funkcje lokalnie:
+
+\begin{lstlisting}[language=bash]
+func start
+\end{lstlisting}
+
+\subsection{Publikowanie funkcji do Azure}
+
+Wdrażamy nasze funkcje do utworzonej wcześniej infrastruktury:
+
+\begin{lstlisting}[language=bash]
+# Pakowanie i publikowanie funkcji
+func azure functionapp publish <nazwa_funkcji>
+\end{lstlisting}
+
+Gdzie \texttt{<nazwa\_funkcji>} to wartość wyjściowa \texttt{function\_app\_name} z Terraform (lub wartość z pliku terraform.tfvars).
+
+Podczas publikacji:
+\begin{itemize}
+    \item Kod jest pakowany do formatu zip
+    \item Plik zip jest przesyłany do konta storage
+    \item Function App jest konfigurowany do uruchomienia kodu z paczki
+    \item Ustawienia aplikacji są aktualizowane
+\end{itemize}
+
+\section{Testowanie funkcji w Azure}
+
+\subsection{Testowanie HTTP Trigger}
+
+Pobierz URL funkcji z portalu Azure lub za pomocą Azure CLI:
+
+\begin{lstlisting}[language=bash]
+# Uzyskanie klucza funkcji
+FUNCTION_KEY=$(az functionapp keys list -g <nazwa_grupy_zasobów> -n <nazwa_funkcji> --query "functionKeys.default" -o tsv)
+
+# Zapytanie HTTP
+curl "https://<nazwa_funkcji>.azurewebsites.net/api/httptriggerfunction?name=Student&code=$FUNCTION_KEY"
+\end{lstlisting}
+
+Oczekiwana odpowiedź:
+\begin{lstlisting}[language=json]
+{
+  "message": "Witaj, Student!",
+  "timestamp": "2025-03-16 20:45:30",
+  "endpoint": "HTTP Trigger"
+}
+\end{lstlisting}
+
+\subsection{Testowanie Timer Trigger}
+
+Timer trigger uruchamia się automatycznie zgodnie z harmonogramem (domyślnie co 5 minut).
+
+Sprawdzamy logi funkcji w portalu Azure lub za pomocą Azure CLI:
+
+\begin{lstlisting}[language=bash]
+az functionapp log tail --name <nazwa_funkcji> --resource-group <nazwa_grupy_zasobów>
+\end{lstlisting}
+
+W logach powinniśmy zobaczyć informacje o uruchomieniu funkcji timer i zapisie raportu do Blob Storage.
+
+\subsection{Testowanie Blob Trigger}
+
+Aby przetestować Blob Trigger, musimy wgrać plik do kontenera \texttt{samples-workitems}:
+
+\begin{lstlisting}[language=bash]
+# Tworzenie testowego pliku JSON
+echo '{"test": "data", "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}' > test-file.json
+
+# Wgranie pliku do blob storage
+az storage blob upload --account-name <nazwa_konta_storage> --container-name samples-workitems --name test-blob.json --file test-file.json --auth-mode login
+\end{lstlisting}
+
+Po wgraniu pliku, Blob Trigger powinien się uruchomić i przetworzyć plik. Efekty można sprawdzić w logach.
+
+\section{Monitorowanie aplikacji}
+
+\subsection{Application Insights}
+
+Przejdź do Azure Portal i znajdź zasób Application Insights utworzony przez Terraform.
+
+Kluczowe sekcje do przejrzenia:
+\begin{itemize}
+    \item Live Metrics - monitorowanie w czasie rzeczywistym
+    \item Failures - błędy aplikacji
+    \item Performance - wydajność
+    \item Logs - szczegółowe logi
+\end{itemize}
+
+Przykładowe kwerendy Kusto w Log Analytics:
+
+\begin{lstlisting}[language=SQL]
+// Wykonania funkcji HTTP
+requests
+| where cloud_RoleName startswith "lab-functions"
+| where name contains "HttpTriggerFunction"
+| project timestamp, name, success, resultCode, duration, operation_Id
+
+// Wykonania wszystkich funkcji
+traces
+| where cloud_RoleName startswith "lab-functions"
+| project timestamp, message, severityLevel, operation_Id
+| order by timestamp desc
+\end{lstlisting}
+
+\section{Czyszczenie zasobów}
+
+Po zakończeniu laboratorium, należy usunąć wszystkie utworzone zasoby, aby uniknąć niepotrzebnych kosztów:
+
+\begin{lstlisting}[language=bash]
+terraform destroy
+\end{lstlisting}
+
+Terraform poprosi o potwierdzenie operacji. Po wpisaniu 'yes', wszystkie utworzone zasoby zostaną usunięte w odpowiedniej kolejności.
+
+\section{Zadania do wykonania dla studentów}
+
+\begin{enumerate}
+    \item Modyfikacja funkcji HTTP:
+    \begin{itemize}
+        \item Dodanie obsługi dodatkowych parametrów (np. age, location)
+        \item Implementacja różnych metod HTTP (GET, POST, PUT)
+        \item Dodanie walidacji danych wejściowych
+    \end{itemize}
+    
+    \item Modyfikacja funkcji Timer:
+    \begin{itemize}
+        \item Zmiana harmonogramu na własny (CRON expression)
+        \item Implementacja dodatkowej logiki biznesowej
+        \item Zapisywanie raportów w strukturyzowanym formacie
+    \end{itemize}
+    
+    \item Modyfikacja funkcji Blob Trigger:
+    \begin{itemize}
+        \item Przetwarzanie różnych typów plików (np. JSON, CSV)
+        \item Implementacja analizy zawartości plików
+        \item Generowanie powiadomień o przetworzonych plikach
+    \end{itemize}
+\end{enumerate}
+
+\section{Wnioski}
+
+W ramach tego laboratorium studenci nauczyli się:
+
+\begin{itemize}
+    \item Definiować infrastrukturę jako kod przy użyciu Terraform
+    \item Tworzyć i wdrażać aplikacje serverless w Azure Functions
+    \item Implementować różne typy triggerów funkcji w Pythonie
+    \item Integrować funkcje z usługami Azure, takimi jak Blob Storage
+    \item Monitorować działanie aplikacji przy użyciu Application Insights
+\end{itemize}
+
+Zdobyte umiejętności są niezbędne w nowoczesnym podejściu do projektowania systemów rozproszonych, gdzie elastyczność, skalowalność i łatwość zarządzania są kluczowymi cechami.
+
+\end{document}
+
+Źródła
