@@ -40,6 +40,8 @@ params:
       url: /jwozniak/zsr-lab
     - name: "psr wykład"
       url: /jwozniak/psr-wyklady
+    - name: "psr projekt"
+      url: /jwozniak/psr-proj
   social:
     - name: linkedin
       url: https://www.linkedin.com/in/wozniakjakub

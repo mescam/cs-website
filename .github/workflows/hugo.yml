@@ -42,6 +42,24 @@ jobs:
           name: labs
           path: ./labs/result
 
+  build-lectures-tex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nix
+        uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Build lectures
+        run: nix build
+        working-directory: ./labs
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lectures-pdf
+          path: ./lectures-src/result
+
   build-website:
     runs-on: ubuntu-latest
     steps:  
@@ -90,6 +108,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: pptx
+          path: ./public/lectures
+      - name: Download lectures pdf
+        uses: actions/download-artifact@v4
+        with:
+          name: lectures-pdf
           path: ./public/lectures
       - name: Setup SSH keys
         run: |

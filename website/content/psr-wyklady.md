@@ -28,6 +28,8 @@ Semestr letni 2024/25
 * Kluczowe pojęcia – opóźnienie, przepustowość, high availability.
 * Studium przypadku – przykładowy system rozproszony w organizacji.
 
+[slajdy](/jwozniak/lectures/psr-lecture-2.pdf)
+
 #### Wykład 3: Komunikacja i Protokoły w Systemach Rozproszonych
 
 * Protokoły internetowe – TCP, UDP, HTTP, HTTPS.
