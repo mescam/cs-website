@@ -26,4 +26,5 @@ Tematyka dowolna.
 ### Plan laboratoriów
 
 1. Wprowadzenie do Azure Functions
-[skrypt](/jwozniak/labs/100-azure-func.pdf)
+
+[skrypt (aktualizacja 30.03.2025)](/jwozniak/labs/101-azure-func.pdf)
