@@ -28,7 +28,7 @@
               for i in *.tex; do
                 env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var \
                   latexmk -interaction=nonstopmode -pdf -xelatex -f \
-                  $i
+                  $i || true
               done;
             '';
             installPhase = ''

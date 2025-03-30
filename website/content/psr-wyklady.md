@@ -30,13 +30,15 @@ Semestr letni 2024/25
 
 [slajdy](/jwozniak/lectures/psr-2.pdf)
 
-#### Wykład 3: Komunikacja i Protokoły w Systemach Rozproszonych
+#### Wykład 3: Architektury monolityczne i mikroserwisowe
 
-* Protokoły internetowe – TCP, UDP, HTTP, HTTPS.
-* Synchroniczne vs. asynchroniczne – omówienie zalet i wad.
-* Wzorce integracji – event bus, message broker, publish/subscribe.
-* API Gateway – rola w systemach rozproszonych, load balancing, bezpieczeństwo.
-* Przykładowe narzędzia – RabbitMQ, Kafka, ZeroMQ, NATS.
+* Monolit – definicja, zalety i wady.
+* Mikroserwisy – cechy, korzyści i wyzwania.
+* Porównanie – kiedy wybrać monolit, a kiedy mikroserwisy.
+* Domain Driven Design – granice kontekstów, bounded contexts.
+* Pułapki mikroserwisów – transakcje, spójność danych, testowanie.
+
+[slajdy](/jwozniak/lectures/psr-3.pdf)
 
 #### Wykład 4: Skalowanie, Replikacja i Równoważenie Obciążenia
 
