@@ -40,21 +40,16 @@ Semestr letni 2024/25
 
 [slajdy](/jwozniak/lectures/psr-3.pdf)
 
-#### Wykład 4: Skalowanie, Replikacja i Równoważenie Obciążenia
+#### Wykład 4: Planowanie i zarządzanie obciążeniem w systemach rozproszonych
 
-* Skalowanie pionowe i poziome – definicje, kiedy stosować.
-* Replikacja danych – strategie i rodzaje.
-* Load balancing – Round Robin, Weighted, ip hash, session affinity.
-* Projektowanie pod kątem skalowalności – sharding, partitioning.
-* Narzędzia – Nginx, HAProxy, Envoy.
+* Modelowanie i prognozowanie obciążenia w systemach rozproszonych na podstawie danych historycznych i analizy trendów.
+* Identyfikacja wąskich gardeł oraz wizualizacja zależności między komponentami systemu.
+* Przeprowadzanie testów wydajnościowych i przygotowanie systemu na szczyty, bursty oraz trendy sezonowe.
+* Zastosowanie kolejek, load balancerów i architektur event-driven do efektywnego zarządzania obciążeniem.
+* Strategie skalowania, replikacji i partycjonowania danych w środowiskach chmurowych.
 
-#### Wykład 5: Planowanie Obciążenia i Modelowanie Przepływów
+[slajdy](/jwozniak/lectures/psr-4.pdf)
 
-* Znaczenie przewidywania obciążenia – jak uniknąć przeciążeń, dostosować zasoby i koszty.
-* Modelowanie przepływów komunikacji – diagramy zależności, identyfikacja bottlenecków.
-* Testy wydajności – narzędzia (JMeter, Gatling, Locust) i metryki (latencja, throughput, p95/p99).
-* Scenariusze skokowego wzrostu ruchu – planowanie peak times, bursty, trendy sezonowe.
-* Praktyka w środowisku rozproszonym – uwzględnianie kolejek, load balancerów i architektur event-driven.
 
 #### Wykład 6: Wzorce Architektoniczne w Systemach Rozproszonych
 
