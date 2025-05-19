@@ -1,0 +1,937 @@
+
+\documentclass[aspectratio=169,xcolor=table]{beamer}
+
+\usetheme{SimpleDarkBlue}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,fit,backgrounds,mindmap,trees}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{enumitem}
+\def\labelenumi{\theenumi}
+\renewcommand{\labelenumi}{\alph{enumi}.)}
+\definecolor{mygreen}{RGB}{28,172,0}
+\definecolor{myblue}{RGB}{0,112,192}
+\definecolor{myred}{RGB}{192,0,0}
+\title{Planowanie i Zarządzanie Obciążeniem w Systemach Rozproszonych}
+\author{mgr inż. Jakub Woźniak}
+\institute[PUT]{Zakład Systemów Informatycznych\\Instytut Informatyki Politechniki Poznańskiej}
+\date{}
+
+
+
+% Definicja stylów dla TikZ dla spójności
+\tikzstyle{service}=[rectangle, draw, fill=blue!10, text width=3cm, align=center, minimum height=1.2cm, rounded corners=3pt, drop shadow]
+\tikzstyle{database}=[cylinder, shape border rotate=90, draw, fill=orange!10, aspect=0.3, minimum height=1cm, text width=2.5cm, align=center, drop shadow]
+\tikzstyle{arrow}=[->, >=latex, thick]
+\tikzstyle{general_box}=[rectangle, draw, fill=gray!10, rounded corners, text width=10cm, align=left, minimum height=1cm]
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{Agenda Wykładu}
+  \begin{columns}[T] % Użycie kolumn dla lepszego rozłożenia
+  \begin{column}{0.5\textwidth}
+  \begin{itemize}
+    \item Wprowadzenie do planowania i modelowania obciążenia
+    \item Modelowanie obciążenia w chmurach publicznych
+    \item Identyfikacja bottlenecków, diagramy zależności
+    \item Testy wydajnościowe
+    \item Planowanie peak times, burst, trendów sezonowych
+  \end{itemize}
+  \end{column}
+  \begin{column}{0.5\textwidth}
+  \begin{itemize}
+    \item Kolejki, load balancery, event-driven
+    \item Skalowanie w chmurze publicznej
+    \item Replikacja danych
+    \item Load balancing (szczegóły)
+    \item Sharding i partycjonowanie
+  \end{itemize}
+  \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cel Wykładu}
+  W ramach wykładu omówione zostaną kluczowe aspekty planowania i zarządzania obciążeniem w systemach rozproszonych.
+  \vspace{1em}
+  \begin{itemize}
+    \item Zrozumienie znaczenia modelowania obciążenia dla projektowania niezawodnych, wydajnych i skalowalnych systemów.
+    \item Poznanie technik identyfikacji wąskich gardeł oraz metod testowania wydajności.
+    \item Zapoznanie się ze strategiami radzenia sobie ze zmiennym obciążeniem, w tym w środowiskach chmur publicznych.
+    \item Przedstawienie mechanizmów takich jak kolejki, load balancery, skalowanie, replikacja i sharding.
+  \end{itemize}
+\end{frame}
+
+\section{Wprowadzenie do Planowania i Modelowania Obciążenia}
+
+\begin{frame}
+  \frametitle{Planowanie i Modelowanie Obciążenia: Podstawy}
+  \textbf{Definicja obciążenia}:
+  \begin{itemize}
+    \item Ilość pracy lub żądań, które system musi przetworzyć w jednostce czasu.
+    \item \textbf{Typy obciążenia}:
+        \begin{itemize}
+            \item \textbf{Obliczeniowe}: intensywne wykorzystanie CPU.
+            \item \textbf{Pamięciowe}: duże zapotrzebowanie na RAM.
+            \item \textbf{Sieciowe}: duża ilość danych przesyłanych przez sieć.
+            \item \textbf{I/O (Input/Output)}: częste operacje odczytu/zapisu.
+        \end{itemize}
+  \end{itemize}
+  \vspace{0.5em}
+  \textbf{Charakterystyka obciążeń}:
+  \begin{itemize}
+    \item Regularne vs nieregularne; Przewidywalne vs nieprzewidywalne.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Wpływ Modelowania Obciążenia na Architekturę}
+  \begin{itemize}
+    \item Przewidywane obciążenie determinuje kluczowe decyzje projektowe dotyczące:
+        \begin{itemize}
+            \item Wyboru technologii (np. bazy danych, systemy kolejkowe).
+            \item Projektu infrastruktury (np. liczba serwerów, przepustowość sieci).
+            \item Strategii skalowania i redundancji.
+        \end{itemize}
+    \item Niewłaściwe modelowanie może prowadzić do niskiej wydajności, niestabilności lub nadmiernych kosztów.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Metodologia Modelowania Obciążenia (1/2)}
+  \textbf{Proces zbierania danych historycznych}:
+    \begin{itemize}
+        \item \textbf{Monitoring}: Ciągłe zbieranie metryk systemowych (CPU, RAM, sieć, I/O).
+        \item \textbf{Analiza logów}: Przeglądanie logów aplikacyjnych i serwerowych w celu identyfikacji wzorców i problemów.
+        \item \textbf{Profilowanie}: Analiza wydajności kodu aplikacji w celu zidentyfikowania wąskich gardeł.
+    \end{itemize}
+  \vspace{1em}
+  \textbf{Techniki prognozowania obciążenia}:
+    \begin{itemize}
+        \item \textbf{Metody statystyczne}: np. analiza szeregów czasowych, regresja.
+        \item \textbf{Uczenie maszynowe}: np. modele predykcyjne oparte na danych historycznych.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Metodologia Modelowania Obciążenia (2/2)}
+  \textbf{Wskaźniki i metryki obciążenia}:
+    \begin{itemize}
+        \item \textbf{RPS (Requests Per Second)}: Liczba żądań na sekundę.
+        \item \textbf{Współczynnik wykorzystania zasobów}: Procentowe użycie CPU, pamięci, dysku.
+        \item \textbf{Czas odpowiedzi (Latency)}: Czas potrzebny na przetworzenie żądania.
+        \item \textbf{Przepustowość (Throughput)}: Ilość danych przetworzonych w jednostce czasu.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Modelowanie dla E-commerce}
+  \textbf{Cel}: Zapewnienie płynnego działania sklepu, zwłaszcza w okresach wzmożonego ruchu.
+  \begin{itemize}
+    \item \textbf{Zbieranie danych}: Analiza logów serwera WWW, bazy danych, systemów płatności. Identyfikacja liczby użytkowników, transakcji na godzinę/dzień.
+    \item \textbf{Identyfikacja wzorców}:
+        \begin{itemize}
+            \item Dziennych (np. większy ruch wieczorami).
+            \item Tygodniowych (np. większy ruch w weekendy).
+            \item Sezonowych (np. wzrost przed świętami, promocje).
+        \end{itemize}
+    \item \textbf{Tworzenie modelu}: Np. model regresji prognozujący liczbę transakcji.
+    \item \textbf{Wynik}: Prognoza RPS, zapotrzebowania na CPU/RAM. Planowanie infrastruktury i skalowania.
+  \end{itemize}
+\end{frame}
+
+\section{Modelowanie Obciążenia w Chmurach Publicznych}
+
+\begin{frame}
+  \frametitle{Specyfika Środowisk Chmurowych}
+  \begin{itemize}
+    \item \textbf{Model płatności za użycie (Pay-as-you-go)}:
+        \begin{itemize}
+            \item Płaci się za faktycznie zużyte zasoby.
+            \item Wpływa na strategię planowania – unikanie nadmiernego provisioningu.
+        \end{itemize}
+    \item \textbf{Dostępne mechanizmy elastyczności}:
+        \begin{itemize}
+            \item \textbf{Automatyczne skalowanie (Auto-scaling)}: Dynamiczne dostosowywanie zasobów.
+            \item \textbf{Zasoby na żądanie (On-demand resources)}: Szybkie uruchamianie i zwalnianie.
+        \end{itemize}
+    \item \textbf{Różnice między dostawcami (AWS, Azure, GCP)}:
+        \begin{itemize}
+            \item Podobne koncepcje, ale własne narzędzia i specyfika usług.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Optymalizacja Kosztów w Chmurze (1/2)}
+  \begin{itemize}
+    \item \textbf{Koncepcja "right-sizing"}:
+        \begin{itemize}
+            \item Dobór odpowiednich typów i rozmiarów instancji do rzeczywistego obciążenia.
+            \item Unikanie zbyt dużych (drogich) lub zbyt małych (niewydajnych) instancji.
+        \end{itemize}
+    \item \textbf{Strategie rezerwacji zasobów}:
+        \begin{itemize}
+            \item \textbf{Reserved Instances (RI), Savings Plans}: Długoterminowe zobowiązania za zniżki. Idealne dla przewidywalnego, stałego obciążenia.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Optymalizacja Kosztów w Chmurze (2/2)}
+  \begin{itemize}
+    \item \textbf{Strategie rezerwacji zasobów (cd.)}:
+        \begin{itemize}
+            \item \textbf{Spot Instances}: Dostęp do niewykorzystanych zasobów po niższych cenach, z ryzykiem przerwania. Dobre dla zadań tolerujących przerwy.
+        \end{itemize}
+    \item \textbf{Bilansowanie kosztów i wydajności}:
+        \begin{itemize}
+            \item Ciągła analiza kompromisu: Czy warto płacić więcej za wyższą wydajność, czy akceptować ograniczenia dla niższych kosztów?
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Optymalizacja Kosztów Netflix w AWS}
+  Netflix intensywnie korzysta z AWS i optymalizuje koszty.
+  \begin{itemize}
+    \item \textbf{Analiza wzorców obciążenia}: Globalny ruch streamingowy ma przewidywalne szczyty.
+    \item \textbf{Wykorzystanie Spot Instances}: Duża część zadań przetwarzania wideo (transkodowanie) realizowana na instancjach Spot.
+    \item \textbf{Automatyczne skalowanie}: Systemy dynamicznie dostosowują liczbę serwerów.
+    \item \textbf{Right-sizing i Reserved Instances}: Kluczowe, stabilne komponenty działają na instancjach zarezerwowanych i odpowiednio dobranych.
+    \item \textbf{Monitoring i optymalizacja}: Ciągłe monitorowanie kosztów i wydajności.
+  \end{itemize}
+  \footnotesize Źródło: Publiczne informacje i prezentacje Netflix dotyczące ich architektury w AWS.
+\end{frame}
+
+\section{Identyfikacja Wąskich Gardeł i Analiza Zależności}
+
+\begin{frame}
+  \frametitle{Identyfikacja Bottlenecków (1/2)}
+  \textbf{Wąskie gardło (bottleneck)}: Komponent systemu ograniczający ogólną wydajność.
+  \begin{itemize}
+    \item \textbf{Rodzaje wąskich gardeł}:
+        \begin{itemize}
+            \item \textbf{CPU}: Pełne obciążenie procesora.
+            \item \textbf{Pamięć (RAM)}: Brak wolnej pamięci, swapping.
+            \item \textbf{Sieć}: Ograniczona przepustowość, wysokie opóźnienia.
+            \item \textbf{I/O dysku}: Wolne operacje odczytu/zapisu.
+            \item \textbf{Baza danych}: Niewydajne zapytania, brak indeksów.
+            \item \textbf{Oprogramowanie}: Nieoptymalny kod.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Identyfikacja Bottlenecków (2/2)}
+  \begin{itemize}
+    \item \textbf{Narzędzia diagnostyczne}:
+        \begin{itemize}
+            \item \textbf{Profilers}: Analiza wykonania kodu (np. Java VisualVM, Python cProfile).
+            \item \textbf{APM (Application Performance Monitoring)}: Monitorowanie wydajności aplikacji w czasie rzeczywistym (np. Dynatrace, New Relic).
+            \item \textbf{Narzędzia monitoringu systemowego}: np. `top`, Prometheus, Grafana.
+        \end{itemize}
+    \item \textbf{Analiza ścieżek krytycznych}: Identyfikacja operacji o największym wpływie na czas odpowiedzi.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Diagramy Zależności}
+  Wizualizacja komponentów systemu i przepływów między nimi.
+  \begin{itemize}
+    \item \textbf{Modelowanie przepływów danych i żądań}:
+        \begin{itemize}
+            \item Diagramy pokazujące, jak żądania przechodzą przez system.
+            \item Pomaga zrozumieć zależności między komponentami.
+        \end{itemize}
+    \item \textbf{Heat maps wydajności}:
+        \begin{itemize}
+            \item Wizualizacja obciążenia lub problemów (np. opóźnień) na diagramie.
+        \end{itemize}
+    \item \textbf{Analiza wpływu (Impact Analysis)}:
+        \begin{itemize}
+            \item Określanie, jak awaria jednego komponentu wpłynie na resztę systemu.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Przykład: Diagram Zależności w Systemie Mikrousług}
+    \begin{center}
+    \resizebox{0.95\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=2.2cm and 2.8cm, % Dostosowane odległości
+        every node/.style={drop shadow},
+        service/.style={rectangle, draw, fill=blue!10, text width=2.8cm, align=center, minimum height=1.1cm, rounded corners=3pt},
+        database/.style={cylinder, shape border rotate=90, draw, fill=orange!10, aspect=0.3, minimum height=0.9cm, text width=2.3cm, align=center, rounded corners=3pt}, % Zmniejszono cylinder
+        arrow/.style={->, >=latex, thick}
+    ]
+    \node (api) [service] {API Gateway};
+    \node (auth) [service, below left=1.2cm and 0.4cm of api] {Serwis Uwierzytelniania};
+    \node (user) [service, below right=1.2cm and 0.4cm of api] {Serwis Użytkowników};
+    \node (order) [service, below=1.8cm of api] {Serwis Zamówień}; % Zwiększony yshift
+    \node (payment) [service, below=1.2cm of order] {Serwis Płatności};
+    \node (db_user) [database, below=1.2cm of user] {Baza Użytkowników};
+    \node (db_order) [database, below=1.2cm of payment] {Baza Zamówień};
+
+    \draw[arrow] (api) -- (auth);
+    \draw[arrow] (api) -- (user);
+    \draw[arrow] (api) -- (order);
+    \draw[arrow] (order) -- (payment);
+    \draw[arrow] (user) -- (db_user);
+    \draw[arrow] (payment) -- (db_order);
+    \draw[arrow] (auth.east) -| ($(api.west)+(-0.3,0.5)$) |- (user.west); % Uproszczona ścieżka
+    \end{tikzpicture}%
+    }
+    \end{center}
+    \textbf{Analiza}: Awaria Serwisu Uwierzytelniania uniemożliwia logowanie. Przeciążenie Bazy Zamówień wpływa na Serwis Płatności i Zamówień.
+\end{frame}
+
+
+\section{Testy Wydajnościowe w Systemach Rozproszonych}
+
+\begin{frame}
+  \frametitle{Rodzaje Testów Wydajnościowych (1/2)}
+  Kluczowe do weryfikacji szybkości, stabilności i skalowalności systemu.
+  \begin{itemize}
+    \item \textbf{Testy obciążeniowe (Load Tests)}:
+        \begin{itemize}
+            \item Cel: Weryfikacja zachowania systemu przy oczekiwanym (normalnym i szczytowym) obciążeniu. Sprawdzenie czasów odpowiedzi i błędów.
+        \end{itemize}
+    \item \textbf{Testy wydajnościowe (Performance Tests)}:
+        \begin{itemize}
+            \item Cel: Pomiar kluczowych wskaźników (np. czas odpowiedzi, przepustowość) komponentów lub całego systemu w różnych scenariuszach.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Rodzaje Testów Wydajnościowych (2/2)}
+  \begin{itemize}
+    \item \textbf{Testy wytrzymałościowe (Stress Tests)}:
+        \begin{itemize}
+            \item Cel: Testowanie granic wydajności systemu poprzez obciążenie przekraczające normalne warunki. Identyfikacja punktu degradacji lub awarii.
+        \end{itemize}
+    \item \textbf{Testy długotrwałe (Soak Tests / Endurance Tests)}:
+        \begin{itemize}
+            \item Cel: Badanie zachowania systemu pod długotrwałym, stałym obciążeniem. Wykrywanie problemów jak wycieki pamięci.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Metodologia Przeprowadzania Testów (1/2)}
+  \begin{itemize}
+    \item \textbf{Definiowanie scenariuszy testowych}:
+        \begin{itemize}
+            \item Na podstawie modeli obciążenia i profili użytkowników.
+            \item Określenie liczby wirtualnych użytkowników, tempa żądań, czasu trwania.
+        \end{itemize}
+    \item \textbf{Konfiguracja środowiska testowego}:
+        \begin{itemize}
+            \item \textbf{Izolacja}: Oddzielone od środowiska produkcyjnego.
+            \item \textbf{Reprezentatywność}: Jak najwierniejsze odwzorowanie produkcji.
+            \item \textbf{Monitoring}: Narzędzia do monitorowania systemu i generatorów obciążenia.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Metodologia Przeprowadzania Testów (2/2)}
+  \begin{itemize}
+    \item \textbf{Metryki i wskaźniki wydajności do analizy}:
+        \begin{itemize}
+            \item Czas odpowiedzi (średni, 95th percentyl, maksymalny).
+            \item Przepustowość (RPS, transakcje na sekundę).
+            \item Liczba błędów (np. HTTP 5xx).
+            \item Wykorzystanie zasobów (CPU, RAM, sieć, I/O) na serwerach.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Test Obciążeniowy z Apache JMeter}
+  Apache JMeter: popularne narzędzie open-source.
+  \begin{itemize}
+    \item \textbf{Plan testu w JMeter}:
+        \begin{itemize}
+            \item \textbf{Thread Group}: Liczba wirtualnych użytkowników, czas narastania, czas trwania.
+            \item \textbf{Samplers}: Typy żądań (np. HTTP Request - URL, metoda, parametry).
+            \item \textbf{Listeners}: Zbieranie i wizualizacja wyników (np. Summary Report).
+            \item \textbf{Assertions}: Weryfikacja odpowiedzi serwera (np. kod odpowiedzi 200 OK).
+        \end{itemize}
+    \item \textbf{Wykonanie testu}: Z GUI JMeter lub z linii komend.
+    \item \textbf{Analiza wyników}: Ocena wydajności, identyfikacja błędów i wąskich gardeł.
+  \end{itemize}
+\end{frame}
+
+\section{Planowanie dla Zmiennego Obciążenia}
+
+\begin{frame}
+  \frametitle{Szczyty Obciążenia (Peak Times)}
+  Okresy znacznie wyższego niż przeciętne zapotrzebowania na zasoby.
+  \begin{itemize}
+    \item \textbf{Rodzaje szczytów}:
+        \begin{itemize}
+            \item \textbf{Cykliczne/Przewidywalne}: np. codzienne szczyty aktywności.
+            \item \textbf{Nieprzewidywalne}: np. wynikające z nagłych wydarzeń.
+        \end{itemize}
+    \item \textbf{Wpływ na architekturę}: System musi radzić sobie ze szczytami.
+    \item \textbf{Strategie radzenia sobie}:
+        \begin{itemize}
+            \item \textbf{Nadmiarowość zasobów (Over-provisioning)}: Kosztowne.
+            \item \textbf{Elastyczność (Elasticity)}: Dynamiczne skalowanie zasobów.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Nagłe Skoki Obciążenia (Burst)}
+  Gwałtowny, często krótkotrwały wzrost obciążenia.
+  \begin{itemize}
+    \item \textbf{Przyczyny bursts}: Virality, ataki DDoS, kampanie marketingowe, "thundering herd".
+    \item \textbf{Mechanizmy buforowania i ochrony}:
+        \begin{itemize}
+            \item \textbf{Kolejki (Queues)}: Buforują nadmiarowe żądania.
+            \item \textbf{Cache}: Przechowywanie często używanych danych.
+            \item \textbf{Throttling (Rate Limiting)}: Ograniczanie liczby żądań.
+        \end{itemize}
+    \item \textbf{Graceful Degradation}: Kontrolowane ograniczanie funkcjonalności przy przeciążeniu, zamiast całkowitej awarii.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Trendy Sezonowe}
+  Wzorce obciążenia powtarzające się w regularnych cyklach.
+  \begin{itemize}
+    \item \textbf{Analiza historycznych wzorców}: Identyfikacja sezonowości na podstawie danych (np. sklepy internetowe - święta, systemy rozliczeniowe - koniec miesiąca).
+    \item \textbf{Prognozowanie trendów}: Metody statystyczne lub uczenie maszynowe do przewidywania przyszłego obciążenia.
+    \item \textbf{Planowanie zasobów}: Strategie dostosowania infrastruktury (np. planowane zwiększenie zasobów przed sezonem, auto-scaling).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Planowanie dla Platformy Streamingowej (VOD)}
+  Platformy VOD doświadczają wyraźnych wzorców obciążenia.
+  \begin{itemize}
+    \item \textbf{Identyfikacja szczytów}: Wieczory, weekendy, premiery, transmisje na żywo.
+    \item \textbf{Strategie zarządzania}:
+        \begin{itemize}
+            \item \textbf{Automatyczne skalowanie}: Infrastruktura serwerów dynamicznie skaluje się.
+            \item \textbf{CDN (Content Delivery Network)}: Globalna sieć serwerów cache'ujących treści blisko użytkowników.
+            \item \textbf{Predictive Scaling}: Proaktywne skalowanie na podstawie prognoz.
+            \item \textbf{Rezerwacja zasobów}: Dla stałego, minimalnego obciążenia (Reserved Instances), dla szczytów (On-demand/Spot).
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Mechanizmy Zarządzania Obciążeniem}
+
+\begin{frame}
+  \frametitle{Systemy Kolejkowania (1/2)}
+  Kluczowe dla odpornych i skalowalnych systemów rozproszonych.
+  \begin{itemize}
+    \item \textbf{Rola kolejek}:
+        \begin{itemize}
+            \item \textbf{Decoupling (Odsprzęganie) komponentów}: Producent i konsument nie muszą o sobie wiedzieć; mogą być skalowane niezależnie.
+            \item \textbf{Buforowanie obciążenia (Load Leveling)}: Wygładzają skoki obciążenia; żądania są przetwarzane w tempie konsumentów.
+            \item \textbf{Zwiększenie niezawodności}: Wiadomości pozostają w kolejce w razie awarii konsumenta.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Systemy Kolejkowania (2/2)}
+  \begin{itemize}
+    \item \textbf{Typowe implementacje}:
+        \begin{itemize}
+            \item \textbf{RabbitMQ}: Broker wiadomości (AMQP).
+            \item \textbf{Apache Kafka}: Platforma do strumieniowania zdarzeń.
+            \item \textbf{Chmurowe}: AWS SQS, Azure Queue Storage, Google Cloud Pub/Sub.
+        \end{itemize}
+    \item \textbf{Wzorce projektowe oparte o kolejki}:
+        \begin{itemize}
+            \item \textbf{Producer-Consumer}: Producenci wysyłają, konsumenci odbierają.
+            \item \textbf{Competing Consumers}: Wielu konsumentów konkuruje o wiadomości z tej samej kolejki (równoległe przetwarzanie).
+            \item \textbf{Priority Queue}: Wiadomości przetwarzane wg priorytetów.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Load Balancery (1/2)}
+  Dystrybuują ruch sieciowy pomiędzy wiele serwerów (backendów).
+  \begin{itemize}
+    \item \textbf{Cel}: Optymalizacja zasobów, maksymalizacja przepustowości, minimalizacja czasu odpowiedzi, unikanie przeciążenia.
+    \item \textbf{Rodzaje load balancerów}:
+        \begin{itemize}
+            \item \textbf{Warstwa 4 (L4 - Transportowa)}: Działają na poziomie TCP/UDP (adres IP, port). Szybkie, mniej elastyczne.
+            \item \textbf{Warstwa 7 (L7 - Aplikacyjna)}: Działają na poziomie HTTP/HTTPS. Decyzje na podstawie treści żądania (URL, nagłówki). Bardziej elastyczne.
+            \item \textbf{Software vs Hardware}: Dedykowane urządzenia lub oprogramowanie (Nginx, HAProxy, usługi chmurowe).
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Load Balancery (2/2)}
+  \begin{itemize}
+    \item \textbf{Algorytmy load balancingu}:
+        \begin{itemize}
+            \item \textbf{Round-robin}: Kolejno przypisuje żądania.
+            \item \textbf{Least Connections}: Do serwera z najmniejszą liczbą aktywnych połączeń.
+            \item \textbf{Resource-based}: Do serwera z najmniejszym obciążeniem (np. CPU).
+            \item \textbf{Latency-based}: Do serwera, który odpowiada najszybciej.
+        \end{itemize}
+    \item \textbf{Sesje lepkie (Sticky Sessions / Session Affinity)}:
+        \begin{itemize}
+            \item Żądania klienta w sesji trafiają do tego samego serwera. Przydatne dla aplikacji stanowych.
+        \end{itemize}
+    \item \textbf{Health Checks}: Regularne sprawdzanie stanu serwerów backendowych.
+    \item \textbf{Circuit Breaking}: Ochrona przed przeciążeniem uszkodzonej usługi.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Architektury Sterowane Zdarzeniami (EDA) (1/2)}
+  Komponenty komunikują się poprzez asynchroniczne wysyłanie i odbieranie zdarzeń.
+  \begin{itemize}
+    \item \textbf{Charakterystyka}:
+        \begin{itemize}
+            \item \textbf{Asynchroniczność}: Komponenty nie czekają na bezpośrednią odpowiedź.
+            \item \textbf{Luźne powiązania (Loose Coupling)}: Producent nie zna konsumentów i na odwrót.
+            \item \textbf{Reaktywność (Reactive Programming)}: Systemy reagują na zdarzenia.
+        \end{itemize}
+    \item \textbf{Wpływ na wydajność i skalowalność}:
+        \begin{itemize}
+            \item \textbf{Odporność na zmienne obciążenie}: Lepsze radzenie sobie ze skokami.
+            \item \textbf{Skalowalność}: Niezależne skalowanie komponentów.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+\begin{frame}
+  \frametitle{Architektury Sterowane Zdarzeniami (EDA) (2/2)}
+  \begin{itemize}
+    \item \textbf{Implementacje i wzorce}:
+        \begin{itemize}
+            \item \textbf{Event Sourcing}: Stan aplikacji określany przez sekwencję zdarzeń.
+            \item \textbf{CQRS (Command Query Responsibility Segregation)}: Rozdzielenie operacji zapisu (Commands) od odczytu (Queries).
+            \item \textbf{Zdarzenia w mikrousługach}: Komunikacja między mikrousługami.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Przetwarzanie Zamówień w E-commerce (EDA)}
+  \begin{itemize}
+    \item \textbf{Scenariusz}: Klient składa zamówienie.
+    \item \textbf{Przepływ oparty o zdarzenia}:
+        \begin{enumerate}
+            \item API Gateway publikuje zdarzenie \texttt{OrderCreated} do brokera wiadomości.
+            \item Mikroserwisy subskrybują zdarzenia i reagują:
+                \begin{itemize}
+                    \item \textbf{Serwis Płatności}: Reaguje na \texttt{OrderCreated}, publikuje \texttt{PaymentProcessed}.
+                    \item \textbf{Serwis Magazynowy}: Reaguje na \texttt{PaymentProcessed}, publikuje \texttt{StockReserved}.
+                    \item \textbf{Serwis Wysyłki}: Reaguje na \texttt{StockReserved}, publikuje \texttt{ShipmentPrepared}.
+                    \item \textbf{Serwis Powiadomień}: Reaguje na różne zdarzenia, wysyła e-maile.
+                \end{itemize}
+        \end{enumerate}
+    \item \textbf{Zalety}: Odsprzęgnięcie, niezależne skalowanie, odporność na awarie.
+  \end{itemize}
+\end{frame}
+
+\section{Skalowanie w Chmurze Publicznej}
+
+\begin{frame}
+  \frametitle{Rodzaje Skalowania (1/2)}
+  Zdolność systemu do zmiany mocy obliczeniowej w odpowiedzi na obciążenie.
+  \begin{itemize}
+    \item \textbf{Skalowanie wertykalne (Scaling Up/Down)}:
+        \begin{itemize}
+            \item Zwiększanie zasobów pojedynczej maszyny (CPU, RAM).
+            \item \textbf{Zalety}: Prostsze. \textbf{Wady}: Limit zasobów, możliwy przestój, droższe, brak redundancji.
+        \end{itemize}
+    \item \textbf{Skalowanie horyzontalne (Scaling Out/In)}:
+        \begin{itemize}
+            \item Dodawanie maszyn do puli. Obciążenie rozkładane (wymaga load balancera).
+            \item \textbf{Zalety}: Teoretycznie nieograniczone, lepsza odporność, opłacalne. \textbf{Wady}: Aplikacja musi wspierać (np. bezstanowość).
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Rodzaje Skalowania (2/2)}
+  \begin{itemize}
+    \item \textbf{Automatyczne skalowanie (Auto-scaling)}:
+        \begin{itemize}
+            \item Automatyczne dostosowywanie liczby instancji wg metryk i polityk.
+            \item Np. CPU > 70% -> dodaj instancję; CPU < 30% -> usuń.
+            \item \textbf{Korzyści}: Optymalizacja kosztów, zapewnienie wydajności i dostępności.
+        \end{itemize}
+    \item \textbf{Skalowanie predykcyjne (Predictive Scaling)}:
+        \begin{itemize}
+            \item Uczenie maszynowe i dane historyczne do prognozowania obciążenia i proaktywnego skalowania.
+            \item Unikanie opóźnień w skalowaniu.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementacja Strategii Skalowania (1/2)}
+  \begin{itemize}
+    \item \textbf{Definiowanie polityk skalowania}:
+        \begin{itemize}
+            \item \textbf{Metryki wyzwalające}: Np. % użycia CPU, liczba żądań, długość kolejki.
+            \item \textbf{Progi (Thresholds)}: Wartości metryk inicjujące skalowanie.
+            \item \textbf{Okresy "schładzania" (Cooldown Periods)}: Czas oczekiwania po akcji skalowania, zapobiega "flappingowi".
+            \item \textbf{Min/max liczba instancji}: Granice skalowania.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementacja Strategii Skalowania (2/2)}
+  \begin{itemize}
+    \item \textbf{Automatyzacja procesu}:
+        \begin{itemize}
+            \item \textbf{Infrastructure as Code (IaC)}: Np. Terraform, AWS CloudFormation do zarządzania infrastrukturą i politykami auto-scalingu.
+            \item \textbf{Orkiestracja kontenerów}: Np. Kubernetes z Horizontal Pod Autoscaler.
+        \end{itemize}
+    \item \textbf{Testowanie i walidacja}:
+        \begin{itemize}
+            \item Testy obciążeniowe do weryfikacji polityk auto-scalingu.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Auto-Scaling dla Aplikacji Webowej w AWS}
+  \begin{itemize}
+    \item \textbf{Komponenty AWS}: EC2 Instances, Application Load Balancer (ALB), Auto Scaling Group (ASG), CloudWatch Alarms.
+    \item \textbf{Przykładowa polityka skalowania}:
+        \begin{itemize}
+            \item \textbf{Scale-out}: CPU > 70% (2x60s) -> +1 instancja. Cooldown: 300s.
+            \item \textbf{Scale-in}: CPU < 30% (5x60s) -> -1 instancja. Cooldown: 300s.
+            \item \textbf{ASG}: Min: 2, Max: 10 instancji.
+        \end{itemize}
+    \item \textbf{Działanie}: CloudWatch wykrywa zmiany metryk, alarmy wyzwalają polityki, ASG dostosowuje liczbę instancji.
+  \end{itemize}
+\end{frame}
+
+\section{Replikacja Danych w Systemach Rozproszonych}
+
+\begin{frame}
+  \frametitle{Modele Replikacji (1/2)}
+  Tworzenie i utrzymywanie wielu kopii danych na różnych serwerach.
+  \begin{itemize}
+    \item \textbf{Cel}: Zwiększenie dostępności, odporności na awarie, poprawa wydajności odczytu.
+    \item \textbf{Replikacja synchroniczna (Synchronous)}:
+        \begin{itemize}
+            \item Zapis potwierdzony po zapisaniu na wszystkich (lub większości) replikach.
+            \item \textbf{Zalety}: Silna spójność. \textbf{Wady}: Większe opóźnienie zapisu, awaria repliki może blokować.
+        \end{itemize}
+    \item \textbf{Replikacja asynchroniczna (Asynchronous)}:
+        \begin{itemize}
+            \item Zapis potwierdzony po zapisie na masterze; propagacja w tle.
+            \item \textbf{Zalety}: Niskie opóźnienie zapisu. \textbf{Wady}: Możliwy replication lag (spójność ostateczna), ryzyko utraty danych przy awarii mastera.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Modele Replikacji (2/2)}
+  \begin{itemize}
+    \item \textbf{Topologie replikacji}:
+        \begin{itemize}
+            \item \textbf{Master-Slave (Leader-Follower)}: Master obsługuje zapisy, slave'y odczyty.
+            \item \textbf{Multi-Master (Leaderless)}: Wiele kopii obsługuje zapisy; wymaga rozwiązywania konfliktów.
+            \item \textbf{Peer-to-Peer}: Każdy węzeł może być masterem i slavem.
+        \end{itemize}
+    \item \textbf{Wpływ na dostępność i wydajność (kontekst twierdzenia CAP)}:
+        \begin{itemize}
+            \item \textbf{CAP}: Spójność (C), Dostępność (A), Odporność na partycjonowanie (P). Maksymalnie dwie z trzech.
+            \item Replikacja synchroniczna: C > A. Replikacja asynchroniczna: A > C (natychmiastowa).
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Wyzwania Replikacji (1/2)}
+  \begin{itemize}
+    \item \textbf{Konsystencja danych (Data Consistency)}:
+        \begin{itemize}
+            \item Zapewnienie zgodności kopii i poprawności odczytów.
+            \item \textbf{Modele konsystencji}: np. strong consistency, eventual consistency.
+            \item \textbf{Konflikty zapisu}: W systemach multi-master; wymagają strategii rozwiązywania (np. "last writer wins").
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Wyzwania Replikacji (2/2)}
+  \begin{itemize}
+    \item \textbf{Opóźnienia replikacji (Replication Lag)}:
+        \begin{itemize}
+            \item W replikacji asynchronicznej dane na slave'ach mogą być opóźnione.
+            \item \textbf{Przyczyny}: Obciążenie sieci/serwerów, duża liczba zapisów.
+        \end{itemize}
+    \item \textbf{Odporność na awarie (Fault Tolerance)}:
+        \begin{itemize}
+            \item Radzenie sobie z awarią mastera/slave'a. Mechanizmy failover (np. promocja slave'a na mastera).
+            \item Zapewnienie ciągłości działania, minimalizacja utraty danych.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Replikacja PostgreSQL Między Regionami}
+  \textbf{Cel}: Wysoka dostępność i odzyskiwanie po awarii dla globalnej aplikacji.
+  \begin{itemize}
+    \item \textbf{Konfiguracja}:
+        \begin{itemize}
+            \item Master (Primary) w jednym regionie, Standby (Replica) w innym.
+            \item Asynchroniczna replikacja strumieniowa (streaming replication).
+        \end{itemize}
+    \item \textbf{Działanie}:
+        \begin{itemize}
+            \item Odczyty mogą być kierowane do standby.
+            \item W razie awarii mastera, standby może być promowany (failover).
+        \end{itemize}
+    \item \textbf{Wyzwania}:
+        \begin{itemize}
+            \item Opóźnienie replikacji (odległość geograficzna).
+            \item Potencjalna utrata danych (asynchroniczność); rozwiązaniem może być replikacja quasi-synchroniczna.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Load Balancing w Szczegółach}
+
+\begin{frame}
+  \frametitle{Zaawansowane Strategie Load Balancingu (1/2)}
+  \begin{itemize}
+    \item \textbf{Global Server Load Balancing (GSLB)}:
+        \begin{itemize}
+            \item Dystrybucja ruchu między serwerami/centrami danych w różnych lokalizacjach.
+            \item \textbf{DNS-based GSLB}: DNS kieruje do "najlepszego" serwera (np. najbliższego).
+            \item \textbf{Anycast}: Ten sam IP ogłaszany z wielu lokalizacji; ruch kierowany do najbliższego PoP.
+            \item \textbf{CDN}: Często wykorzystują GSLB.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Zaawansowane Strategie Load Balancingu (2/2)}
+  \begin{itemize}
+    \item \textbf{Content-aware Load Balancing (Świadomy Treści)}:
+        \begin{itemize}
+            \item Load balancer L7 analizuje zawartość żądania (URL, nagłówki) i kieruje ruch.
+            \item Np. żądania obrazów do serwerów statycznych, API do serwerów aplikacyjnych.
+        \end{itemize}
+    \item \textbf{Load Balancing dla Mikrousług}:
+        \begin{itemize}
+            \item \textbf{API Gateway}: Pojedynczy punkt wejścia, routing, podstawowy LB.
+            \item \textbf{Service Mesh (np. Istio, Linkerd)}: Warstwa infrastruktury do zarządzania komunikacją między mikrousługami (zaawansowany LB, service discovery, circuit breaking).
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Optymalizacja Load Balancingu}
+  \begin{itemize}
+    \item \textbf{Session Affinity (Lepkość Sesji)}:
+        \begin{itemize}
+            \item Żądania klienta w sesji trafiają na ten sam serwer.
+            \item \textbf{Stosowanie}: Starsze aplikacje stanowe. Nowoczesne dążą do bezstanowości.
+            \item \textbf{Implementacja}: Np. HTTP cookies.
+        \end{itemize}
+    \item \textbf{Health Checking (Kontrola Kondycji)}:
+        \begin{itemize}
+            \item \textbf{Strategie}: Aktywne (LB wysyła zapytania testowe) lub pasywne (LB monitoruje rzeczywiste odpowiedzi).
+            \item \textbf{Znaczenie}: Kluczowe dla wysokiej dostępności.
+        \end{itemize}
+    \item \textbf{Adaptive Load Balancing}: Dynamiczne dostosowanie algorytmów do bieżących warunków.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Load Balancing dla Mikrousług}
+  \textbf{Architektura}: Aplikacja z wieloma mikrousługami.
+  \begin{itemize}
+    \item \textbf{Rola API Gateway (np. AWS API Gateway, Kong)}:
+        \begin{itemize}
+            \item Pojedynczy punkt wejścia, routing, podstawowy LB, uwierzytelnianie, rate limiting.
+        \end{itemize}
+    \item \textbf{Rola Service Mesh (np. Istio, Linkerd)}:
+        \begin{itemize}
+            \item Wewnątrz klastra mikrousług (np. Kubernetes).
+            \item Zaawansowany LB, service discovery, odporność (circuit breaking, retries), obserwowalność.
+        \end{itemize}
+    \item \textbf{Przepływ}: Klient $\rightarrow$ API Gateway $\rightarrow$ (Service Mesh) $\rightarrow$ Mikrousługa A $\rightarrow$ (Service Mesh) $\rightarrow$ Mikrousługa B.
+  \end{itemize}
+\end{frame}
+
+\section{Sharding i Partycjonowanie Danych}
+
+\begin{frame}
+  \frametitle{Sharding i Partycjonowanie: Koncepcje (1/2)}
+  Dzielenie dużych zbiorów danych na mniejsze, zarządzalne części.
+  \begin{itemize}
+    \item \textbf{Partycjonowanie (Partitioning)}:
+        \begin{itemize}
+            \item Ogólny termin oznaczający podział danych (np. tabeli wg daty w jednej instancji).
+        \end{itemize}
+    \item \textbf{Sharding (Fragmentacja Horyzontalna)}:
+        \begin{itemize}
+            \item Wiersze tabeli (lub dokumenty) rozdzielane między wiele niezależnych instancji bazy danych (shardów).
+            \item \textbf{Cel}: Skalowanie baz danych poprzez dystrybucję danych i obciążenia.
+        \end{itemize}
+    \item \textbf{Różnice}: Sharding zawsze implikuje dystrybucję między wiele serwerów.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Sharding i Partycjonowanie: Strategie (2/2)}
+  \begin{itemize}
+    \item \textbf{Strategie shardingu (wybór Shard Key)}:
+        \begin{itemize}
+            \item \textbf{Key-based (Hash-based)}: Wartość klucza haszowana; wynik funkcji określa shard. Równomierny rozkład.
+            \item \textbf{Range-based}: Dane dzielone na zakresy wartości klucza. Ułatwia zapytania o zakresy, ryzyko "hot spots".
+            \item \textbf{Directory-based}: Centralna tabela mapuje klucze na shardy. Elastyczne, ale tabela może być wąskim gardłem.
+        \end{itemize}
+    \item \textbf{Wpływ na zapytania i transakcje}:
+        \begin{itemize}
+            \item \textbf{Zapytania o pojedynczy shard}: Wydajne.
+            \item \textbf{Cross-shard Queries}: Bardziej skomplikowane i mniej wydajne.
+            \item \textbf{Transakcje rozproszone}: Trudne do implementacji i zarządzania (np. Two-Phase Commit).
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Wyzwania Implementacyjne Shardingu (1/2)}
+  \begin{itemize}
+    \item \textbf{Wybór klucza shardingu}:
+        \begin{itemize}
+            \item Kluczowy dla wydajności i równomiernego rozkładu. Zły wybór prowadzi do "hot spots".
+            \item Należy wybrać atrybut często używany w zapytaniach, zapewniający dobrą dystrybucję.
+        \end{itemize}
+    \item \textbf{Rebalancing (Równoważenie Shardów)}:
+        \begin{itemize}
+            \item Przenoszenie danych między shardami lub dodawanie nowych w miarę wzrostu.
+            \item Proces może być skomplikowany, czasochłonny i wpływać na wydajność.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Wyzwania Implementacyjne Shardingu (2/2)}
+  \begin{itemize}
+    \item \textbf{Spójność danych (Data Consistency)}:
+        \begin{itemize}
+            \item Zapewnienie spójności między shardami, zwłaszcza przy transakcjach rozproszonych i replikacji.
+        \end{itemize}
+    \item \textbf{Złożoność operacyjna}:
+        \begin{itemize}
+            \item Zarządzanie wieloma instancjami bazy danych (monitorowanie, backupy, odzyskiwanie) staje się bardziej skomplikowane.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Przykład: Sharding Bazy Użytkowników}
+  \textbf{Problem}: Aplikacja społecznościowa z milionami użytkowników; pojedyncza baza nie radzi sobie z obciążeniem.
+  \begin{itemize}
+    \item \textbf{Rozwiązanie}: Sharding bazy użytkowników. Klucz shardingu: \texttt{UserID}.
+    \item \textbf{Strategia shardingu}: Hash-based sharding (\texttt{hash(UserID) mod N}).
+    \item \textbf{Architektura}: Warstwa aplikacyjna (lub router) kieruje zapytania do odpowiedniego shardu. Każdy shard to niezależna instancja bazy.
+    \item \textbf{Korzyści}: Skalowalność zapisu/odczytu, większa pojemność.
+    \item \textbf{Wyzwania}: Zapytania o relacje między użytkownikami na różnych shardach, rebalancing.
+  \end{itemize}
+\end{frame}
+
+\section{Podsumowanie i Integracja Wiedzy}
+
+\begin{frame}
+  \frametitle{Całościowe Podejście do Planowania Wydajności}
+  Efektywne zarządzanie wymaga zintegrowanego podejścia.
+  \begin{itemize}
+    \item \textbf{Holistyczna analiza systemu}: Zrozumienie współdziałania wszystkich omówionych aspektów. Decyzje w jednym obszarze wpływają na inne.
+    \item \textbf{Proces decyzyjny}: Wybór mechanizmów zależy od specyficznych wymagań systemu (obciążenie, dostępność, spójność, koszty). Często konieczne kompromisy.
+    \item \textbf{Ewolucja systemu}: Wymagania i obciążenie zmieniają się. Strategie muszą być elastyczne. Konieczne ciągłe monitorowanie i dostosowywanie.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Najlepsze Praktyki (1/2)}
+  Kluczowe zasady efektywnego zarządzania obciążeniem i wydajnością:
+  \begin{itemize}
+    \item \textbf{Monitoring i Obserwowalność (Observability)}:
+        \begin{itemize}
+            \item Fundamentalne dla zrozumienia systemu, wykrywania problemów, podejmowania decyzji. Obejmuje metryki, logi, ślady (traces).
+        \end{itemize}
+    \item \textbf{Testowanie i Walidacja}:
+        \begin{itemize}
+            \item Regularne testy wydajnościowe weryfikujące spełnianie wymagań. Empiryczne potwierdzanie modeli.
+        \end{itemize}
+    \item \textbf{Ciągła Optymalizacja (Continuous Optimization)}:
+        \begin{itemize}
+            \item Zarządzanie wydajnością to proces iteracyjny. Regularne przeglądy i wdrażanie optymalizacji.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Najlepsze Praktyki (2/2)}
+  \begin{itemize}
+    \item \textbf{Automatyzacja}:
+        \begin{itemize}
+            \item Procesów wdrażania, skalowania, monitorowania, reagowania na incydenty (np. IaC, CI/CD, auto-scaling).
+        \end{itemize}
+    \item \textbf{Projektowanie z Myślą o Skalowalności i Odporności}:
+        \begin{itemize}
+            \item Od początku uwzględnianie w architekturze mechanizmów wspierających skalowalność (np. bezstanowość) i odporność (np. redundancja, circuit breaking).
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Materiały Dodatkowe i Literatura}
+  \begin{itemize}
+    \item \textbf{Książki}:
+        \begin{itemize}
+            \item "Designing Data-Intensive Applications" by Martin Kleppmann
+            \item "Site Reliability Engineering" by Beyer, Jones, Petoff, and Murphy
+            \item "Distributed Systems" by Tanenbaum and van Steen
+        \end{itemize}
+    \item \textbf{Dokumentacja dostawców chmurowych}:
+        \begin{itemize}
+            \item AWS/Azure/Google Cloud Well-Architected Framework (Performance Pillar)
+        \end{itemize}
+    \item \textbf{Blogi technologiczne i konferencje}:
+        \begin{itemize}
+            \item Blogi firm: Netflix, Uber, LinkedIn, Amazon, Google, Microsoft.
+            \item Konferencje: AWS re:Invent, Google Cloud Next, Microsoft Ignite, KubeCon.
+        \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Pytania?}
+  \begin{center}
+    Dziękuję za uwagę!
+  \end{center}
+\end{frame}
+
+\end{document}
