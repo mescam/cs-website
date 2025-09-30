@@ -779,7 +779,7 @@ ansible-playbook deploy.yml
 
 \textbf{3. Sprawdzenie:}
 \begin{lstlisting}[language=bash]
-# Test bezpośredniego dostępu do aplikacji
+# Test bezposredniego dostępu do aplikacji
 curl http://node1:8080
 curl http://node2:8080
 curl http://node3:8080
@@ -797,48 +797,7 @@ ansible myservers -m shell -a "sudo systemctl restart myserver"
 curl http://node1  # Powinien dalej działać
 \end{lstlisting}
 
-\subsection*{Kryteria oceny}
 
-\textbf{Wymagania podstawowe:}
-\begin{itemize}
-    \item Napisany i działający serwer HTTP w dowolnym języku
-    \item Playbook deployuje aplikację na wszystkie węzły
-    \item Serwis systemd uruchamia aplikację automatycznie
-    \item Nginx działa jako reverse proxy na porcie 80
-\end{itemize}
-
-\textbf{Wymagania rozszerzone:}
-\begin{itemize}
-    \item Obsługa różnych języków programowania w playbooku
-    \item Dodatkowe endpoints w aplikacji (np. /status, /info)
-    \item Konfiguracja logowania w systemd
-    \item Monitoring zdrowia aplikacji
-\end{itemize}
-
-\subsection*{Co oddać}
-
-\textbf{Struktura projektu:}
-\begin{lstlisting}
-projekt/
-  server.py (lub server.js, server.go, etc.)
-  deploy.yml
-  inventory  
-  templates/
-    myserver.service.j2
-    nginx-proxy.conf.j2
-  README.md (instrukcja uruchomienia)
-\end{lstlisting}
-
-\textbf{Demonstracja:}
-\begin{itemize}
-    \item Pokaż kod swojego serwera
-    \item Uruchom playbook od zera
-    \item Pokaż działającą aplikację przez przeglądarkę
-    \item Wyjaśnij konfigurację systemd i Nginx
-    \item Zademonstruj automatyczny restart po awarii
-\end{itemize}
-
-\textit{To zadanie sprawdza kompletny flow: programowanie - deployment - konfiguracja systemu. Tak wyglądają prawdziwe projekty DevOps!}
 
 \section{Rozwiązywanie problemów}
 
@@ -926,17 +885,17 @@ end
 
 \textbf{Użycie:}
 \begin{lstlisting}[language=bash]
-# Utwórz katalog i skopiuj Vagrantfile
+# Utworz katalog i skopiuj Vagrantfile
 mkdir ansible-lab && cd ansible-lab
 # ... skopiuj Vagrantfile ...
 
 # Uruchom wszystkie maszyny
 vagrant up
 
-# Połącz się z maszyną kontrolną
+# Polacz się z maszyna kontrolna
 vagrant ssh control
 
-# Na końcu - usuń środowisko
+# Na koncu - usun srodowisko
 vagrant destroy
 \end{lstlisting}
 
