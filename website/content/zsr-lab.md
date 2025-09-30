@@ -6,9 +6,9 @@ draft = false
 
 ### Informacje
 
-Semestr zimowy 2024/25  
+Semestr zimowy 2025/26  
 Laboratorium 1.6.16  
-poniedziałki, 18:15
+poniedziałki, od razu po wykładzie
 
 ### Zaliczenie
 

@@ -4,9 +4,9 @@ date = 2024-10-03T22:21:06+02:00
 draft = false
 +++
 
-Semestr zimowy 2024/25  
-Sala L0.2.9  
-poniedziałki, 16:50  
+Semestr zimowy 2025/26  
+Sala L128  
+poniedziałki, 16:50 (45 min)  
 
 ### Plan wykładów
 
