@@ -3,7 +3,38 @@
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{xcolor}
+\usepackage{fancyvrb}
 \setlength{\parindent}{0pt}
+
+% Konfiguracja kolorów dla listingów
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+
+
+\lstset{style=mystyle}
 
 \title{Zarządzanie Systemami Rozproszonymi\\Laboratoria z Ansible}
 \author{mgr inż. Jakub Woźniak}
@@ -36,35 +67,95 @@ Celem tych laboratoriów jest zapoznanie studentów z narzędziem Ansible oraz a
 \textbf{Teoria:}  
 W środowiskach rozproszonych ważne jest zapewnienie bezproblemowej komunikacji między maszynami. Dzięki Ansible możemy automatycznie zarządzać wieloma systemami jednocześnie. W tym laboratorium studenci skonfigurują trzy maszyny wirtualne w tej samej sieci, które będą mogły komunikować się ze sobą oraz z maszyną kontrolną przez SSH.
 
-\subsection*{Tutorial: Konfiguracja maszyn wirtualnych w VirtualBox z użyciem gotowych obrazów}
+\subsection*{Metoda 1: NAT Network (zalecane)}
 
-1. \textbf{Pobranie gotowych obrazów systemu:}
-   \begin{itemize}
-       \item \textbf{Ubuntu Minimal}: Pobierz obraz minimalny Ubuntu z \href{https://cloud-images.ubuntu.com/}{Ubuntu Cloud}.
-       \item \textbf{openSUSE Minimal}: Pobierz minimalny obraz openSUSE z \href{https://get.opensuse.org/tumbleweed/}{openSUSE Tumbleweed}.
-   \end{itemize}
+\textbf{Krok 1: Utworzenie sieci NAT}
+\begin{enumerate}
+    \item Otwórz VirtualBox → File → Preferences → Network → NAT Networks
+    \item Kliknij "Create" i ustaw:
+    \begin{itemize}
+        \item Nazwa: \texttt{ansible-lab}
+        \item Network CIDR: \texttt{10.0.2.0/24}
+        \item Zaznacz "Enable DHCP"
+    \end{itemize}
+\end{enumerate}
 
-2. \textbf{Konfiguracja sieci:}
-   \begin{itemize}
-       \item Utwórz sieć typu "Host-Only" w VirtualBox, która pozwala na komunikację między maszynami.
-       \item Dla każdej maszyny wirtualnej skonfiguruj Adapter 1 jako NAT (dostęp do internetu) i Adapter 2 jako Host-Only.
-   \end{itemize}
+\textbf{Krok 2: Konfiguracja maszyn wirtualnych}
+\begin{enumerate}
+    \item Utwórz 4 maszyny wirtualne (1 kontrolna + 3 węzły):
+    \begin{itemize}
+        \item \texttt{ansible-control} (Ubuntu/openSUSE)
+        \item \texttt{node1}, \texttt{node2}, \texttt{node3} (Ubuntu)
+    \end{itemize}
+    \item Dla każdej maszyny w ustawieniach sieci:
+    \begin{itemize}
+        \item Adapter 1: NAT Network → \texttt{ansible-lab}
+    \end{itemize}
+\end{enumerate}
 
-3. \textbf{Importowanie maszyn wirtualnych:}
-   \begin{itemize}
-       \item Utwórz nowe maszyny w VirtualBox, korzystając z pobranych obrazów jako dysków.
-   \end{itemize}
+\textbf{Krok 3: Instalacja Ansible na maszynie kontrolnej}
+\begin{lstlisting}[language=bash]
+# Ubuntu/Debian
+sudo apt update && sudo apt install -y ansible
 
-4. \textbf{Konfiguracja bezhasłowego SSH:}
-   \begin{itemize}
-       \item Na maszynie hosta wygeneruj parę kluczy SSH za pomocą \texttt{ssh-keygen -t rsa -b 4096}.
-       \item Skopiuj klucz publiczny na każdą z maszyn wirtualnych, korzystając z \texttt{ssh-copy-id}.
-   \end{itemize}
+# openSUSE
+sudo zypper install -y ansible
 
-5. \textbf{Sprawdzenie komunikacji między maszynami:}
-   \begin{itemize}
-       \item Użyj polecenia \texttt{ping}, aby upewnić się, że maszyny wirtualne mogą się ze sobą komunikować.
-   \end{itemize}
+# Weryfikacja instalacji
+ansible --version
+\end{lstlisting}
+
+\textbf{Krok 4: Konfiguracja SSH}
+\begin{lstlisting}[language=bash]
+# Generowanie klucza SSH (na maszynie kontrolnej)
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+
+# Znalezienie adresów IP węzłów
+nmap -sn 10.0.2.0/24
+
+# Kopiowanie klucza na każdy węzeł
+ssh-copy-id user@10.0.2.15  # node1
+ssh-copy-id user@10.0.2.16  # node2  
+ssh-copy-id user@10.0.2.17  # node3
+\end{lstlisting}
+
+\textbf{Krok 5: Konfiguracja inventory}
+Utwórz plik \texttt{/etc/ansible/hosts} lub lokalny \texttt{inventory}:
+\begin{lstlisting}
+[myservers]
+node1 ansible_host=10.0.2.15 ansible_user=user
+node2 ansible_host=10.0.2.16 ansible_user=user  
+node3 ansible_host=10.0.2.17 ansible_user=user
+
+[myservers:vars]
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+\end{lstlisting}
+
+\subsection*{Metoda 2: Multipass (alternatywa)}
+
+Jeśli VirtualBox sprawia problemy, użyj Multipass:
+
+\begin{lstlisting}[language=bash]
+# Instalacja Multipass
+# Ubuntu: snap install multipass
+# macOS: brew install multipass
+# Windows: pobierz z https://multipass.run
+
+# Utworzenie maszyn
+multipass launch --name control-node --cpus 2 --mem 2G
+multipass launch --name node1 --cpus 1 --mem 1G  
+multipass launch --name node2 --cpus 1 --mem 1G
+multipass launch --name node3 --cpus 1 --mem 1G
+
+# Połączenie z maszyną kontrolną
+multipass shell control-node
+
+# Instalacja Ansible
+sudo apt update && sudo apt install -y ansible
+
+# Lista maszyn z adresami IP
+multipass list
+\end{lstlisting}
 
 \section{Sprawdzenie połączenia}
 
@@ -97,17 +188,31 @@ Wyświetli to szczegółowe dane na temat każdej z maszyn w formacie JSON.
 \textbf{Teoria:}  
 Playbooki Ansible to pliki YAML, które definiują zestawy instrukcji do wykonania na zdalnych maszynach. W tym kroku zainstalujemy serwer Nginx na wszystkich maszynach.
 
-\textbf{Playbook YAML do instalacji Nginx:}
+\textbf{Playbook YAML do instalacji Nginx (nginx-install.yml):}
 
-\noindent\begin{lstlisting}
+\begin{lstlisting}
 ---
 - hosts: myservers
   become: yes
   tasks:
-    - name: Install Nginx
+    - name: Install Nginx on Ubuntu/Debian
       apt:
         name: nginx
         state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+      
+    - name: Install Nginx on openSUSE
+      zypper:
+        name: nginx
+        state: present
+      when: ansible_os_family == "Suse"
+      
+    - name: Start and enable Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
 \end{lstlisting}
 
 \textbf{Uruchomienie playbooka:}
@@ -121,17 +226,39 @@ ansible-playbook nginx-install.yml
 \textbf{Teoria:}  
 Ansible umożliwia automatyczne zarządzanie plikami na zdalnych maszynach. W tym kroku skopiujemy plik \texttt{index.html} na wszystkie maszyny, zmieniając stronę główną Nginx.
 
-\textbf{Playbook YAML do skopiowania pliku \texttt{index.html}:}
+\textbf{Utworzenie pliku index.html:}
+\begin{lstlisting}[language=html]
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ansible Lab - Statyczna strona</title>
+</head>
+<body>
+    <h1>Witaj w laboratorium Ansible!</h1>
+    <p>To jest statyczna strona skopiowana przez Ansible.</p>
+</body>
+</html>
+\end{lstlisting}
 
-\noindent\begin{lstlisting}
+\textbf{Playbook YAML do skopiowania pliku \texttt{index.html} (update-index.yml):}
+
+\begin{lstlisting}
 ---
 - hosts: myservers
   become: yes
   tasks:
     - name: Copy index.html to all servers
       copy:
-        src: /path/to/index.html
+        src: ./index.html
         dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        
+    - name: Restart Nginx to apply changes
+      systemd:
+        name: nginx
+        state: restarted
 \end{lstlisting}
 
 \textbf{Uruchomienie playbooka:}
@@ -156,17 +283,25 @@ Ansible pozwala na korzystanie z szablonów, które dynamicznie generują pliki 
 </html>
 \end{lstlisting}
 
-\textbf{Playbook YAML do wdrożenia szablonu:}
+\textbf{Playbook YAML do wdrożenia szablonu (template-index.yml):}
 
-\noindent\begin{lstlisting}
+\begin{lstlisting}
 ---
 - hosts: myservers
   become: yes
   tasks:
     - name: Deploy template index.html
       template:
-        src: /path/to/index.html.j2
+        src: ./index.html.j2
         dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
 \end{lstlisting}
 
 \textbf{Uruchomienie playbooka:}
@@ -180,14 +315,630 @@ ansible-playbook template-index.yml
 \textbf{Teoria:}  
 Redis jest bazą danych typu key-value, która obsługuje replikację danych w trybie Master-Slave. W tym kroku skonfigurujemy klaster Redis z jednym węzłem Master i dwoma węzłami Slave.
 
-\textbf{Zadanie:}  
-Stwórz playbook, który zainstaluje Redis na wszystkich maszynach i skonfiguruje replikację Master-Slave. Po zakończeniu zadania sprawdź, czy dane są replikowane między węzłami.
+\textbf{Zadanie końcowe: Redis Master-Slave}
+
+Stwórz playbook \texttt{redis-cluster.yml}, który:
+\begin{enumerate}
+    \item Zainstaluje Redis na wszystkich węzłach
+    \item Skonfiguruje \texttt{node1} jako Master
+    \item Skonfiguruje \texttt{node2} i \texttt{node3} jako Slave
+\end{enumerate}
+
+\textbf{Przykładowa struktura playbooka:}
+\begin{lstlisting}
+---
+- hosts: myservers
+  become: yes
+  tasks:
+    - name: Install Redis
+      apt:
+        name: redis-server
+        state: present
+      when: ansible_os_family == "Debian"
+
+- hosts: node1
+  become: yes
+  tasks:
+    - name: Configure Redis Master
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: '^bind'
+        line: 'bind 0.0.0.0'
+    
+    - name: Restart Redis Master
+      systemd:
+        name: redis-server
+        state: restarted
+
+- hosts: node2,node3
+  become: yes
+  tasks:
+    - name: Configure Redis Slaves
+      blockinfile:
+        path: /etc/redis/redis.conf
+        block: |
+          bind 0.0.0.0
+          replicaof {{ hostvars['node1']['ansible_default_ipv4']['address'] }} 6379
+    
+    - name: Restart Redis Slaves
+      systemd:
+        name: redis-server
+        state: restarted
+\end{lstlisting}
+
+\textbf{Weryfikacja:}
+\begin{lstlisting}[language=bash]
+# Na node1 (Master)
+redis-cli set test-key "Hello from Master"
+
+# Na node2/node3 (Slaves)  
+redis-cli get test-key
+# Powinno zwrócić: "Hello from Master"
+\end{lstlisting}
 
 \textbf{Kryteria zaliczenia:}
 \begin{itemize}
-    \item Poprawnie skonfigurowany klaster Redis z jednym Master i dwoma Slave.
-    \item Weryfikacja, że dane dodane na węźle Master są replikowane na węzłach Slave.
+    \item Poprawnie skonfigurowany klaster Redis z jednym Master i dwoma Slave
+    \item Weryfikacja replikacji danych między węzłami
+    \item Działający playbook z obsługą różnych dystrybucji Linux
 \end{itemize}
+
+\section{Load Balancer z PHP (zadanie dodatkowe)}
+
+\textbf{Teoria:}  
+Load balancer to narzędzie, które rozkłada ruch sieciowy między kilka serwerów backend. Nginx może działać jako reverse proxy i load balancer, kierując żądania do różnych serwerów w sposób round-robin lub z użyciem innych algorytmów.
+
+\textbf{Zadanie:} Stwórz system load balancera z trzema serwerami PHP pokazującymi informacje o sobie.
+
+\subsection*{Krok 1: Konfiguracja serwerów backend}
+
+Stwórz playbook \texttt{php-backend.yml}:
+
+\begin{lstlisting}
+---
+- hosts: myservers
+  become: yes
+  tasks:
+    - name: Install PHP and FPM
+      apt:
+        name: [php-fpm, php-cli]
+        state: present
+        update_cache: yes
+        
+    - name: Create PHP info page
+      copy:
+        content: |
+          <?php
+          echo "<div style='font-family: Arial; text-align: center; padding: 20px;'>";
+          echo "<h1 style='color: #2196F3;'>SERVER: " . gethostname() . "</h1>";
+          echo "<h2>Server IP: " . $_SERVER['SERVER_ADDR'] . "</h2>";
+          echo "<h3>Your IP: " . $_SERVER['REMOTE_ADDR'] . "</h3>";
+          echo "<p><strong>Current time:</strong> " . date('Y-m-d H:i:s') . "</p>";
+          echo "<p><strong>Request count:</strong> " . (file_exists('/tmp/requests') ? file_get_contents('/tmp/requests') : '0') . "</p>";
+          file_put_contents('/tmp/requests', (int)@file_get_contents('/tmp/requests') + 1);
+          echo "<hr><p><em>Refresh to see load balancing in action!</em></p>";
+          echo "</div>";
+          ?>
+        dest: /var/www/html/index.php
+        
+    - name: Get PHP version
+      shell: php -v | head -1 | cut -d' ' -f2 | cut -d'.' -f1,2
+      register: php_version_output
+      
+    - name: Set PHP version fact
+      set_fact:
+        ansible_php_version: "{{ php_version_output.stdout }}"
+        
+    - name: Configure Nginx for PHP backends
+      copy:
+        content: |
+          server {
+              listen 8080;
+              root /var/www/html;
+              index index.php;
+              server_name _;
+              
+              location / {
+                  try_files $uri $uri/ /index.php?$query_string;
+              }
+              
+              location ~ \.php$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_pass unix:/var/run/php/php{{ ansible_php_version }}-fpm.sock;
+              }
+          }
+        dest: /etc/nginx/sites-available/backend
+        
+    - name: Remove default Nginx site from backends
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+        
+    - name: Enable backend site
+      file:
+        src: /etc/nginx/sites-available/backend
+        dest: /etc/nginx/sites-enabled/backend
+        state: link
+        
+    - name: Start and enable PHP-FPM
+      systemd:
+        name: "php{{ ansible_php_version }}-fpm"
+        state: started
+        enabled: yes
+        
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
+\end{lstlisting}
+
+\subsection*{Krok 2: Konfiguracja load balancera}
+
+Stwórz playbook \texttt{load-balancer.yml}:
+
+\begin{lstlisting}
+---
+- hosts: node1
+  become: yes
+  tasks:
+    - name: Configure Nginx as load balancer
+      copy:
+        content: |
+          upstream backend_servers {
+              server {{ hostvars['node1']['ansible_default_ipv4']['address'] }}:8080;
+              server {{ hostvars['node2']['ansible_default_ipv4']['address'] }}:8080;  
+              server {{ hostvars['node3']['ansible_default_ipv4']['address'] }}:8080;
+          }
+          
+          server {
+              listen 80;
+              server_name _;
+              
+              location / {
+                  proxy_pass http://backend_servers;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              }
+              
+              location /status {
+                  return 200 "Load Balancer OK\n";
+                  add_header Content-Type text/plain;
+              }
+          }
+        dest: /etc/nginx/sites-available/loadbalancer
+        
+    - name: Enable load balancer
+      file:
+        src: /etc/nginx/sites-available/loadbalancer  
+        dest: /etc/nginx/sites-enabled/loadbalancer
+        state: link
+        
+    - name: Test Nginx configuration
+      command: nginx -t
+      register: nginx_test
+      failed_when: nginx_test.rc != 0
+      
+    - name: Reload Nginx
+      systemd:
+        name: nginx
+        state: reloaded
+\end{lstlisting}
+
+\subsection*{Uruchomienie i weryfikacja}
+
+\textbf{Uruchomienie playbooków:}
+\begin{lstlisting}[language=bash]
+# Konfiguracja backend serwerów
+ansible-playbook php-backend.yml
+
+# Konfiguracja load balancera  
+ansible-playbook load-balancer.yml
+\end{lstlisting}
+
+\textbf{Sprawdzenie krok po kroku:}
+
+1. Test backends bezpośrednio:
+\begin{lstlisting}[language=bash]
+curl http://node1:8080  # Powinien pokazać node1
+curl http://node2:8080  # Powinien pokazać node2
+curl http://node3:8080  # Powinien pokazać node3
+\end{lstlisting}
+
+2. Test load balancera:
+\begin{lstlisting}[language=bash]
+curl http://node1       # Losowy backend
+curl http://node1       # Inny backend
+curl http://node1       # Kolejny backend
+\end{lstlisting}
+
+3. Test w przeglądarce:
+\begin{itemize}
+    \item Otwórz \texttt{http://node1} i odświeżaj stronę
+    \item Nazwa serwera powinna się zmieniać (node1, node2, node3)
+    \item Licznik żądań rośnie na każdym serwerze osobno
+\end{itemize}
+
+\textbf{Kryteria zaliczenia zadania dodatkowego:}
+\begin{itemize}
+    \item Wszystkie trzy serwery backend działają na porcie 8080
+    \item Load balancer kieruje ruch round-robin między serwerami
+    \item Strona PHP wyświetla informacje o aktualnym serwerze
+    \item Liczniki żądań działają poprawnie na każdym węźle
+\end{itemize}
+
+\section{Zadanie samodzielne: Deployment własnej aplikacji}
+
+\textbf{Cel:} Napisz prosty serwer HTTP, wdróż go na wszystkie węzły za pomocą Ansible i skonfiguruj Nginx jako reverse proxy.
+
+\subsection*{Etapy wykonania}
+
+\textbf{Etap 1: Napisanie prostego serwera HTTP}
+
+Napisz jednoplikowy serwer w dowolnym języku programowania. Oto przykłady:
+
+\textbf{Python (server.py):}
+\begin{lstlisting}
+#!/usr/bin/env python3
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import socket, os, datetime
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Mój serwer</title></head>
+        <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h1>Mój serwer HTTP</h1>
+            <h2>Hostname: {socket.gethostname()}</h2>
+            <h3>PID: {os.getpid()}</h3>
+            <p><strong>Sciezka:</strong> {self.path}</p>
+            <p><strong>Czas:</strong> {datetime.datetime.now()}</p>
+            <p><strong>IP klienta:</strong> {self.client_address[0]}</p>
+            <hr>
+            <p><em>Serwer napisany przez [TWOJE IMIE]</em></p>
+        </body>
+        </html>
+        """
+        self.wfile.write(html.encode())
+
+if __name__ == '__main__':
+    print("Serwer startuje na porcie 8080...")
+    HTTPServer(('0.0.0.0', 8080), Handler).serve_forever()
+\end{lstlisting}
+
+\textbf{Node.js (server.js):}
+\begin{lstlisting}
+const http = require('http');
+const os = require('os');
+
+const server = http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial; text-align: center; padding: 50px;">
+        <h1>Mój serwer Node.js</h1>
+        <h2>Hostname: ${os.hostname()}</h2>
+        <h3>PID: ${process.pid}</h3>
+        <p><strong>URL:</strong> ${req.url}</p>
+        <p><strong>Czas:</strong> ${new Date()}</p>
+        <hr>
+        <p><em>Serwer napisany przez [TWOJE IMIE]</em></p>
+    </body>
+    </html>`;
+    res.end(html);
+});
+
+server.listen(8080, '0.0.0.0', () => {
+    console.log('Serwer startuje na porcie 8080...');
+});
+\end{lstlisting}
+
+\textbf{Etap 2: Stworzenie playbooka Ansible}
+
+Napisz playbook \texttt{deploy.yml}, który:
+
+\begin{lstlisting}
+---
+- hosts: myservers
+  become: yes
+  vars:
+    app_name: "myserver"
+    app_port: 8080
+    
+  tasks:
+    - name: Install Python3 (dla Python server)
+      apt:
+        name: python3
+        state: present
+      when: server_type == "python"
+      
+    - name: Install Node.js (dla Node server)
+      apt:
+        name: nodejs
+        state: present
+      when: server_type == "nodejs"
+    
+    - name: Create application directory
+      file:
+        path: /opt/{{ app_name }}
+        state: directory
+        mode: '0755'
+    
+    - name: Copy server application
+      copy:
+        src: ./server.py  # lub server.js
+        dest: /opt/{{ app_name }}/server.py
+        mode: '0755'
+    
+    - name: Create systemd service file
+      template:
+        src: myserver.service.j2
+        dest: /etc/systemd/system/{{ app_name }}.service
+      notify: restart myserver
+    
+    - name: Start and enable service
+      systemd:
+        name: "{{ app_name }}"
+        state: started
+        enabled: yes
+        daemon_reload: yes
+    
+    - name: Configure Nginx reverse proxy
+      template:
+        src: nginx-proxy.conf.j2
+        dest: /etc/nginx/sites-available/{{ app_name }}
+    
+    - name: Enable Nginx site
+      file:
+        src: /etc/nginx/sites-available/{{ app_name }}
+        dest: /etc/nginx/sites-enabled/{{ app_name }}
+        state: link
+      notify: restart nginx
+    
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: restart nginx
+
+  handlers:
+    - name: restart myserver
+      systemd:
+        name: "{{ app_name }}"
+        state: restarted
+    
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+\end{lstlisting}
+
+\textbf{Etap 3: Szablony konfiguracyjne}
+
+\textbf{templates/myserver.service.j2:}
+\begin{lstlisting}
+[Unit]
+Description=My HTTP Server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/{{ app_name }}
+ExecStart=/usr/bin/python3 /opt/{{ app_name }}/server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+\end{lstlisting}
+
+\textbf{templates/nginx-proxy.conf.j2:}
+\begin{lstlisting}
+server {
+    listen 80;
+    server_name _;
+    
+    location / {
+        proxy_pass http://127.0.0.1:{{ app_port }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    
+    location /health {
+        access_log off;
+        return 200 "OK\n";
+        add_header Content-Type text/plain;
+    }
+}
+\end{lstlisting}
+
+\subsection*{Uruchomienie i weryfikacja}
+
+\textbf{1. Przygotowanie plików:}
+\begin{lstlisting}[language=bash]
+mkdir myapp-deployment
+cd myapp-deployment
+# Skopiuj: server.py, deploy.yml, inventory
+# Utworz katalog: templates/  
+# Skopiuj szablony do templates/
+\end{lstlisting}
+
+\textbf{2. Uruchomienie:}
+\begin{lstlisting}[language=bash]
+ansible-playbook deploy.yml
+\end{lstlisting}
+
+\textbf{3. Sprawdzenie:}
+\begin{lstlisting}[language=bash]
+# Test bezpośredniego dostępu do aplikacji
+curl http://node1:8080
+curl http://node2:8080
+curl http://node3:8080
+
+# Test przez Nginx reverse proxy
+curl http://node1
+curl http://node2
+curl http://node3
+
+# Sprawdzenie statusu serwisu
+ansible myservers -m shell -a "systemctl status myserver"
+
+# Test restartu automatycznego
+ansible myservers -m shell -a "sudo systemctl restart myserver"
+curl http://node1  # Powinien dalej działać
+\end{lstlisting}
+
+\subsection*{Kryteria oceny}
+
+\textbf{Wymagania podstawowe:}
+\begin{itemize}
+    \item Napisany i działający serwer HTTP w dowolnym języku
+    \item Playbook deployuje aplikację na wszystkie węzły
+    \item Serwis systemd uruchamia aplikację automatycznie
+    \item Nginx działa jako reverse proxy na porcie 80
+\end{itemize}
+
+\textbf{Wymagania rozszerzone:}
+\begin{itemize}
+    \item Obsługa różnych języków programowania w playbooku
+    \item Dodatkowe endpoints w aplikacji (np. /status, /info)
+    \item Konfiguracja logowania w systemd
+    \item Monitoring zdrowia aplikacji
+\end{itemize}
+
+\subsection*{Co oddać}
+
+\textbf{Struktura projektu:}
+\begin{lstlisting}
+projekt/
+  server.py (lub server.js, server.go, etc.)
+  deploy.yml
+  inventory  
+  templates/
+    myserver.service.j2
+    nginx-proxy.conf.j2
+  README.md (instrukcja uruchomienia)
+\end{lstlisting}
+
+\textbf{Demonstracja:}
+\begin{itemize}
+    \item Pokaż kod swojego serwera
+    \item Uruchom playbook od zera
+    \item Pokaż działającą aplikację przez przeglądarkę
+    \item Wyjaśnij konfigurację systemd i Nginx
+    \item Zademonstruj automatyczny restart po awarii
+\end{itemize}
+
+\textit{To zadanie sprawdza kompletny flow: programowanie - deployment - konfiguracja systemu. Tak wyglądają prawdziwe projekty DevOps!}
+
+\section{Rozwiązywanie problemów}
+
+\subsection*{Problemy z siecią}
+\textbf{Problem:} Maszyny nie mogą się komunikować
+\begin{itemize}
+    \item Sprawdź, czy wszystkie maszyny są w tej samej sieci NAT
+    \item Użyj \texttt{ip addr show} aby sprawdzić adresy IP
+    \item Przetestuj połączenie: \texttt{ping 10.0.2.15}
+\end{itemize}
+
+\textbf{Problem:} Brak dostępu do internetu
+\begin{itemize}
+    \item Sprawdź ustawienia DNS: \texttt{cat /etc/resolv.conf}
+    \item Zrestartuj sieć: \texttt{sudo systemctl restart networking}
+    \item W VirtualBox sprawdź czy NAT Network ma włączony DHCP
+\end{itemize}
+
+\subsection*{Problemy z SSH}
+\textbf{Problem:} "Permission denied (publickey)"
+\begin{itemize}
+    \item Sprawdź uprawnienia klucza: \texttt{chmod 600 ~/.ssh/id\_rsa}
+    \item Sprawdź czy klucz publiczny jest na węźle: \texttt{cat ~/.ssh/authorized\_keys}
+    \item Test połączenia: \texttt{ssh -v user@10.0.2.15}
+\end{itemize}
+
+\subsection*{Problemy z Ansible}
+\textbf{Problem:} "Host key verification failed"
+\begin{lstlisting}[language=bash]
+# Wyłącz sprawdzanie host key (tylko dla laboratoriów!)
+export ANSIBLE_HOST_KEY_CHECKING=False
+# lub dodaj do ansible.cfg:
+echo "[defaults]" > ansible.cfg
+echo "host_key_checking = False" >> ansible.cfg
+\end{lstlisting}
+
+\textbf{Problem:} Moduł nie znaleziony
+\begin{lstlisting}[language=bash]
+# Sprawdź dostępne moduły
+ansible-doc -l | grep nazwa_modulu
+
+# Aktualizuj Ansible
+sudo apt update && sudo apt upgrade ansible
+\end{lstlisting}
+
+\section*{Dodatek: Vagrant (opcjonalnie)}
+
+Dla zaawansowanych użytkowników - automatyczna konfiguracja środowiska:
+
+\textbf{Vagrantfile:}
+\begin{lstlisting}
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+  
+  # Maszyna kontrolna
+  config.vm.define "control" do |control|
+    control.vm.hostname = "ansible-control"
+    control.vm.network "private_network", ip: "192.168.56.10"
+    control.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      vb.cpus = 2
+    end
+    
+    control.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y ansible
+      ssh-keygen -t rsa -b 4096 -f /home/vagrant/.ssh/id_rsa -N ""
+      chown vagrant:vagrant /home/vagrant/.ssh/id_rsa*
+    SHELL
+  end
+  
+  # Węzły robocze
+  (1..3).each do |i|
+    config.vm.define "node#{i}" do |node|
+      node.vm.hostname = "node#{i}"
+      node.vm.network "private_network", ip: "192.168.56.#{10+i}"
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = "512"
+        vb.cpus = 1
+      end
+    end
+  end
+end
+\end{lstlisting}
+
+\textbf{Użycie:}
+\begin{lstlisting}[language=bash]
+# Utwórz katalog i skopiuj Vagrantfile
+mkdir ansible-lab && cd ansible-lab
+# ... skopiuj Vagrantfile ...
+
+# Uruchom wszystkie maszyny
+vagrant up
+
+# Połącz się z maszyną kontrolną
+vagrant ssh control
+
+# Na końcu - usuń środowisko
+vagrant destroy
+\end{lstlisting}
 
 \end{document}
 

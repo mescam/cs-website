@@ -13,7 +13,7 @@
           inherit (pkgs.texlive)
             scheme-medium latex-bin latexmk curve fontawesome5 silence
             simpleicons relsize comment biblatex csquotes cochineal xstring
-            cabin inconsolata upquote xurl;
+            cabin inconsolata upquote xurl fancyvrb xcolor listings listingsutf8;
         };
       in rec {
         packages = {
