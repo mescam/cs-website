@@ -41,6 +41,8 @@ Zapoznanie studentów z nowoczesnymi praktykami zarządzania systemami rozproszo
 - "The Phoenix Project" - Kevin Kim, Gene Kim, George Spafford (wybrane rozdziały)
 - Raporty State of DevOps 2024/2025
 
+[slajdy](/jwozniak/lectures/zsr-1.pdf)
+
 ### Sesja 2: Konteneryzacja - fundamenty Docker i nowoczesne praktyki
 **Cele edukacyjne:**
 - Zrozumienie koncepcji konteneryzacji
