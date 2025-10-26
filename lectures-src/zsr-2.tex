@@ -1,0 +1,264 @@
+\documentclass[10pt, aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{hyperref}
+
+% Beamer theme
+\usetheme{Madrid}
+\usecolortheme{default}
+
+% Colors
+\definecolor{IBMBlue}{RGB}{0,113,197}
+\definecolor{IBMDarkBlue}{RGB}{0,67,118}
+\definecolor{IBMGray}{RGB}{82,95,107}
+
+\setbeamercolor{structure}{fg=IBMBlue}
+\setbeamercolor{palette primary}{bg=IBMBlue,fg=white}
+\setbeamercolor{palette secondary}{bg=IBMDarkBlue,fg=white}
+\setbeamercolor{palette tertiary}{bg=IBMGray,fg=white}
+
+
+\author[J. Woźniak]{mgr inż. Jakub Woźniak}
+\institute[PUT]{Politechnika Poznańska\\Wydział Informatyki i Telekomunikacji}
+\date{}
+\title{Konteneryzacja: Docker w praktyce}
+\subtitle{Zarządzanie Systemami Rozproszonymi}
+
+
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}{Cele i plan}
+\textbf{Cele:}
+\begin{itemize}
+  \item Zrozumieć różnice między maszynami wirtualnymi a kontenerami oraz poznać architekturę Dockera.
+  \item Opanować wzorce tworzenia Dockerfile: kompilacja wieloetapowa, uruchamianie bez uprawnień administratora, dobór lekkiego obrazu bazowego.
+  \item Poznać podstawy bezpieczeństwa (skanowanie obrazów, utwardzanie środowiska wykonawczego) i skład usług z użyciem Docker Compose.
+\end{itemize}
+
+
+\end{frame}
+
+\begin{frame}[fragile]{Maszyny wirtualne a kontenery — istota różnic}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\textbf{Maszyna wirtualna:} pełny system gościa nad hipernadzorcą; izolacja silna, narzut zasobów większy.
+\begin{lstlisting}[language=bash]
++------------------+
+| Aplikacje        |
++------------------+
+| System goscia    | (GB)
++------------------+
+| Hipernadzorca    |
++------------------+
+| System gospodarza|
++------------------+
+\end{lstlisting}
+
+\column{0.48\textwidth}
+\textbf{Kontener:} wspólny jądro systemu gospodarza; uruchamianie szybkie, zużycie zasobów małe.
+\begin{lstlisting}[language=bash]
++------------------+
+| Aplikacje        | (MB)
++------------------+
+| Srodowisko kont. |
++------------------+
+| System gospodarza|
+| (jadro)          |
++------------------+
+\end{lstlisting}
+\end{columns}
+
+\medskip
+Rozmiar: GB kontra MB; start: 30–60 s kontra < 1 s; gęstość uruchomień: dziesiątki kontra setki/tysiące na host.
+\end{frame}
+
+\begin{frame}[fragile]{Architektura Dockera w pigułce}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
++-----------------------------+
+|  Klient Docker (CLI/API)    |
++-------------+---------------+
+              |
++-------------v---------------+
+|  Demon Docker (dockerd)     |
+|  - obrazy, kontenery        |
+|  - sieci, wolumeny          |
++-------------+---------------+
+              |
++-------------v---------------+
+|  containerd (CNCF)          |
++-------------+---------------+
+              |
++-------------v---------------+
+|  runc (OCI runtime)         |
++-----------------------------+
+\end{lstlisting}
+
+Pojęcia: obraz (tylko do odczytu), kontener (obraz + warstwa zapisu), system warstw z pamięcią podręczną, rejestry obrazów (publiczne i prywatne).
+\end{frame}
+
+\begin{frame}[fragile]{Warstwy, pamięć podręczna i .dockerignore}
+\textbf{Kolejność instrukcji a wykorzystanie pamięci podręcznej:}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\textbf{Niekorzystnie (częste przebudowy):}
+\begin{lstlisting}[language=Docker,basicstyle=\ttfamily\tiny]
+FROM node:20-alpine
+COPY . .
+RUN npm install
+RUN npm run build
+\end{lstlisting}
+
+\column{0.5\textwidth}
+\textbf{Korzystnie (stabilna pamięć podręczna):}
+\begin{lstlisting}[language=Docker,basicstyle=\ttfamily\tiny]
+FROM node:20-alpine
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+\end{lstlisting}
+\end{columns}
+
+\textbf{Plik .dockerignore (mniejszy kontekst budowania):}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+node_modules/
+.git/
+.env
+*.md
+.vscode/
+coverage/
+dist/
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Kompilacja wieloetapowa — smukły obraz wykonawczy}
+\begin{lstlisting}[language=Docker,basicstyle=\ttfamily\tiny]
+# Etap 1: budowanie
+FROM node:20 AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+
+# Etap 2: uruchomieniowy (lekki)
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+USER node
+EXPOSE 3000
+CMD ["node","dist/main.js"]
+\end{lstlisting}
+
+Efekt: znacznie mniejszy obraz i szybsze pobieranie oraz uruchamianie.
+\end{frame}
+
+\begin{frame}{Dobór obrazu bazowego}
+Wielkość i bezpieczeństwo obrazu bazowego mają kluczowe znaczenie:
+\begin{itemize}
+  \item \textbf{alpine} (~7 MB) — bardzo lekki, dobry na etapie deweloperskim (uwaga na musl vs glibc).
+  \item \textbf{distroless} (~20 MB) — tylko środowisko uruchomieniowe, bez powłoki i menedżera pakietów; mniejsza powierzchnia ataku.
+  \item \textbf{scratch} (0 MB) — wyłącznie statyczne binaria; maksymalna prostota i najmniejszy rozmiar.
+\end{itemize}
+Praktyka: jeden obraz prowadzony przez wszystkie środowiska, minimalny jak tylko to wygodne - ISO 9k
+\end{frame}
+
+\begin{frame}[fragile]{Uruchamianie bez uprawnień administratora i ograniczanie zasobów}
+\textbf{Tworzenie użytkownika i uruchamianie z ograniczeniami:}
+\begin{lstlisting}[language=Docker,basicstyle=\ttfamily\tiny]
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y python3 && \
+    groupadd -g 10001 app && useradd -u 10001 -g app -m app
+USER app
+WORKDIR /home/app
+COPY --chown=app:app app.py .
+CMD ["python3","app.py"]
+\end{lstlisting}
+
+\textbf{Przykładowe uruchomienie z politykami:}
+\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize]
+docker run --read-only --tmpfs /tmp --cap-drop=ALL \
+  --cap-add=NET_BIND_SERVICE --pids-limit=200 --memory=256m app:prod
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Skanowanie obrazów i spis komponentów (SBOM)}
+\textbf{Narzędzia:} Trivy, Grype, Docker Scout, Snyk.
+
+\textbf{Szybki start:}
+\begin{lstlisting}[language=bash,basicstyle=\ttfamily\scriptsize]
+trivy image --severity HIGH,CRITICAL myapp:latest
+grype myapp:latest
+\end{lstlisting}
+
+\textbf{Zalecenia:}
+\begin{itemize}
+  \item Regularnie przebudowuj obrazy (np. co miesiąc), aby włączyć poprawki bezpieczeństwa.
+  \item Generuj SBOM (np. CycloneDX/Syft) i egzekwuj polityki w potokach CI/CD.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile,shrink]{Docker Compose — zwarta konfiguracja środowiska}
+\begin{lstlisting}[language=yaml,basicstyle=\ttfamily\tiny]
+version: "3.9"
+services:
+  web:
+    build: .
+    ports: ["3000:3000"]
+    environment:
+      DATABASE_URL: "postgresql://db:5432/app"
+      REDIS_URL: "redis://cache:6379"
+    depends_on:
+      db: { condition: service_healthy }
+      cache: { condition: service_started }
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp"]
+    healthcheck:
+      test: ["CMD","curl","-f","http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_PASSWORD: ${DB_PASSWORD} }
+    volumes: ["db-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 10s
+volumes: { db-data: {} }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Alternatywy i środowiska uruchomieniowe}
+\textbf{Podman:} praca bez demona, tryb bez uprawnień administratora domyślnie, integracja z systemd (generowanie jednostek). \\
+\textbf{containerd / CRI-O:} lekkie i natywne dla Kubernetes (Dockershim usunięty od wersji 1.24). \\
+\textbf{Praktyka:} środowiska deweloperskie — Docker/Podman; produkcja — Kubernetes z containerd/CRI-O.
+\end{frame}
+
+\begin{frame}{WebAssembly (Wasm) w zarysie}
+Zalety: uruchamianie w milisekundach, obrazy rzędu kilobajtów–megabajtów, silna izolacja (piaskownica) — dobre na brzeg/serwerless. \\
+Ograniczenia: młody ekosystem, braki w funkcjonalności w części uruchomień, narzędzia wciąż dojrzewają. \\
+Kierunek: współistnienie kontenerów i Wasm; możliwe uruchamianie Wasm również z narzędziami Dockera.
+\end{frame}
+
+\begin{frame}{Lista kontrolna — praktyka od jutra}
+\begin{itemize}
+  \item Kompilacja wieloetapowa, lekki obraz bazowy, uruchamianie bez uprawnień administratora.
+  \item .dockerignore, ograniczenia zasobów, system plików tylko do odczytu, ograniczenie uprawnień jądra.
+  \item Skanowanie obrazów, podpisy kryptograficzne, tajne dane poza obrazem, polityki sieci, cykliczne przebudowy.
+  \item Dev example: Docker + Compose (środowiska per gałąź). Prod: Kubernetes + obserwowalność.
+\end{itemize}
+\end{frame}
+
+\end{document}
