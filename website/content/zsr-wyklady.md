@@ -62,6 +62,8 @@ Zapoznanie studentów z nowoczesnymi praktykami zarządzania systemami rozproszo
 - Analiza Dockerfile dla aplikacji webowej
 - Przegląd strategii bezpieczeństwa kontenerów w produkcji
 
+[slajdy](/jwozniak/lectures/zsr-2.pdf)
+
 ### Sesja 3: Orkiestracja kontenerów - Kubernetes w praktyce
 **Cele edukacyjne:**
 - Zrozumienie architektury Kubernetes
