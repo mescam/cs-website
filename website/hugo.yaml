@@ -42,3 +42,5 @@ params:
       url: https://medium.com/@jakubwozniak
     - name: github
       url: https://github.com/mescam
+    - name: homepage
+      url: https://jakubwozniak.me
