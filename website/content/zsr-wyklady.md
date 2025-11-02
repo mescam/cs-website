@@ -79,8 +79,7 @@ Zapoznanie studentów z nowoczesnymi praktykami zarządzania systemami rozproszo
 - Kubernetes management: Helm, Kustomize, Operators
 - Managed Kubernetes: EKS, GKE, AKS - porównanie i wybór
 
-**Case study:**
-- Migracja aplikacji monolitycznej do architektury mikroserwisów na K8s
+[slajdy](/jwozniak/lectures/zsr-3.pdf)
 
 ### Sesja 4: Zarządzanie infrastrukturą jako kod (Infrastructure as Code)
 **Cele edukacyjne:**

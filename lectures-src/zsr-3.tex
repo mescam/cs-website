@@ -1,0 +1,429 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{Madrid}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,arrows}
+
+\definecolor{IBMBlue}{RGB}{0,113,197}
+\setbeamercolor{structure}{fg=IBMBlue}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10},
+  showstringspaces=false
+}
+
+\author[J. Woźniak]{mgr inż. Jakub Woźniak}
+\institute[PUT]{Politechnika Poznańska\\Wydział Informatyki i Telekomunikacji}
+\date{}
+\title{Kubernetes: Orkiestracja Kontenerów}
+\subtitle{Zarządzanie Systemami Rozproszonymi}
+
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Plan wykładu}
+\tableofcontents
+\end{frame}
+
+\section{Fundamentalne koncepty}
+
+\begin{frame}[fragile]{Problem: Podejście imperatywne}
+
+Tradycyjny DevOps wymaga ręcznych poleceń na każdym hoście:
+
+\begin{lstlisting}
+ssh user@host1 "docker run -d myapp:1.0"
+ssh user@host2 "docker run -d myapp:1.0"
+ssh user@host3 "docker run -d myapp:1.0"
+
+# Jesli host1 padnie - reczny restart
+ssh user@host1 "docker ps"
+ssh user@host1 "docker start kontener"
+\end{lstlisting}
+
+\textbf{Problemy:}
+\begin{itemize}
+  \item Operacje niepowtarzalne
+  \item Nie skaluje się (100 hostów = 100 poleceń)
+  \item Brak historii zmian
+  \item Ręczny failover
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Rozwiązanie: Kubernetes (deklaratywnie)}
+
+Opisujesz \textbf{pożądany stan} zamiast instrukcji krokowych:
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: aplikacja
+        image: myapp:1.0
+\end{lstlisting}
+
+\begin{lstlisting}
+kubectl apply -f deployment.yaml
+\end{lstlisting}
+
+\textbf{Korzyści:} Automatyczne skalowanie, naprawa awarii, aktualizacja i wycofanie
+
+\end{frame}
+
+\begin{frame}{Pętla rekoncyliacji}
+
+\textbf{Nieskończona pętla porównująca pożądany stan z rzeczywistym:}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.5cm]
+  \node[rectangle,draw,fill=blue!20,align=center] (desired) {Pożądany stan\\(etcd)\\replik: 3};
+  \node[rectangle,draw,fill=green!20,below=of desired,align=center] (contr) {Kontroler\\Porównanie};
+  \node[rectangle,draw,fill=red!20,below=of contr,align=center] (actual) {Stan rzeczywisty\\2 pody};
+  
+  \draw[->,thick] (desired) -- (contr);
+  \draw[->,thick] (contr) -- (actual);
+  \draw[->,thick,dashed] (actual) to[bend right=30] (contr);
+\end{tikzpicture}
+\end{center}
+
+\end{frame}
+
+\begin{frame}{etcd - Baza danych klastra}
+
+\textbf{Rozproszone magazyny klucz-wartość przechowujące WSZYSTKIE obiekty}
+
+\begin{itemize}
+  \item Konsensus poprzez algorytm Raft
+  \item 3 węzły: toleruje 1 awarię
+  \item 5 węzłów: toleruje 2 awarie
+  \item Leader replikuje zmiany do pomocników
+\end{itemize}
+
+\begin{alertblock}{Standardowy, ale nie wymagany}
+W przypadku Azure Kubernetes Service, etcd jest zastąpiony przez Azure CosmosDB.
+\end{alertblock}
+
+\end{frame}
+
+\section{Architektura Kubernetes}
+
+\begin{frame}{Komponenty klastra}
+
+\begin{center}
+\begin{tikzpicture}[node distance=2cm]
+  \node[rectangle,draw,fill=blue!20,minimum width=8cm,minimum height=1.8cm,align=center] (cp) {
+    \textbf{Warstwa zarządzania}\\
+    apiserver | scheduler | controller-manager | etcd
+  };
+  
+  \node[rectangle,draw,fill=green!20,below left=2.5cm and 2.5cm of cp,minimum width=2cm,align=center] (w1) {Węzeł 1\\kubelet};
+  \node[rectangle,draw,fill=green!20,below=2.5cm of cp,minimum width=2cm,align=center] (w2) {Węzeł 2\\kubelet};
+  \node[rectangle,draw,fill=green!20,below right=2.5cm and 0.5cm of cp,minimum width=2cm,align=center] (w3) {Węzeł 3\\kubelet};
+  
+  \draw[->,thick] (cp) -- (w1);
+  \draw[->,thick] (cp) -- (w2);
+  \draw[->,thick] (cp) -- (w3);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Warstwa zarządzania:} Zarządza stanem, planuje rozmieszczenie
+
+\textbf{Węzły robocze:} Uruchamiają pody
+
+\end{frame}
+
+\begin{frame}{Główne komponenty}
+
+\textbf{kube-apiserver}
+\begin{itemize}
+  \item Punkt wejściowy do klastra (REST API)
+  \item Walidacja, autoryzacja (RBAC), zapis do etcd
+\end{itemize}
+
+\textbf{kube-scheduler}
+\begin{itemize}
+  \item Przypisuje pody do węzłów na podstawie dostępnych zasobów
+\end{itemize}
+
+\textbf{controller-manager}
+\begin{itemize}
+  \item Uruchamia kontrolery (Deployment, ReplicaSet, Service)
+  \item Pętla rekonsyliacji dla każdego typu obiektu
+\end{itemize}
+
+\textbf{kubelet}
+\begin{itemize}
+  \item Agent na węźle, uruchamia kontenery
+  \item Obsługuje sondy (readiness/liveness)
+\end{itemize}
+
+\end{frame}
+
+\section{Obiekty Kubernetes}
+
+\begin{frame}[fragile]{Pod - Najmniejsza jednostka}
+
+Grupa kontenerów dzielących sieć i magazyn danych:
+
+\begin{lstlisting}
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: aplikacja
+    image: myapp:1.0
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+\end{lstlisting}
+
+\textbf{requests} = minimum zasobów dla harmonogramowania
+
+\textbf{limits} = maksimum zasobów (jądro zatrzyma proces jeśli przekroczony)
+
+\end{frame}
+
+\begin{frame}[fragile]{Service - Stabilny punkt dostępu}
+
+Abstrakcja zapewniająca rozdzielanie obciążenia:
+
+\begin{lstlisting}
+apiVersion: v1
+kind: Service
+spec:
+  type: ClusterIP
+  selector:
+    app: siec
+  ports:
+  - port: 80
+    targetPort: 8080
+\end{lstlisting}
+
+\textbf{Typy:}
+\begin{itemize}
+  \item ClusterIP (dostęp wewnątrz klastra)
+  \item NodePort (dostęp zewnętrzny przez port węzła)
+  \item LoadBalancer (cloud LB)
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Deployment - Zarządzanie replikami}
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    spec:
+      containers:
+      - name: app
+        image: myapp:1.5.0
+\end{lstlisting}
+
+\textbf{RollingUpdate:} Stopniowo zamienia stare pody nowymi
+
+\textbf{Historia:} kubectl rollout history / undo
+
+\end{frame}
+
+\section{Sieciowanie}
+
+\begin{frame}{CNI - Container Network Interface}
+
+\begin{table}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Wtyczka} & \textbf{Warstwa danych} & \textbf{Wydajność} \\
+\hline
+Cilium & eBPF & 95 Gbps \\
+Calico & iptables & 40 Gbps \\
+Flannel & VXLAN & Niska \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Test 2024:} eBPF (Cilium) lepiej skaluje przy złożonych politykach sieciowych
+
+\end{frame}
+
+\begin{frame}[fragile]{Ingress - Routing warstwy HTTP}
+
+\begin{lstlisting}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+spec:
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /api
+        backend:
+          service:
+            name: api
+            port:
+              number: 8080
+\end{lstlisting}
+
+\textbf{Kontrolery:} NGINX, AWS ALB, Traefik, Istio Gateway
+
+\end{frame}
+
+\section{Magazyn danych}
+
+\begin{frame}[fragile]{PersistentVolume i StorageClass}
+
+\begin{lstlisting}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: szybki-dysk
+provisioner: ebs.csi.aws.com
+parameters:
+  type: io2
+  iops: "1000"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+spec:
+  storageClassName: szybki-dysk
+  resources:
+    requests:
+      storage: 50Gi
+\end{lstlisting}
+
+\textbf{Dynamiczne tworzenie:} Sterownik CSI automatycznie tworzy urządzenie
+
+\end{frame}
+
+\section{Strategie wdrażania}
+
+\begin{frame}{RollingUpdate}
+
+Stopniowo zamienia stare pody nowymi:
+
+\begin{center}
+\begin{tabular}{|r|l|}
+\hline
+\textbf{Czas} & \textbf{Stan} \\
+\hline
+0 & 5x v1.0 \\
+1 & 4x v1.0, 1x v2.0 \\
+3 & 2x v1.0, 3x v2.0 \\
+5 & 0x v1.0, 5x v2.0 \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Zalety:} Zero przerwania usług
+
+\textbf{Wady:} Powolne przy dużych wdrożeniach
+
+\end{frame}
+
+\begin{frame}{Blue-Green i Canary}
+
+\textbf{Blue-Green:}
+\begin{itemize}
+  \item Dwa równoległe środowiska
+  \item Przełączenie Service selector (natychmiastowe)
+  \item Wada: podwójne zasoby
+\end{itemize}
+
+\textbf{Canary:}
+\begin{itemize}
+  \item 5 procent ruchu do nowej wersji
+  \item Monitorowanie wskaźników
+  \item Stopniowo: 25 procent, 50 procent, 100 procent
+  \item Wymaga Service Mesh (Istio/Linkerd)
+\end{itemize}
+
+\end{frame}
+
+\section{Zarządzanie}
+
+\begin{frame}{Helm vs Kustomize}
+
+\begin{table}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Aspekt} & \textbf{Helm} & \textbf{Kustomize} \\
+\hline
+Zastosowanie & Pakiety & Środowiska \\
+Szablonowanie & Szablony Go & Łączenie \\
+Ekosystem & 70k+ chartów & Mniejszy \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Praktyka:}
+\begin{itemize}
+  \item Helm dla bibliotek (PostgreSQL, Redis)
+  \item Kustomize dla aplikacji (test/przygotowanie/produkcja)
+\end{itemize}
+
+\end{frame}
+
+
+\section{Podsumowanie}
+
+\begin{frame}{Główne pojęcia}
+
+\begin{enumerate}
+  \item Deklaracja zamiast instrukcji
+  \item Pętla rekonsyliacji (samonaplanianie)
+  \item etcd jako źródło prawdy
+  \item Architektura sterowana zdarzeniami
+  \item Zawsze używaj YAML (GitOps)
+\end{enumerate}
+
+\textbf{Dobre praktyki:}
+\begin{itemize}
+  \item Oddajmy zarządzanie komuś innemu ;)
+  \item Limity zasobów i polityki sieciowe
+  \item Kontenery bez uprawnień roota
+  \item Monitorowanie warstwy zarządzania
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\centering
+\Huge Dziękuję za uwagę!
+
+\vspace{2cm}
+\Large Pytania?
+
+\vspace{1cm}
+\normalsize
+\textbf{Jakub Woźniak}
+
+jakub.wozniak@cs.put.poznan.pl
+
+\end{frame}
+
+\end{document}
