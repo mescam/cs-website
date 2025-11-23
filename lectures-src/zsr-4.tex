@@ -1,0 +1,614 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{Madrid}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,arrows}
+
+\definecolor{IBMBlue}{RGB}{0,113,197}
+\setbeamercolor{structure}{fg=IBMBlue}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10},
+  showstringspaces=false
+}
+
+\author[J. Woźniak]{mgr inż. Jakub Woźniak}
+\institute[PUT]{Politechnika Poznańska\\Wydział Informatyki i Telekomunikacji}
+\date{}
+\title{Zarządzanie infrastrukturą jako kod}
+\subtitle{Infrastructure as Code (IaC)}
+
+
+
+\begin{document}
+
+%-------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Agenda wykładu}
+  \begin{itemize}
+    \item Filozofia Infrastructure as Code
+    \item Terraform – deklaratywne zarządzanie infrastrukturą
+    \item Ansible – automatyzacja konfiguracji
+    \item GitOps i Pulumi
+    \item Zaawansowane wzorce
+    \item Podsumowanie i Q\&A
+  \end{itemize}
+\end{frame}
+
+%=================================================
+\section{Intro i filozofia IaC}
+%=================================================
+
+%-------------------------------------------------
+\begin{frame}{Problem: tradycyjne zarządzanie infrastrukturą}
+  \textbf{Typowe wyzwania:}
+  \begin{itemize}
+    \item Manualna konfiguracja przez konsolę WWW
+    \item \emph{Snowflake servers} – każdy serwer unikalny, trudny do odtworzenia
+    \item \emph{Configuration drift} – środowiska rozjeżdżają się w czasie
+    \item Brak wersjonowania i historii zmian
+    \item Długi czas wdrożenia nowego środowiska
+    \item Błędy ludzkie wynikające z operacji manualnych
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Rozwiązanie: Infrastructure as Code}
+  \textbf{Definicja:} \emph{Infrastructure as Code} to praktyka definiowania i zarządzania infrastrukturą IT za pomocą kodu maszynowo-czytelnego, zamiast procesów manualnych i narzędzi interaktywnych.
+  \vspace{0.5cm}
+  \textbf{Kluczowe zasady:}
+  \begin{itemize}
+    \item Deklaratywność – opisujemy \dq co\dq, nie \dq jak\dq
+    \item Wersjonowanie – infrastruktura w Git
+    \item Powtarzalność – łatwe odtwarzanie środowisk
+    \item Automatyzacja – provisioning i konfiguracja przez narzędzia
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Korzyści z IaC}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Operacyjne:}
+      \begin{itemize}
+        \item Szybki deployment (minuty vs dni)
+        \item Spójność między środowiskami
+        \item Łatwe skalowanie infrastruktury
+        \item Self-service dla zespołów
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Bezpieczeństwo i compliance:}
+      \begin{itemize}
+        \item Code review dla zmian infrastruktury
+        \item Audit trail w historii Git
+        \item Policy as Code
+        \item Disaster recovery w minuty
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Kategorie narzędzi IaC}
+  \begin{itemize}
+    \item \textbf{Infrastructure provisioning} – tworzenie zasobów chmurowych (VM, sieci, storage): Terraform, Pulumi, CloudFormation
+    \item \textbf{Configuration management} – konfiguracja systemów i aplikacji: Ansible, Chef, Puppet, SaltStack
+    \item \textbf{Container orchestration} – zarządzanie kontenerami: Kubernetes, Docker Swarm, ECS
+    \item \textbf{Image building} – tworzenie immutable images: Packer, Docker, Buildpacks
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Deklaratywne vs imperatywne podejście}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Imperatywne (\dq jak?\dq)}
+      \begin{verbatim}
+# Bash script
+aws ec2 run-instances \
+  --image-id ami-123 \
+  --instance-type t3.medium
+
+aws ec2 create-tags \
+  --resources i-456 \
+  --tags Key=Name,Value=web
+      \end{verbatim}
+      \begin{itemize}
+        \item Opisujemy kroki
+        \item Musimy obsłużyć stany
+        \item Trudniej o idempotentność
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Deklaratywne (\dq co?\dq)}
+      \begin{verbatim}
+# Terraform
+resource "aws_instance" "web" {
+  ami           = "ami-123"
+  instance_type = "t3.medium"
+  tags = {
+    Name = "web"
+  }
+}
+      \end{verbatim}
+      \begin{itemize}
+        \item Opisujemy stan docelowy
+        \item Narzędzie zarządza stanem
+        \item Wbudowana idempotentność
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{IaC: dobre praktyki}
+  \begin{itemize}
+    \item Wersjonuj wszystko (infrastruktura, konfiguracje, polityki)
+    \item Małe, inkrementalne zmiany zamiast dużych wdrożeń
+    \item Code review (PR) dla każdej zmiany
+    \item Automatyczne testy (unit, integration, policy)
+    \item Immutability – preferuj wymianę nad zmianą in-place
+    \item Bezpieczne zarządzanie sekretami (Vault, SSM, KMS)
+    \item Modularność – wielokrotnego użytku moduły
+    \item Dokumentacja jako kod (README, komentarze, generowane docs)
+  \end{itemize}
+\end{frame}
+
+%=================================================
+\section{Terraform}
+%=================================================
+
+%-------------------------------------------------
+\begin{frame}{Terraform – wprowadzenie}
+  \textbf{Terraform:}
+  \begin{itemize}
+    \item Open-source narzędzie IaC od HashiCorp (od 2014)
+    \item Multi-cloud: AWS, Azure, GCP, on-prem, SaaS
+    \item Deklaratywny język HCL (HashiCorp Configuration Language)
+    \item Architektura oparta o providery (tysiące providerów)
+  \end{itemize}
+  \vspace{0.3cm}
+  \textbf{Kiedy używać?}
+  \begin{itemize}
+    \item Provisioning infrastruktury chmurowej (VM, sieci, bazy)
+    \item Złożone zależności i multi-cloud
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Architektura Terraform}
+  \begin{verbatim}
+ .tf files  ->  Terraform Core  ->  Providers  ->  Cloud APIs
+
+ State file (terraform.tfstate) śledzi
+ mapowanie zasobów i ich aktualny stan.
+  \end{verbatim}
+  \begin{itemize}
+    \item Konfiguracje w plikach \texttt{.tf}
+    \item Silnik Terraform (plan, apply)
+    \item Providery dla chmur i usług
+    \item Plik stanu (local, S3, Terraform Cloud)
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{State w Terraform}
+  \textbf{Dlaczego potrzebny jest state?}
+  \begin{itemize}
+    \item Mapowanie zasobów w kodzie na realne zasoby w chmurze
+    \item Lepsza wydajność (cache zamiast ciągłych wywołań API)
+    \item Zarządzanie grafem zależności
+  \end{itemize}
+  \vspace{0.3cm}
+  \textbf{Przykładowe backendy:}
+  \begin{itemize}
+    \item \texttt{local} – domyślnie, do dev/test
+    \item \texttt{s3} – produkcja i współpraca w zespole (z blokadą DynamoDB)
+    \item Terraform Cloud – zarządzany state, UI, remote execution
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Typowy workflow Terraform}
+  \begin{verbatim}
+# 1. Inicjalizacja (pobranie providerów)
+    $ terraform init
+# 2. Formatowanie
+    $ terraform fmt
+# 3. Walidacja
+    $ terraform validate
+# 4. Plan (dry-run)
+    $ terraform plan
+# 5. Wdrożenie zmian
+    $ terraform apply
+# 6. Podgląd stanu
+    $ terraform show
+# 7. Usunięcie infrastruktury
+    $ terraform destroy
+  \end{verbatim}
+  \textbf{Zasada:} zawsze uruchamiaj \texttt{terraform plan} przed \texttt{apply}.
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{HCL – podstawy składni}
+  \begin{verbatim}
+# Provider
+provider "aws" {
+  region = "eu-west-1"
+}
+# Resource
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name        = "main-vpc"
+    Environment = "production"
+  }
+}
+# Data source
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-*"]
+  }
+}
+  \end{verbatim}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Przykład: klaster EKS na AWS}
+  \begin{verbatim}
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 19.0"
+  cluster_name    = "my-k8s-cluster"
+  cluster_version = "1.28"
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+  eks_managed_node_groups = {
+    general = {
+      desired_size = 3
+      min_size     = 2
+      max_size     = 5
+      instance_types = ["t3.medium"]
+      capacity_type  = "SPOT"
+    }
+  }
+}
+  \end{verbatim}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Zmienne i wyjścia w Terraform}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Variables}
+      \begin{verbatim}
+# variables.tf
+variable "environment" {
+  type        = string
+  default     = "dev"
+}
+variable "instance_count" {
+  type    = number
+  default = 3
+}
+resource "aws_instance" "app" {
+  count = var.instance_count
+}
+      \end{verbatim}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Outputs}
+      \begin{verbatim}
+# outputs.tf
+output "cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+# CLI
+$ terraform output cluster_endpoint
+      \end{verbatim}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Drift detection w Terraform}
+  \begin{itemize}
+    \item Drift = różnica między \emph{desired state} (kod) a \emph{actual state} (chmura)
+    \item Źródła: zmiany manualne w konsoli, inne procesy, race conditions
+  \end{itemize}
+  \vspace{0.3cm}
+  \begin{verbatim}
+# Wykrycie drifta
+$ terraform plan -refresh-only
+
+# Naprawa – doprowadzenie realnego stanu do docelowego
+$ terraform apply
+  \end{verbatim}
+\end{frame}
+
+%=================================================
+\section{Ansible}
+%=================================================
+
+%-------------------------------------------------
+\begin{frame}{Ansible – przypomnienie}
+  \begin{itemize}
+    \item Agentless – SSH/WinRM, brak agentów na maszynach docelowych
+    \item Imperatywny, ale idempotentny
+    \item Playbooki w YAML
+    \item Bogaty ekosystem modułów
+  \end{itemize}
+  \vspace{0.3cm}
+  \textbf{Terraform vs Ansible}
+  \begin{itemize}
+    \item Terraform – provisioning infrastruktury
+    \item Ansible – konfiguracja systemów i aplikacji
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Struktura playbooka Ansible}
+  \begin{verbatim}
+
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Copy config file
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+      notify: restart nginx
+  \end{verbatim}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Idempotentność w Ansible}
+  \textbf{Cel:} wielokrotne uruchomienie playbooka daje ten sam rezultat.
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      Nie-idempotentny przykład:
+      \begin{verbatim}
+- name: Add line
+  shell: |
+    echo "export PATH=/app/bin:$PATH" \
+      >> ~/.bashrc
+      \end{verbatim}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      Idempotentny przykład:
+      \begin{verbatim}
+- name: Add line
+  lineinfile:
+    path: ~/.bashrc
+    line: 'export PATH=/app/bin:$PATH'
+    state: present
+      \end{verbatim}
+    \end{column}
+  \end{columns}
+  \vspace{0.3cm}
+  \textbf{Best practice:} używaj modułów zamiast \texttt{shell}/\texttt{command}.
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Zmienne i szablony (Jinja2)}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Variables}
+      \begin{verbatim}
+# group_vars/webservers.yml
+app_name: myapp
+app_port: 8080
+environment: production
+
+# Użycie
+- name: Start app
+  shell: |
+    ./{{ app_name }} \
+      --port {{ app_port }}
+      \end{verbatim}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Templates}
+      \begin{verbatim}
+server {
+  listen {{ app_port }};
+  server_name {{ inventory_hostname }};
+}
+
+- name: Deploy config
+  template:
+    src: config.j2
+    dest: /etc/app/config.conf
+      \end{verbatim}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%=================================================
+\section{GitOps i Pulumi}
+%=================================================
+
+%-------------------------------------------------
+\begin{frame}{GitOps – Git jako źródło prawdy}
+  \textbf{Definicja:} GitOps używa repozytorium Git jako \emph{single source of truth} dla deklaratywnej infrastruktury i aplikacji.
+  \vspace{0.3cm}
+  \textbf{Zasady GitOps:}
+  \begin{itemize}
+    \item Deklaratywność – cały desired state w Git
+    \item Wersjonowanie i niezmienność – historia Git = audit trail
+    \item Operatorzy (np. ArgoCD, Flux) pobierają zmiany z Git
+    \item Ciągła obserwacja stanu i korekta driftów.
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Workflow GitOps}
+  \begin{verbatim}
+Git repo (manifesty)
+    |
+    |  git push
+    v
+Git hook / CI
+    |
+    v
+Operator GitOps (ArgoCD, Flux)
+    |
+    |  pull & apply
+    v
+Kubernetes cluster (deployment)
+  \end{verbatim}
+  \textbf{Korzyści:} zero-touch deployment, rollback przez git revert, pełna audytowalność.
+\end{frame}
+
+
+%-------------------------------------------------
+\begin{frame}{Pulumi – nowoczesne IaC}
+  \textbf{Cechy Pulumi:}
+  \begin{itemize}
+    \item Języki ogólnego przeznaczenia: Python, TypeScript, Go, C\# itd.
+    \item Brak własnej DSL – pełna moc języka
+    \item Multi-cloud i wsparcie dla Kubernetes, Dockera, Helm
+    \item Łatwe testowanie (unit/integration) i refaktoryzacja
+  \end{itemize}
+  \vspace{0.3cm}
+  \textbf{Pulumi vs Terraform:}
+  \begin{itemize}
+    \item Terraform – HCL, moduły
+    \item Pulumi – klasy, funkcje, pakiety, IDE/IntelliSense
+  \end{itemize}
+\end{frame}
+
+%=================================================
+\section{Zaawansowane wzorce}
+%=================================================
+
+%-------------------------------------------------
+\begin{frame}{Immutable infrastructure}
+  \textbf{Idea:} serwery nie są modyfikowane po wdrożeniu – każda zmiana = nowy serwer/obraz.
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Podejście mutable}
+      \begin{itemize}
+        \item Aktualizacje in-place
+        \item Configuration drift
+        \item Snowflake servers
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Podejście immutable}
+      \begin{itemize}
+        \item Wymiana zasobów przy zmianie
+        \item Brak drifta
+        \item Łatwe odtwarzanie
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.3cm}
+  \textbf{Implementacja:} kontenery Docker, obrazy VM (Packer), blue-green deployments.
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Drift detection – strategia}
+  \begin{itemize}
+    \item Terraform: \texttt{terraform plan -refresh-only} cyklicznie w CI
+    \item Ansible: \texttt{ansible-playbook --check --diff}
+    \item GitOps (ArgoCD): ciągła rekonsyliacja i alerty
+    \item Narzędzia chmurowe (np. AWS Config) do compliance
+  \end{itemize}
+  \vspace{0.3cm}
+  \textbf{Praktyka:} alertuj o drifcie, automatycznie naprawiaj zmiany niekrytyczne.
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}[fragile]{Policy as Code – OPA}
+  \begin{itemize}
+    \item Polityki bezpieczeństwa i compliance jako kod
+    \item Walidacja konfiguracji przed wdrożeniem
+  \end{itemize}
+  \vspace{0.3cm}
+  \begin{verbatim}
+# policy.rego
+package terraform.analysis
+
+# Zakaz publicznych bucketów S3
+deny[msg] {
+  resource := input.resource_changes[_]
+  resource.type == "aws_s3_bucket"
+  resource.change.after.acl == "public-read"
+  msg := sprintf("S3 bucket %v must not be public",
+                 [resource.name])
+}
+  \end{verbatim}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Zarządzanie sekretami}
+  \textbf{Czego nie robić:}
+  \begin{itemize}
+    \item Nie trzymamy kluczy API i haseł w repo (ani w \texttt{provider}ach)
+  \end{itemize}
+  \vspace{0.3cm}
+  \textbf{Dobre praktyki:}
+  \begin{itemize}
+    \item Menedżery sekretów chmurowych (SSM Parameter Store, Secrets Manager, Secret Manager)
+    \item HashiCorp Vault jako centralny magazyn sekretów
+    \item SOPS/Sealed Secrets dla K8s
+    \item Sekrety przekazywane z CI/CD jako zmienne środowiskowe
+  \end{itemize}
+\end{frame}
+
+%=================================================
+\section{Podsumowanie}
+%=================================================
+
+%-------------------------------------------------
+\begin{frame}{Najczęstsze pułapki}
+  \begin{itemize}
+    \item Brak backupu state i wersjonowania
+    \item Hardkodowanie wartości zamiast użycia zmiennych
+    \item \enquote{Apply} bez wcześniejszego planu
+    \item Zbyt duży \emph{blast radius} jednego state
+    \item Ignorowanie drifta i braku regularnych checków
+    \item Słabe zarządzanie sekretami
+    \item Brak testów i środowisk pośrednich (dev/stage)
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Podsumowanie i dalsza praktyka}
+  \begin{itemize}
+    \item IaC jako fundament nowoczesnego DevOps i chmury
+    \item Terraform do provisioningu, Ansible do konfiguracji
+    \item GitOps i Pulumi jako kolejny krok w dojrzałości
+    \item Zaawansowane wzorce: immutable infra, Policy as Code, drift detection
+  \end{itemize}
+\end{frame}
+
+%-------------------------------------------------
+\begin{frame}{Pytania?}
+  \centering
+  Dziękuję za uwagę!\\[0.5cm]
+  Pytania, komentarze, dyskusja.
+\end{frame}
+
+\end{document}
