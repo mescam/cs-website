@@ -100,6 +100,8 @@ Zapoznanie studentów z nowoczesnymi praktykami zarządzania systemami rozproszo
 - Template Terraform dla klastra Kubernetes
 - Ansible playbook dla konfiguracji serwerów aplikacyjnych
 
+[slajdy](/jwozniak/lectures/zsr-4.pdf)
+
 ### Sesja 5: CI/CD i automatyzacja procesów deweloperskich
 **Cele edukacyjne:**
 - Zrozumienie pipeline CI/CD
