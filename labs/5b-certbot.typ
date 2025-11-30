@@ -1,9 +1,8 @@
-#import "@preview/rubber-article:0.5.0": *
+#import "@preview/rubber-article:0.4.2": *
 
 #show: article.with(
   lang: "pl",
-  page-margins: 2cm,
-  page-paper: "a4",
+  margins: (left: 2cm, right: 2cm, top: 2cm, bottom: 2cm),
   page-numbering: "1",
   header-display: true,
   header-title: "Zarządzanie Systemami Rozproszonymi – Cert-Manager i Let's Encrypt",

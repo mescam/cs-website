@@ -3,7 +3,7 @@
   inputs = {
     # Older, known-good nixpkgs for LaTeX / TeX Live
     nixpkgs.url = "github:NixOS/nixpkgs/5633bcff0c6162b9e4b5f1264264611e950c8ec7";
-    # Newer nixpkgs solely to get a recent Typst
+    # Newer nixpkgs solely to get a recent Typst (and Typst packages)
     typst-nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
@@ -20,23 +20,11 @@
             cabin inconsolata upquote xurl fancyvrb xcolor listings listingsutf8;
         };
 
-        # Vendored Typst universe packages for offline builds.
-        # Layout must match: typst/packages/preview/{name}-{version}
-        typstUniverseCache = pkgs.stdenvNoCC.mkDerivation {
-          name = "typst-universe-cache";
-          src = pkgs.fetchurl {
-            url = "https://packages.typst.org/preview/rubber-article-0.5.0.tar.gz";
-            sha256 = "sha256-SAv/422FDuMIglR4xgCXq6pDlb4C2p9M3k37qBh1ih0=";
-          };
-          phases = [ "unpackPhase" "installPhase" ];
-          unpackPhase = ''
-            mkdir -p source
-            tar -xzf "$src" -C source
-          '';
-          installPhase = ''
-            mkdir -p "$out/typst/packages/preview/rubber-article-0.5.0"
-            cp -R source/* "$out/typst/packages/preview/rubber-article-0.5.0/"
-          '';
+        # Expose rubber-article 0.4.2 as a local package path
+        rubberArticlePkg = typstPkgs.typstPackages.rubber-article_0_4_2;
+        typstPackagePath = pkgs.linkFarm "typst-local-packages" {
+          # Layout: preview/<name>/<version>
+          "preview/rubber-article/0.4.2" = "${rubberArticlePkg}/lib/typst-packages/rubber-article/0.4.2";
         };
       in rec {
         packages = {
@@ -54,9 +42,10 @@
               export XDG_CACHE_HOME="$PWD/.cache"
               export TEXMFVAR="$PWD/.cache/texmf-var"
 
-              # Point Typst to a pre-populated, offline universe cache.
+              # Use a local package path for @preview/rubber-article:0.4.2
               export TYPST_CACHE_DIR="$PWD/.cache/typst"
-              export TYPST_PACKAGE_CACHE_PATH="${typstUniverseCache}/typst/packages"
+              export TYPST_PACKAGE_PATH="${typstPackagePath}"
+
               export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
               export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
 
@@ -89,9 +78,9 @@
               mkdir -p .cache/typst
               export XDG_CACHE_HOME="$PWD/.cache"
 
-              # Use the same offline universe cache here.
+              # Same local package path here
               export TYPST_CACHE_DIR="$PWD/.cache/typst"
-              export TYPST_PACKAGE_CACHE_PATH="${typstUniverseCache}/typst/packages"
+              export TYPST_PACKAGE_PATH="${typstPackagePath}"
               export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
               export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
 
