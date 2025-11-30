@@ -20,7 +20,7 @@
           document = pkgs.stdenvNoCC.mkDerivation rec {
             name = "LaTeX-Build";
             src = self;
-            buildInputs = [ pkgs.coreutils tex ];
+            buildInputs = [ pkgs.coreutils tex pkgs.typst ];
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
             buildPhase = ''
               export PATH="${pkgs.lib.makeBinPath buildInputs}";
@@ -30,6 +30,28 @@
                   latexmk -interaction=nonstopmode -pdf -lualatex \
                   $i
               done;
+
+              # Build all Typst lab documents
+              for i in *.typ; do
+                typst compile "$i" "${i%.typ}.pdf"
+              done
+            '';
+            installPhase = ''
+              mkdir -p $out
+              cp *.pdf $out/
+            '';
+          };
+
+          typst-docs = pkgs.stdenvNoCC.mkDerivation rec {
+            name = "Typst-Build";
+            src = self;
+            buildInputs = [ pkgs.coreutils pkgs.typst ];
+            phases = [ "unpackPhase" "buildPhase" "installPhase" ];
+            buildPhase = ''
+              export PATH="${pkgs.lib.makeBinPath buildInputs}";
+              for i in *.typ; do
+                typst compile "$i" "${i%.typ}.pdf"
+              done
             '';
             installPhase = ''
               mkdir -p $out
