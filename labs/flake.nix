@@ -19,6 +19,25 @@
             simpleicons relsize comment biblatex csquotes cochineal xstring
             cabin inconsolata upquote xurl fancyvrb xcolor listings listingsutf8;
         };
+
+        # Vendored Typst universe packages for offline builds.
+        # Layout must match: typst/packages/preview/{name}-{version}
+        typstUniverseCache = pkgs.stdenvNoCC.mkDerivation {
+          name = "typst-universe-cache";
+          src = pkgs.fetchurl {
+            url = "https://packages.typst.org/preview/rubber-article-0.5.0.tar.gz";
+            sha256 = "sha256-SAv/422FDuMIglR4xgCXq6pDlb4C2p9M3k37qBh1ih0=";
+          };
+          phases = [ "unpackPhase" "installPhase" ];
+          unpackPhase = ''
+            mkdir -p source
+            tar -xzf "$src" -C source
+          '';
+          installPhase = ''
+            mkdir -p "$out/typst/packages/preview/rubber-article-0.5.0"
+            cp -R source/* "$out/typst/packages/preview/rubber-article-0.5.0/"
+          '';
+        };
       in rec {
         packages = {
           document = pkgs.stdenvNoCC.mkDerivation rec {
@@ -35,8 +54,9 @@
               export XDG_CACHE_HOME="$PWD/.cache"
               export TEXMFVAR="$PWD/.cache/texmf-var"
 
+              # Point Typst to a pre-populated, offline universe cache.
               export TYPST_CACHE_DIR="$PWD/.cache/typst"
-              export TYPST_PACKAGE_CACHE_PATH="$PWD/.cache/typst"
+              export TYPST_PACKAGE_CACHE_PATH="${typstUniverseCache}/typst/packages"
               export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
               export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
 
@@ -68,10 +88,13 @@
               export PATH="${pkgs.lib.makeBinPath buildInputs}";
               mkdir -p .cache/typst
               export XDG_CACHE_HOME="$PWD/.cache"
+
+              # Use the same offline universe cache here.
               export TYPST_CACHE_DIR="$PWD/.cache/typst"
-              export TYPST_PACKAGE_CACHE_PATH="$PWD/.cache/typst"
+              export TYPST_PACKAGE_CACHE_PATH="${typstUniverseCache}/typst/packages"
               export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
               export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
+
               for i in *.typ; do
                 typst compile "$i" "$(basename "$i" .typ).pdf"
               done
