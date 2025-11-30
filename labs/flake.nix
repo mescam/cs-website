@@ -24,7 +24,7 @@
           document = pkgs.stdenvNoCC.mkDerivation rec {
             name = "LaTeX-Build";
             src = self;
-            buildInputs = [ pkgs.coreutils tex typstPkgs.typst ];
+            buildInputs = [ pkgs.coreutils tex typstPkgs.typst pkgs.cacert ];
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
             buildPhase = ''
               export PATH="${pkgs.lib.makeBinPath buildInputs}";
@@ -37,6 +37,8 @@
 
               export TYPST_CACHE_DIR="$PWD/.cache/typst"
               export TYPST_PACKAGE_CACHE_PATH="$PWD/.cache/typst"
+              export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+              export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
 
               # Build all LaTeX lab documents
               for i in *.tex; do
@@ -60,7 +62,7 @@
           typst-docs = pkgs.stdenvNoCC.mkDerivation rec {
             name = "Typst-Build";
             src = self;
-            buildInputs = [ pkgs.coreutils typstPkgs.typst ];
+            buildInputs = [ pkgs.coreutils typstPkgs.typst pkgs.cacert ];
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
             buildPhase = ''
               export PATH="${pkgs.lib.makeBinPath buildInputs}";
@@ -68,6 +70,8 @@
               export XDG_CACHE_HOME="$PWD/.cache"
               export TYPST_CACHE_DIR="$PWD/.cache/typst"
               export TYPST_PACKAGE_CACHE_PATH="$PWD/.cache/typst"
+              export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+              export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
               for i in *.typ; do
                 typst compile "$i" "$(basename "$i" .typ).pdf"
               done
