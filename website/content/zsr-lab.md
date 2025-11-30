@@ -65,7 +65,14 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Automatyzacja wdrożeń aplikacji Kubernetes
   - [skrypt](/jwozniak/labs/5-gitops.pdf)
 
-#### 7. Service Mesh z Istio
+#### 7. Cert-Manager
+  - **Wymagania**: Kubernetes, Cert-Manager
+  - **Zadania**:
+    - Instalacja i konfiguracja Cert-Manager
+    - Automatyczne zarządzanie certyfikatami TLS
+  - [skrypt](/jwozniak/labs/5b-certbot.pdf)
+
+#### 8. Service Mesh z Istio
   - **Wymagania**: Kubernetes, Istio
   - **Zadania**:
     - Instalacja i konfiguracja Istio
@@ -73,7 +80,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Konfiguracja Ingress i Egress Gateway
   - [skrypt](/jwozniak/labs/6-servicemesh.pdf)
 
-#### 8. Terraform: Tworzenie infrastruktury chmurowej
+#### 9. Terraform: Tworzenie infrastruktury chmurowej
   - **Wymagania**: Terraform, AWS/Azure/GCP
   - **Zadania**:
     - Wprowadzenie do chmury Microsoft Azure
@@ -81,7 +88,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Automatyzacja zarządzania infrastrukturą
   - [skrypt](/jwozniak/labs/7-azuretf.pdf)
 
-#### 9. Terraform: moduły, zmienne i stan zdalny
+#### 10. Terraform: moduły, zmienne i stan zdalny
   - **Wymagania**: Terraform, Microsoft Azure
   - **Zadania**:
     - Tworzenie modułów w Terraform
@@ -90,7 +97,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Stworzenie bazy danych
   - [skrypt](/jwozniak/labs/8-terraform.pdf)
 
-#### 10. AKS i Terraform - podsumowanie
+#### 11. AKS i Terraform - podsumowanie
   - **Wymagania**: Terraform, Microsoft Azure, Kubernetes
   - **Zadania**:
     - Stworzenie infrastruktury w Microsoft Azure
