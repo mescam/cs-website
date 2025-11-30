@@ -20,11 +20,20 @@
             cabin inconsolata upquote xurl fancyvrb xcolor listings listingsutf8;
         };
 
-        # Expose rubber-article 0.4.2 as a local package path
+        # Expose rubber-article 0.4.2 and its dependencies as local packages
         rubberArticlePkg = typstPkgs.typstPackages.rubber-article_0_4_2;
+        hydraPkg         = typstPkgs.typstPackages.hydra_0_6_1;
+        oxifmtPkg        = typstPkgs.typstPackages.oxifmt_0_2_1;
+        pillarPkg        = typstPkgs.typstPackages.pillar_0_3_1;
+        zeroPkg          = typstPkgs.typstPackages.zero_0_3_2;
+
         typstPackagePath = pkgs.linkFarm "typst-local-packages" {
           # Layout: preview/<name>/<version>
           "preview/rubber-article/0.4.2" = "${rubberArticlePkg}/lib/typst-packages/rubber-article/0.4.2";
+          "preview/hydra/0.6.1"          = "${hydraPkg}/lib/typst-packages/hydra/0.6.1";
+          "preview/oxifmt/0.2.1"         = "${oxifmtPkg}/lib/typst-packages/oxifmt/0.2.1";
+          "preview/pillar/0.3.1"         = "${pillarPkg}/lib/typst-packages/pillar/0.3.1";
+          "preview/zero/0.3.2"           = "${zeroPkg}/lib/typst-packages/zero/0.3.2";
         };
       in rec {
         packages = {
@@ -42,7 +51,7 @@
               export XDG_CACHE_HOME="$PWD/.cache"
               export TEXMFVAR="$PWD/.cache/texmf-var"
 
-              # Use a local package path for @preview/rubber-article:0.4.2
+              # Use a local package path for Typst packages (@preview/...)
               export TYPST_CACHE_DIR="$PWD/.cache/typst"
               export TYPST_PACKAGE_PATH="${typstPackagePath}"
 
