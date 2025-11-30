@@ -29,15 +29,16 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
         "repo": "nixpkgs",
+        "rev": "5633bcff0c6162b9e4b5f1264264611e950c8ec7",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "typst-nixpkgs": "typst-nixpkgs"
       }
     },
     "systems": {
@@ -52,6 +53,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "typst-nixpkgs": {
+      "locked": {
+        "lastModified": 1764242076,
+        "narHash": "sha256-sKoIWfnijJ0+9e4wRvIgm/HgE27bzwQxcEmo2J/gNpI=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2fad6eac6077f03fe109c4d4eb171cf96791faa4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
         "type": "github"
       }
     }
