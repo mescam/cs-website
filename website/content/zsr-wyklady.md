@@ -109,17 +109,13 @@ Zapoznanie studentów z nowoczesnymi praktykami zarządzania systemami rozproszo
 - Zrozumienie wzorców deployment
 
 **Tematyka:**
-- Continuous Integration: automated testing, code quality, security scanning
-- Continuous Deployment vs Continuous Delivery
-- Jenkins vs GitHub Actions vs GitLab CI: porównanie platform
-- Pipeline as Code: Jenkinsfile, GitHub Workflows, GitLab CI YAML
-- Artifact management: container registries, package repositories
-- Feature flags i progressive delivery
-- Monitoring i observability w pipeline
+- DevOps vs Platform Engineering
+- Metryki DORA jako wskaźnik dojrzałości DevOps
+- Monorepozytoria i ich zastosowanie w mikrousługach
+- GitOps: push vs pull
+- Wdrożenia i wydania, różnice.
 
-**Analiza przypadków:**
-- Design pipeline CI/CD dla aplikacji e-commerce
-- Strategies for zero-downtime deployments
+[slajdy](/jwozniak/lectures/zsr-5.pdf)
 
 ### Sesja 6: Monitorowanie i obserwabilność systemów rozproszonych
 **Cele edukacyjne:**
