@@ -136,6 +136,8 @@ Zapoznanie studentów z nowoczesnymi praktykami zarządzania systemami rozproszo
 - Design monitoring strategy dla systemu e-commerce
 - Incident response i postmortem analysis
 
+[slajdy](/jwozniak/lectures/zsr-6.pdf)
+
 ### Sesja 7: Bezpieczeństwo i DevSecOps
 **Cele edukacyjne:**
 - Zrozumienie koncepcji "shift-left security"
