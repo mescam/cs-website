@@ -1,0 +1,243 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usetheme{Madrid}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,arrows}
+
+\definecolor{IBMBlue}{RGB}{0,113,197}
+\setbeamercolor{structure}{fg=IBMBlue}
+
+\author[J. Woźniak]{mgr inż. Jakub Woźniak}
+\institute[PUT]{Politechnika Poznańska\\Wydział Informatyki i Telekomunikacji}
+\date{}
+\title[Monitorowanie i Obserwowalność]{Monitorowanie i obserwowalność systemów rozproszonych}
+
+
+
+
+\setbeamertemplate{navigation symbols}{} % Ukrycie paska nawigacji
+\setbeamertemplate{headline}{} % Czysty nagłówek
+
+% --- Konfiguracja listingu (YAML) ---
+\definecolor{eclipseBlue}{RGB}{42,0.0,255}
+\definecolor{eclipseGreen}{RGB}{63,127,95}
+\definecolor{eclipsePurple}{RGB}{127,0,85}
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{darkgray}\bfseries,
+  basicstyle=\ttfamily\footnotesize,                                 
+  breaklines=true,
+  breakatwhitespace=false,
+  captionpos=b,
+  commentstyle=\color{eclipseGreen},
+  stringstyle=\color{eclipseBlue},
+  identifierstyle=\color{black},
+  showstringspaces=false,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  rulecolor=\color{gray!30},
+}
+
+\begin{document}
+
+% Slajd Tytułowy
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% Slajd 1: Wprowadzenie
+\begin{frame}{Wprowadzenie do ekosystemu obserwowalności}
+    \begin{itemize}
+        \item \textbf{Kontekst}: Ewolucja od monolitów do mikroserwisów i infrastruktury efemerycznej.
+        \item \textbf{Problem}: Tradycyjny monitoring nie radzi sobie z "nieznanymi niewiadomymi".
+        \item \textbf{Cele edukacyjne}:
+        \begin{itemize}
+            \item Zrozumienie różnicy: Monitoring vs. Observability.
+            \item Poznanie Trzech Filarów (Metrics, Logs, Traces).
+            \item Standardy (OpenTelemetry) i praktyki (SRE, Chaos Engineering).
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Slajd 2: Monitoring a Observability
+\begin{frame}{Monitoring a Observability – Ewolucja paradygmatu}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Monitoring (Działanie)}
+            \begin{itemize}
+                \item "Czy system działa?"
+                \item Znane niewiadome (Known Unknowns).
+                \item Reaktywny, oparty na progach.
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \textbf{Observability (Właściwość)}
+            \begin{itemize}
+                \item "Dlaczego to się dzieje?"
+                \item Nieznane niewiadome (Unknown Unknowns).
+                \item Proaktywne badanie interakcji.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+    \begin{block}{Definicja}
+        Observability to zdolność do wnioskowania o stanie wewnętrznym systemu na podstawie jego zewnętrznej telemetrii.
+    \end{block}
+\end{frame}
+
+% Slajd 3: Trzy Filary
+\begin{frame}{Trzy Filary Obserwowalności – Architektura danych}
+    \begin{itemize}
+        \item \textbf{Metryki (Metrics)}: Dane liczbowe w czasie (agregowalne). Służą do wykrywania trendów i alertowania.
+        \item \textbf{Logi (Logs)}: Niezmienne rekordy zdarzeń. Dostarczają detali o błędach (granularność).
+        \item \textbf{Ślady (Traces)}: Ścieżka żądania przez usługi. Lokalizacja wąskich gardeł latencji.
+    \end{itemize}
+    \begin{exampleblock}{Korelacja}
+        Kluczem jest powiązanie danych: TraceID w logach i kontekst w metrykach.
+    \end{exampleblock}
+\end{frame}
+
+% Slajd 4: Metryki - Golden Signals
+\begin{frame}{Metryki – Typy i Golden Signals}
+    \begin{itemize}
+        \item \textbf{Typy instrumentów (OpenTelemetry)}: Counter (licznik), Gauge (miernik), Histogram.
+        \item \textbf{The Four Golden Signals (Google SRE)}:
+        \begin{enumerate}
+            \item \textbf{Latency}: Czas obsługi żądania.
+            \item \textbf{Traffic}: Poziom popytu na system.
+            \item \textbf{Errors}: Częstotliwość błędów.
+            \item \textbf{Saturation}: Stopień wykorzystania zasobów.
+        \end{enumerate}
+    \end{itemize}
+    \textit{Uwaga: unikaj średniej, operuj na percentylach (p95, p99).}
+\end{frame}
+
+% Slajd 5: Prometheus Ecosystem
+\begin{frame}{Ekosystem Prometheus – Architektura Pull}
+    \begin{itemize}
+        \item \textbf{Model Pull}: Serwer pobiera (scrapes) dane z endpointów HTTP (/metrics).
+        \item \textbf{TSDB}: Lokalna baza szeregów czasowych zoptymalizowana pod zapis.
+        \item \textbf{Komponenty}:
+        \begin{itemize}
+            \item \textbf{Exporters}: Translatory dla MySQL, Node, itp.
+            \item \textbf{Pushgateway}: Dla zadań krótkożyjących.
+            \item \textbf{Service Discovery}: Automatyczne wykrywanie targetów w K8s.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Slajd 6: PromQL i AlertManager
+\begin{frame}{PromQL i AlertManager – Logika operacyjna}
+    \begin{itemize}
+        \item \textbf{PromQL}: Funkcyjny język zapytań (agregacja, predykcja).
+        \item \textbf{AlertManager}: Zarządzanie alertami z Prometheusa.
+        \begin{itemize}
+            \item \textbf{Grouping}: Łączenie alertów w jeden komunikat.
+            \item \textbf{Inhibition}: Wyciszanie alertów podrzędnych.
+            \item \textbf{Silencing}: Wyciszanie na czas prac konserwacyjnych.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Slajd 7: Logi ELK vs EFK
+\begin{frame}{Zarządzanie logami – Stos ELK vs. EFK}
+    \begin{itemize}
+        \item \textbf{Elasticsearch}: Baza NoSQL do wyszukiwania pełnotekstowego.
+        \item \textbf{Kibana}: Wizualizacja i dashboardy.[22, 23]
+        \item \textbf{Logstash (ELK)}: Potężny silnik ETL (JVM), duży narzut zasobów.
+        \item \textbf{Fluentd/Fluent Bit (EFK)}: Lekkie kolektory (CNCF), natywne dla K8s.
+    \end{itemize}
+    \textit{Fluent Bit jest zalecany jako agent brzegowy ze względu na minimalne zużycie RAM.]}
+\end{frame}
+
+% Slajd 8: Jaeger i Zipkin
+\begin{frame}{Distributed tracing – Jaeger i Zipkin}
+    \begin{itemize}
+        \item \textbf{Cel}: Śledzenie żądań między granicami serwisów.
+        \item \textbf{Zipkin}: Pionier (Twitter), prosty w konfiguracji (Java).
+        \item \textbf{Jaeger}: Nowoczesny standard (Uber/CNCF), wysoka skalowalność (Go).
+        \item \textbf{Pojęcia}:
+        \begin{itemize}
+            \item \textbf{Span}: Jednostka pracy.
+            \item \textbf{Context Propagation}: Przekazywanie nagłówków.
+            \item \textbf{Sampling}: Decyzja o zapisaniu śladu (np. 1\% ruchu).
+        \end{itemize}
+    \end{itemize}
+    \textit{Rachunki związane z obserwowalnością mogą łatwo przewyższyć koszt chmury}
+\end{frame}
+
+% Slajd 9: OpenTelemetry
+\begin{frame}{OpenTelemetry (OTel) – Unifikacja telemetrii}
+    \begin{itemize}
+        \item \textbf{Idea}: Jeden standard dla metryk, logów i śladów.
+        \item \textbf{OTel Collector}:
+        \begin{itemize}
+            \item \textit{Receivers}: OTLP, Jaeger, Prometheus.
+            \item \textit{Processors}: Filtrowanie, batching, PII redaction.
+            \item \textit{Exporters}: Wysyłka do wielu backendów naraz.
+        \end{itemize}
+    \end{itemize}
+    \textit{OTel rozwiązuje problem uzależnienia od dostawcy (Vendor Lock-in).}
+\end{frame}
+
+% Slajd 10: SRE Practices
+\begin{frame}{SRE practices – SLI, SLO i Error Budgets}
+    \begin{itemize}
+        \item \textbf{SLI}: $SLI = \frac{\text{Liczba poprawnych zdarzeń}}{\text{Suma zdarzeń}}$.
+        \item \textbf{SLO}: Cel (np. 99,9\% dostępności).
+        \item \textbf{Error Budget}: $100\% - SLO$.
+    \end{itemize}
+    \begin{block}{Zasada Error Budget}
+        Jeśli budżet błędów się wyczerpie, priorytetem staje się stabilność (wstrzymanie nowych funkcji).
+    \end{block}
+\end{frame}
+
+% Slajd 11: AIOps
+\begin{frame}{AIOps – Machine Learning w monitorowaniu}
+    \begin{itemize}
+        \item \textbf{Anomaly Detection}: Dynamiczne progi zamiast statycznych.
+        \item \textbf{Noise Reduction}: Grupowanie tysięcy alertów w jeden incydent.
+        \item \textbf{Predictive Analytics}: Przewidywanie awarii (np. zapełnienie dysku).
+        \item \textbf{Root Cause Analysis (RCA)}: Automatyczne wskazywanie winnego.
+    \end{itemize}
+\end{frame}
+
+% Slajd 12: Chaos Engineering
+\begin{frame}{Chaos Engineering – Testowanie niezawodności}
+    \begin{itemize}
+        \item \textbf{Steady State}: Definicja stanu normalnego.
+        \item \textbf{Hypothesis}: "Jeśli wyłączymy instancję bazy, system obsłuży ruch przez replikę".
+        \item \textbf{Minimalizacja Blast Radius}: Ograniczenie wpływu na użytkowników.
+        \item \textbf{Narzędzia}: Chaos Monkey, Gremlin, Litmus.
+    \end{itemize}
+\end{frame}
+
+% Slajd 13: Case Study E-commerce
+\begin{frame}{Design monitoring strategy dla systemu e-commerce}
+    \begin{itemize}
+        \item \textbf{Kluczowe procesy}: Checkout, Cart, Payment.
+        \item \textbf{Hierarchia monitoringu}:
+        \begin{enumerate}
+            \item Warstwa biznesowa: Sprzedaż na sekundę.
+            \item Warstwa aplikacji: Latencja p95 płatności (<300ms).
+            \item Warstwa infrastruktury: Zdrowie kontenerów K8s.
+        \end{enumerate}
+    \end{itemize}
+\end{frame}
+
+% Slajd 14: Incident Response i Postmortem
+\begin{frame}{Incident response i Postmortem analysis}
+    \begin{itemize}
+        \item \textbf{Incident Lifecycle}: Detection $\rightarrow$ Triage $\rightarrow$ Mitigation $\rightarrow$ Resolution.
+        \item \textbf{Blameless Postmortem}:
+        \begin{itemize}
+            \item Skupienie na systemie, nie na człowieku.
+            \item Cel: Wypracowanie Action Items zapobiegających nawrotom.
+            \item Timeline i Root Cause Analysis.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\end{document}
