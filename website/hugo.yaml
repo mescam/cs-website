@@ -11,8 +11,7 @@ params:
     Politechnika Poznańska
 
     **Informacje dla studentów**
-    Zajęcia z przedmiotu ZSR (wykład + laboratorium) dnia 19 stycznia 2026 *nie odbędą się* z powodu mojego wyjazdu.  
-    Kolokwium zaliczeniowe odbędzie się na wykładzie dnia 26 stycznia.
+    Wyniki kolokwium zaliczeniowego z 26 stycznia 2026 r. znajdziecie Państwo w zakładce [/zsr-wyniki](/jwozniak/zsr-wyniki).
 
     **Konsultacje**  
     na żądanie po wcześniejszym umówieniu mailowym  
@@ -35,6 +34,8 @@ params:
       url: /jwozniak/zsr-wyklady
     - name: "zsr lab"
       url: /jwozniak/zsr-lab
+    - name: "zsr wyniki"
+      url: /jwozniak/zsr-wyniki
     - name: "psr wykład"
       url: /jwozniak/psr-wyklady
     - name: "psr projekt"
