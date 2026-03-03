@@ -50,7 +50,7 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 * Komunikacja synchroniczna: REST, gRPC, GraphQL — kiedy co wybrać
 * Komunikacja asynchroniczna: message brokers (Kafka, RabbitMQ, NATS)
 * Wzorce: request-response, fire-and-forget, event notification
-* API Gateway — routing, rate limiting, autentykacja na brzegu
+* API Gateway — routing, rate limiting, uwierzytelnianie na brzegu
 * Backend for Frontend (BFF)
 * API versioning, schema evolution, backward/forward compatibility
 * Idempotencja operacji — klucze idempotentności, retry safety
