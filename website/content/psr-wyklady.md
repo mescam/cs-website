@@ -4,129 +4,145 @@ date = 2025-01-25T21:37:00+02:00
 draft = false
 +++
 
-Przedmiot przedstawia zasady projektowania i wdrażania nowoczesnych architektur rozproszonych, obejmujących rozwiązania monolityczne, mikroserwisowe i chmurowe. Obejmuje kluczowe zagadnienia skalowania, bezpieczeństwa, zarządzania danymi oraz przepływów komunikacji w środowiskach wieloserwerowych. Uwzględnione są strategie migracji do mikroserwisów, narzędzia konteneryzacji oraz integracja podejść PaaS i FaaS. Końcowe wykłady poruszają najnowsze trendy, takie jak serverless, multi-cloud czy edge computing, stanowiąc podsumowanie i wskazując perspektywy rozwoju w dziedzinie systemów rozproszonych.
+Przedmiot koncentruje się na **projektowaniu aplikacji rozproszonych i chmurowych** — na decyzjach architektonicznych, wzorcach komunikacji, zarządzaniu danymi i niezawodnością, które inżynier podejmuje _zanim_ system trafi do pipeline'u CI/CD. Każdy wykład łączy fundamenty (papery, modele) z praktyką (case study z przemysłu, blogi inżynierskie) i zawiera pytanie do dyskusji ze studentami.
 
 ### Informacje
 
-Semestr letni 2024/25  
+Semestr letni 2025/26  
+10 spotkań × 1.5h  
+
+Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
+
+### Literatura podstawowa
+
+1. M. Kleppmann — *Designing Data-Intensive Applications* (O'Reilly, 2017)
+2. S. Newman — *Building Microservices*, 2nd ed. (O'Reilly, 2021)
+3. C. Richardson — *Microservices Patterns* (Manning, 2018)
+4. A. Xu — *System Design Interview* Vol. 1 (2020) & Vol. 2 (2022)
 
 ### Plan wykładów
 
-#### Wykład 1: Wprowadzenie do Systemów Rozproszonych
+#### Wykład 1: Anatomia systemu rozproszonego — od wymagań do architektury
 
-* Definicja i przykłady – co oznacza „rozproszony”, zastosowania w praktyce.
-* Historia i ewolucja – od scentralizowanych architektur do mikroserwisów.
-* Kluczowe wyzwania – skalowanie, spójność danych, zarządzanie stanem.
-* Modele architektoniczne – przegląd typowych modeli (client-server, peer-to-peer, event-driven).
-* Zarys dalszych wykładów – wprowadzenie do tematyki migracji, chmury i serverless.
+* Rola architekta vs rola operatora — co znaczy „projektować" system rozproszony
+* Wymagania funkcjonalne vs niefunkcjonalne (reliability, scalability, maintainability)
+* Back-of-the-envelope estimation — szacowanie obciążenia, przepustowości, storage
+* Przegląd modeli architektonicznych: client-server, peer-to-peer, event-driven, hybrid
+* SLA / SLO / SLI — definiowanie kontraktu niezawodności
+* Skalowanie: pionowe vs poziome, stateless vs stateful
+* ☁️ Estymacja kosztów chmurowych (koszt/request, koszt/GB), managed services jako sposób na skalowanie
 
-#### Wykład 2: Komponenty i Architektura Systemów Rozproszonych
+**Case study:** „Scale From Zero To Millions Of Users" (A. Xu, rozdz. 1)
 
-* Warstwy systemu – prezentacji, logiki biznesowej, danych.
-* Wzorce komunikacji – synchroniczne (HTTP/REST, gRPC) i asynchroniczne (kolejki, publish/subscribe).
-* Service registry i discovery – podstawowe mechanizmy.
-* Kluczowe pojęcia – opóźnienie, przepustowość, high availability.
-* Studium przypadku – przykładowy system rozproszony w organizacji.
+#### Wykład 2: Style architektoniczne — monolit, mikroserwisy, modularny monolit
 
-[slajdy](/jwozniak/lectures/psr-2.pdf)
+* Monolit — kiedy wystarczy (Majestic Monolith — DHH/Basecamp)
+* Modularny monolit — granice modułów bez kosztów sieciowych (Shopify)
+* Mikroserwisy — korzyści, koszty, kiedy wydzielać
+* Domain-Driven Design — Bounded Contexts jako linie podziału serwisów
+* Distributed Monolith — anti-pattern
+* ☁️ Cloud-native vs cloud-hosted — 12-Factor App, kontenery i PaaS (Cloud Run, App Service, ECS)
 
-#### Wykład 3: Architektury monolityczne i mikroserwisowe
+**Case study:** Segment.io — od monolitu do ~100 mikroserwisów i z powrotem
 
-* Monolit – definicja, zalety i wady.
-* Mikroserwisy – cechy, korzyści i wyzwania.
-* Porównanie – kiedy wybrać monolit, a kiedy mikroserwisy.
-* Domain Driven Design – granice kontekstów, bounded contexts.
-* Pułapki mikroserwisów – transakcje, spójność danych, testowanie.
+#### Wykład 3: Komunikacja w systemach rozproszonych
 
-[slajdy](/jwozniak/lectures/psr-3.pdf)
+* Komunikacja synchroniczna: REST, gRPC, GraphQL — kiedy co wybrać
+* Komunikacja asynchroniczna: message brokers (Kafka, RabbitMQ, NATS)
+* Wzorce: request-response, fire-and-forget, event notification
+* API Gateway — routing, rate limiting, autentykacja na brzegu
+* Backend for Frontend (BFF)
+* API versioning, schema evolution, backward/forward compatibility
+* Idempotencja operacji — klucze idempotentności, retry safety
+* ☁️ Managed brokers (SQS/SNS, Google Pub/Sub, Azure Service Bus), managed API Gateway
 
-#### Wykład 4: Planowanie i zarządzanie obciążeniem w systemach rozproszonych
+**Case study:** „Design a Chat System" (A. Xu, rozdz. 12) — polling, long-polling, WebSocket
 
-* Modelowanie i prognozowanie obciążenia w systemach rozproszonych na podstawie danych historycznych i analizy trendów.
-* Identyfikacja wąskich gardeł oraz wizualizacja zależności między komponentami systemu.
-* Przeprowadzanie testów wydajnościowych i przygotowanie systemu na szczyty, bursty oraz trendy sezonowe.
-* Zastosowanie kolejek, load balancerów i architektur event-driven do efektywnego zarządzania obciążeniem.
-* Strategie skalowania, replikacji i partycjonowania danych w środowiskach chmurowych.
+#### Wykład 4: Wzorce architektoniczne — Event-Driven Architecture, CQRS, Event Sourcing
 
-[slajdy](/jwozniak/lectures/psr-4.pdf)
+* Event-Driven Architecture — decoupling producentów i konsumentów
+* Event notification vs Event-carried state transfer vs Event sourcing
+* CQRS — oddzielne modele odczytu i zapisu
+* Event Sourcing — log zdarzeń jako źródło prawdy, snapshoty
+* Orkiestracja vs Choreografia — Saga Orchestrator vs autonomiczne serwisy
+* Wzorzec Sagi — choreograficzna vs orkiestracyjna, kompensacje
+* ☁️ Managed event services (EventBridge, Cloud Events), managed workflow (AWS Step Functions, GCP Workflows)
 
+**Case study:** System zamówień — rezerwacja stocku → płatność → wysyłka. 2PC vs saga.
 
-#### Wykład 6: Wzorce Architektoniczne w Systemach Rozproszonych
+#### Wykład 5: Dane w systemach rozproszonych — strategie, replikacja, partycjonowanie
 
-* Monolit vs. mikroserwisy – porównanie.
-* Architektura zdarzeniowa – event-driven, CQRS, event sourcing.
-* Wzorzec Sagi – zarządzanie transakcjami rozproszonymi.
-* Orkiestracja vs. choreografia – różnice w projektowaniu przepływów.
-* Wzorce integracji – Strangler Pattern, Anti-Corruption Layer.
+* Database per Service — konsekwencje projektowe
+* Wybór bazy danych pod przypadek użycia (PostgreSQL, MongoDB, Cassandra, Redis, DynamoDB)
+* Replikacja — leader-follower, multi-leader, leaderless (quorum)
+* Partycjonowanie — range-based, hash-based, consistent hashing
+* Spójność — ACID vs BASE, eventual consistency, CAP/PACELC
+* Transakcje rozproszone — 2PC, Saga
+* Change Data Capture (CDC) — Debezium, Kafka Connect
+* ☁️ Managed databases (RDS, Cloud SQL, DynamoDB, CosmosDB), managed replikacja i sharding
 
-#### Wykład 7: Monolity, Mikroserwisy i Modułowe Monolity
+**Case study:** „Design a Key-Value Store" (A. Xu, rozdz. 6) — consistent hashing, quorum, vector clocks
 
-* Klasyczny monolit – zalety i wyzwania.
-* Modułowy monolit – główne założenia.
-* Mikroserwisy – cechy, korzyści i trudności.
-* Współpraca usług – synchronicznie (REST/gRPC) i asynchronicznie (eventy/kolejki).
-* Narzędzia wdrożeniowe – konteneryzacja, orkiestracja.
+#### Wykład 6: Odporność i niezawodność — projektowanie na awarie
 
-#### Wykład 8: Strategie Migracji z Monolitu do Mikroserwisów
+* Fallacies of Distributed Computing
+* Design for Failure — awaria jako norma
+* Wzorce: Circuit Breaker, Bulkhead, Retry with backoff + jitter, Timeout, Dead Letter Queue, Graceful degradation
+* Rate limiting — Token Bucket, Sliding Window, rozproszony rate limiter
+* Load balancing — algorytmy, health checks
+* Autoskalowanie — HPA, VPA, KEDA
+* Chaos Engineering — Netflix Simian Army, GameDay
+* ☁️ Cloud resilience (AZ/Region failover, global load balancer), AWS Fault Injection Simulator
 
-* Diagnoza istniejącego systemu – identyfikacja granic kontekstów.
-* Podejście iteracyjne – wyodrębnianie serwisów krok po kroku.
-* Techniki migracji – Strangler Fig, re-platforming, refactoring.
-* Obszary ryzyka – spójność danych, zmiany w komunikacji, zarządzanie konfiguracją.
-* Case study – przykładowy plan migracji w średniej wielkości organizacji.
+**Case study:** „Design a Rate Limiter" (A. Xu, rozdz. 4) — Token Bucket vs Sliding Window, Redis
 
-#### Wykład 9: Orkiestracja i Choreografia
+#### Wykład 7: Migracja i ewolucja architektury
 
-* Zalety systemów orkiestrujących – koordynacja przepływu zdarzeń.
-* Choreografia – autonomiczne serwisy współpracujące przez zdarzenia.
-* Kiedy wybrać orkiestrację, a kiedy choreografię.
-* Narzędzia – BPMN, Camunda, Zeebe, platformy event-driven (Kafka).
-* Projektowanie przepływów – praktyczne przykłady.
+* Diagnoza istniejącego systemu — identyfikacja bounded contexts w monolicie
+* Strangler Fig Pattern, Branch by Abstraction, Anti-Corruption Layer, Parallel Run
+* Zarządzanie danymi w trakcie migracji — dual writes, CDC
+* Feature flags — stopniowe wdrażanie zmian
+* Migracja chmurowa — 6 R-ów migracji do chmury (AWS)
 
-#### Wykład 10: Bazy Danych w Systemach Rozproszonych
+**Case study:** Monzo Bank — od monolitu do 2000+ mikroserwisów
 
-* Przegląd typów baz danych – relacyjne, NoSQL, NewSQL.
-* Strategie rozproszenia – partitioning, sharding, replikacja.
-* Spójność – ACID vs. BASE, eventual consistency.
-* Transakcje rozproszone – 2PC, Sagi.
-* Przykłady – Cassandra, MongoDB, CockroachDB.
+#### Wykład 8: Przetwarzanie danych w skali — batch, streaming, pipelines
 
-#### Wykład 11: Bezpieczeństwo i Autoryzacja
+* Batch processing — MapReduce, Apache Spark, dbt
+* Stream processing — Kafka Streams, Apache Flink
+* Kafka jako centralny szkielet danych
+* Lambda vs Kappa Architecture
+* Change Data Capture w praktyce — Debezium + Kafka Connect
+* Real-time analytics — ClickHouse, Apache Druid, Apache Pinot
+* ETL vs ELT
+* ☁️ Managed streaming (Kinesis, Dataflow), managed OLAP (BigQuery, Redshift), serverless ETL (Glue)
 
-* Podstawy bezpieczeństwa – szyfrowanie, TLS/SSL, API security.
-* Uwierzytelnienie i autoryzacja – OAuth 2.0, JWT, OpenID Connect.
-* IAM, SSO – zarządzanie tożsamością.
-* Dostęp i uprawnienia – RBAC, ABAC.
-* Monitorowanie incydentów – narzędzia WAF, SIEM.
+**Case study:** „Design a News Feed System" (A. Xu, rozdz. 11) — fan-out on write vs read
 
-#### Wykład 12: Techniki i Narzędzia do Projektowania i Wdrażania
+#### Wykład 9: Serverless, FaaS i architektura na brzegu
 
-* Konteneryzacja – Docker, Podman.
-* Orkiestracja – Kubernetes, Docker Swarm.
-* Infrastruktura jako Kod (IaC) – Terraform, Ansible.
-* Architektura Cloud-native – 12-factor app.
-* CI/CD (zarys) – narzędzia (Jenkins, GitLab CI, GitHub Actions).
+* Koncepcja serverless — „bez zarządzania serwerem", nie „bez serwera"
+* FaaS — AWS Lambda, Azure Functions, Google Cloud Functions, cold starts
+* Event-driven serverless — SQS, EventBridge, API Gateway
+* Serverless poza FaaS — DynamoDB, Aurora Serverless, Fargate, Cloud Run
+* Ograniczenia — vendor lock-in, debugowanie, koszty przy stałym ruchu
+* Edge computing — Cloudflare Workers, Lambda@Edge, Vercel Edge Functions
+* Multi-cloud i hybrid-cloud
+* WebAssembly na serwerze — Spin, Fermyon
+* ☁️ Porównanie kosztów: Lambda vs Fargate vs ECS vs EC2
 
-#### Wykład 13: Wprowadzenie do Chmur Publicznych i Modeli Usług
+**Case study:** „Design Google Drive" (A. Xu, rozdz. 15) — Lambda + S3 + SQS + DynamoDB
 
-* Rodzaje chmur – publiczne, prywatne, hybrydowe.
-* Modele usług – IaaS, PaaS, SaaS, FaaS.
-* Dostawcy chmurowi – AWS, Azure, GCP.
-* Podstawowe usługi w chmurze – compute, storage, networking.
-* Aspekty kosztowe – pay-per-use, elastyczne skalowanie.
+#### Wykład 10: Obserwowalność, bezpieczeństwo i przyszłość systemów rozproszonych
 
-#### Wykład 14: Serverless, PaaS i FaaS
+* Projektowanie pod obserwowalność — structured logging, correlation IDs, OpenTelemetry
+* Distributed tracing — Jaeger, W3C Trace Context
+* Metryki biznesowe vs techniczne — RED method (Rate, Errors, Duration)
+* Zero Trust Architecture
+* Autentykacja/autoryzacja w mikroserwisach — OAuth 2.0, JWT, mTLS, service mesh
+* Zarządzanie sekretami — Vault, AWS Secrets Manager
+* AI/ML w systemach rozproszonych — serving models at scale
+* Platform Engineering — Backstage, Internal Developer Platforms
+* ☁️ AWS Well-Architected Framework, GCP Architecture Center, FinOps
 
-* Koncepcja serverless – zalety i ograniczenia.
-* Platform as a Service – Heroku, AWS Elastic Beanstalk.
-* Function as a Service – AWS Lambda, Azure Functions, Google Cloud Functions.
-* Architektura bezserwerowa – event-driven, stateless.
-* Praktyczne przykłady – koszty, monitoring, cold starts.
-
-##### Wykład 15: Trendy, Perspektywy i Podsumowanie
-
-* Aktualne trendy – edge computing, multi-cloud, service mesh.
-* Nowości – WebAssembly (wasm), rozproszone przetwarzanie AI/ML.
-* Zarys rozwoju zawodowego – rola architekta systemów rozproszonych.
-* Podsumowanie przedmiotu – kluczowe wnioski, powtórka.
-* Sesja pytań i odpowiedzi – dyskusja końcowa.
+**Case study:** „Design YouTube" (A. Xu, rozdz. 14) — pełna analiza end-to-end łącząca wszystkie wykłady
