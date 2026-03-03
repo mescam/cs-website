@@ -139,7 +139,7 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 * Distributed tracing — Jaeger, W3C Trace Context
 * Metryki biznesowe vs techniczne — RED method (Rate, Errors, Duration)
 * Zero Trust Architecture
-* Autentykacja/autoryzacja w mikroserwisach — OAuth 2.0, JWT, mTLS, service mesh
+* Uwierzytelnianie/autoryzacja w mikroserwisach — OAuth 2.0, JWT, mTLS, service mesh
 * Zarządzanie sekretami — Vault, AWS Secrets Manager
 * AI/ML w systemach rozproszonych — serving models at scale
 * Platform Engineering — Backstage, Internal Developer Platforms
