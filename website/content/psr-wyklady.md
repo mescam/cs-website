@@ -34,6 +34,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 **Case study:** „Scale From Zero To Millions Of Users" (A. Xu, rozdz. 1)
 
+[slajdy](/jwozniak/lectures/psr-w01.pdf)
+
 #### Wykład 2: Style architektoniczne — monolit, mikroserwisy, modularny monolit
 
 * Monolit — kiedy wystarczy (Majestic Monolith — DHH/Basecamp)
