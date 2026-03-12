@@ -47,6 +47,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 **Case study:** Segment.io — od monolitu do ~100 mikroserwisów i z powrotem
 
+[slajdy](/jwozniak/lectures/psr-w02.pdf)
+
 #### Wykład 3: Komunikacja w systemach rozproszonych
 
 * Komunikacja synchroniczna: REST, gRPC, GraphQL — kiedy co wybrać
