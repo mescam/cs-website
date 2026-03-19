@@ -62,6 +62,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 **Case study:** „Design a Chat System" (A. Xu, rozdz. 12) — polling, long-polling, WebSocket
 
+[slajdy](/jwozniak/lectures/psr-w03.pdf)
+
 #### Wykład 4: Wzorce architektoniczne — Event-Driven Architecture, CQRS, Event Sourcing
 
 * Event-Driven Architecture — decoupling producentów i konsumentów
