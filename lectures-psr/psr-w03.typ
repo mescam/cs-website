@@ -204,15 +204,15 @@
     #defblock[Request-Response][
       Klient wysyła, czeka na odpowiedź.
       - REST, gRPC (unary)
-      - ✅ Prosty model
-      - ❌ Tight coupling
+      - + Prosty model
+      - − Tight coupling
     ]
   ][
     #defblock[Fire-and-Forget][
       Producent wysyła, nie czeka.
       - Kolejka, zdarzenie
-      - ✅ Loose coupling
-      - ❌ Brak potwierdzenia
+      - + Loose coupling
+      - − Brak potwierdzenia
     ]
   ]
 ]
@@ -223,15 +223,15 @@
     #defblock[Request-Reply via Queue][
       Żądanie i odpowiedź przez kolejki.
       - Correlation ID łączy parę
-      - ✅ Async + odpowiedź
-      - ❌ Złożoność
+      - + Async + odpowiedź
+      - − Złożoność
     ]
   ][
     #defblock[Event Notification][
       „Coś się stało" — konsumenci decydują.
       - `OrderPlaced`, `PaymentDone`
-      - ✅ Maks. decoupling
-      - ❌ Trudne śledzenie
+      - + Maks. decoupling
+      - − Trudne śledzenie
     ]
   ]
 ]
@@ -353,11 +353,11 @@
         text(fill: white, weight: "bold")[Sync],
         text(fill: white, weight: "bold")[Async],
       ),
-      [Użytkownik czeka na odpowiedź], [✅], [❌],
-      [Operacja trwa > 1s],            [❌], [✅],
-      [Wielu odbiorców zdarzenia],     [❌], [✅],
-      [Proste CRUD],                   [✅], [❌],
-      [Event-driven workflow],         [❌], [✅],
+      [Użytkownik czeka na odpowiedź], [Tak], [Nie],
+      [Operacja trwa > 1s],            [Nie], [Tak],
+      [Wielu odbiorców zdarzenia],     [Nie], [Tak],
+      [Proste CRUD],                   [Tak], [Nie],
+      [Event-driven workflow],         [Nie], [Tak],
     )
   ]
 ]
