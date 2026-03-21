@@ -6,8 +6,6 @@ draft = false
 
 ### Informacje
 
-> ⚠️ **Uwaga:** Zajęcia w dniu **26 marca 2026 (czwartek)** — wykład i projekt — **nie odbędą się** z powodu nieobecności prowadzącego.
-
 ### Zaliczenie
 
 Zaliczenie polega na wykonaniu projektu związanego z tematyką przedmiotu. Projekt może być wykonany w grupie do 3 osób. Termin oddania projektu to ostatnie zajęcia w semestrze.
