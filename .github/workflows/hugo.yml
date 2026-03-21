@@ -14,6 +14,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write
 
   # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
   # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
@@ -33,6 +34,11 @@ jobs:
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-labs-${{ hashFiles('./labs/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-labs-
       - name: Build labs
         run: nix build
         working-directory: ./labs
@@ -51,6 +57,11 @@ jobs:
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-lectures-src-${{ hashFiles('./lectures-src/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-lectures-src-
       - name: Build lectures
         run: nix build
         working-directory: ./lectures-src
@@ -69,6 +80,11 @@ jobs:
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-website-${{ hashFiles('./website/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-website-
       - name: Build labs
         run: nix build
         working-directory: ./website
@@ -87,6 +103,11 @@ jobs:
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-lectures-psr-${{ hashFiles('./lectures-psr/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-lectures-psr-
       - name: Build PSR lectures
         run: nix build
         working-directory: ./lectures-psr

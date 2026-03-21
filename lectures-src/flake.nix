@@ -11,9 +11,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         tex = pkgs.texlive.combine {
           inherit (pkgs.texlive)
-            scheme-full latex-bin latexmk curve fontawesome5 silence
-            simpleicons relsize comment biblatex csquotes cochineal xstring
-            cabin inconsolata upquote xurl;
+            scheme-medium latex-bin latexmk;
         };
       in rec {
         packages = {
