@@ -124,3 +124,44 @@ This is an academic website for **mgr inż. Jakub Woźniak** from the Institute 
 - Focus on practical, hands-on learning with modern DevOps and cloud technologies
 - Strong emphasis on industry-relevant tools (Docker, Kubernetes, Terraform, Azure)
 - Assessment includes both theoretical knowledge and practical project work
+
+## Typst Slides (lectures-psr/)
+
+### Emoji Handling (CRITICAL)
+**NEVER paste raw Unicode emoji into Typst files.** Arial and most fonts do not include emoji glyphs, causing rendering failures.
+
+Use the Typst `emoji` module instead (see https://typst.app/docs/reference/symbols/emoji/):
+
+| Want | Wrong (raw Unicode) | Correct (Typst) |
+|------|---------------------|------------------|
+| ✅ | `✅` | `#emoji.checkmark.box` |
+| ❌ | `❌` | `#emoji.crossmark` |
+| ☁️ | `☁️` | `#emoji.cloud` |
+| ⚠️ | `⚠️` | `#emoji.warning` |
+| 🔥 | `🔥` | `#emoji.fire` |
+
+For frequently used emoji, import them at the top of the file:
+```typst
+#import emoji: checkmark, crossmark, cloud
+```
+
+### Theme and Style
+- Theme file: `psr-theme.typ` (Politechnika Poznańska colors)
+- Slide framework: `typslides` v1.3.2
+- Block types: `#defblock` (blue), `#exblock` (green), `#alertblock` (orange)
+- Tables use `ibm-blue-80`, `ibm-blue-10`, `ibm-gray-30` color aliases
+- Source attribution: `#src[...]`
+- Highlight: `#hl[...]`
+- Small text: `#sm[...]`
+
+### Cloud Context Pattern (☁️)
+Each lecture includes a cloud/public-cloud section following this pattern:
+1. Add `☁️` item in Agenda slide
+2. Add 2-3 dedicated slides with managed/cloud equivalents of the lecture topic
+3. Add cloud takeaway in "Kluczowe wnioski" slide
+4. Add cloud-related sources in "Źródła i lektury" slide
+
+### Build
+- Nix flake in `lectures-psr/flake.nix`
+- CI: GitHub Actions job `build-lectures-psr` in `.github/workflows/hugo.yml`
+- Output: PDF per `psr-w*.typ` file, deployed to `/jwozniak/lectures/`
