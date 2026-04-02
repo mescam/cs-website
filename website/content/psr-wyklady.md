@@ -76,6 +76,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 **Case study:** System zamówień — rezerwacja stocku → płatność → wysyłka. 2PC vs saga.
 
+[slajdy](/jwozniak/lectures/psr-w04.pdf)
+
 #### Wykład 5: Dane w systemach rozproszonych — strategie, replikacja, partycjonowanie
 
 * Database per Service — konsekwencje projektowe
