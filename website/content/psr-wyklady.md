@@ -91,6 +91,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 **Case study:** „Design a Key-Value Store" (A. Xu, rozdz. 6) — consistent hashing, quorum, vector clocks
 
+[slajdy](/jwozniak/lectures/psr-w05.pdf)
+
 #### Wykład 6: Odporność i niezawodność — projektowanie na awarie
 
 * Fallacies of Distributed Computing
