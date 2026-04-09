@@ -225,7 +225,7 @@
     #alertblock[BASE][
       *Basically Available* — system odpowiada (może stare dane) \
       *Soft state* — stan może być niespójny tymczasowo \
-      *Eventually consistent* — po czasie repliki się zsynchronizują
+      *Eventual consistency* — po czasie repliki się zsynchronizują (spójność ostateczna)
     ]
   ]
 
@@ -348,7 +348,7 @@
   ]
 
   Artykuł Dynamo (2007) opisuje dokładnie te decyzje: \
-  Amazon wybrał *eventual consistency jako default* — „always-writable" ważniejsze niż strong consistency dla koszyka zakupowego.
+  Amazon wybrał *spójność ostateczną jako domyślną* — „always-writable" ważniejsze niż silna spójność dla koszyka zakupowego.
 
   #src[DeCandia et al. — „Dynamo" (SOSP 2007) · allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf]
 ]
@@ -393,7 +393,7 @@
         text(fill: white, weight: "bold")[Kluczowa cecha],
       ),
       [*DynamoDB*],     [Klucz-wartość / dokument],    [Single-digit ms, global tables, on-demand scaling],
-      [*Cosmos DB*],    [Multi-model (dokument, graf)], [5 poziomów spójności (od strong do eventual)],
+      [*Cosmos DB*],    [Multi-model (dokument, graf)], [5 poziomów spójności (od silnej do ewentualnej)],
       [*Spanner*],      [Relacyjna, globalnie spójna],  [TrueTime: external consistency + global sharding],
       [*CockroachDB*],  [Distributed SQL (PostgreSQL)], [Survives AZ/region failure, serializable default],
       [*PlanetScale*],  [MySQL (Vitess)],               [Schema branching jak Git, zero-downtime migrations],
