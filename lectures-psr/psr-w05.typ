@@ -153,7 +153,7 @@
   ]
 
   #alertblock[Quorum nie gwarantuje linearizability!][
-    Sloppy quorum (hinted handoff), network partitions, concurrent writes — nawet z W+R>N możliwe odczytanie starych danych. DynamoDB papier opisuje to szczegółowo.
+    Sloppy quorum (hinted handoff), network partitions, concurrent writes — nawet z W+R>N możliwe odczytanie starych danych. Artykuł Dynamo opisuje to szczegółowo.
   ]
 
   #src[Kleppmann — DDIA, rozdz. 5: „Quorums for reading and writing"]
@@ -225,7 +225,7 @@
     #alertblock[BASE][
       *Basically Available* — system odpowiada (może stare dane) \
       *Soft state* — stan może być niespójny tymczasowo \
-      *Eventually consistent* — po czasie repliki się zsynchronizują
+      *Eventual consistency* — po czasie repliki się zsynchronizują (spójność ostateczna)
     ]
   ]
 
@@ -325,7 +325,7 @@
   ]
 
   Typowe zastosowania:
-  - *Materialized views* między serwisami — serwis zamówień emituje eventy, serwis analityki buduje dashboardy
+  - *Materialized views* między serwisami — serwis zamówień emituje zdarzenia, serwis analityki buduje dashboardy
   - *Cache invalidation* — zmiana w DB → usunięcie z Redis
   - *Search index sync* — zmiana w DB → update Elasticsearch
   - *Migracja danych* — streaming z legacy DB do nowego systemu
@@ -342,13 +342,13 @@
   #defblock[Od hash mapy do rozproszonego systemu][
     - *Consistent hashing* — dystrybucja kluczy na klaster
     - *Quorum* (W, R, N) — kompromis spójność vs dostępność
-    - *Vector clocks* — wykrywanie confliktów w leaderless replication
+    - *Vector clocks* — wykrywanie konfliktów w leaderless replication
     - *Gossip protocol* — propagacja membership i failure detection
     - *Merkle trees* — synchronizacja danych między replikami
   ]
 
-  DynamoDB papier (2007) opisuje dokładnie te decyzje: \
-  Amazon wybrał *eventual consistency jako default* — „always-writable" ważniejsze niż strong consistency dla koszyka zakupowego.
+  Artykuł Dynamo (2007) opisuje dokładnie te decyzje: \
+  Amazon wybrał *spójność ostateczną jako domyślną* — „always-writable" ważniejsze niż silna spójność dla koszyka zakupowego.
 
   #src[DeCandia et al. — „Dynamo" (SOSP 2007) · allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf]
 ]
@@ -373,7 +373,7 @@
       [*AWS RDS*],       [Single-AZ lub Multi-AZ failover],        [6 silników, failover < 60s],
       [*AWS Aurora*],    [6-krotna replikacja w 3 AZ, log-based], [Do 15 read replik, 5x throughput PostgreSQL],
       [*Cloud SQL*],     [Managed MySQL/PostgreSQL na GCP],        [Automatyczne backupy, repliki cross-region],
-      [*AlloyDB*],       [PostgreSQL-compatible, columnar engine], [4x szybszy niż std. PostgreSQL (Google claim)],
+      [*AlloyDB*],       [PostgreSQL-compatible, columnar engine], [4x szybszy niż std. PostgreSQL (wg. Google)],
       [*Azure SQL DB*],  [Managed SQL Server],                    [Hyperscale tier, auto-tuning],
     )]
   ]
@@ -393,7 +393,7 @@
         text(fill: white, weight: "bold")[Kluczowa cecha],
       ),
       [*DynamoDB*],     [Klucz-wartość / dokument],    [Single-digit ms, global tables, on-demand scaling],
-      [*Cosmos DB*],    [Multi-model (dokument, graf)], [5 poziomów spójności (od strong do eventual)],
+      [*Cosmos DB*],    [Multi-model (dokument, graf)], [5 poziomów spójności (od silnej do ostatecznej)],
       [*Spanner*],      [Relacyjna, globalnie spójna],  [TrueTime: external consistency + global sharding],
       [*CockroachDB*],  [Distributed SQL (PostgreSQL)], [Survives AZ/region failure, serializable default],
       [*PlanetScale*],  [MySQL (Vitess)],               [Schema branching jak Git, zero-downtime migrations],
