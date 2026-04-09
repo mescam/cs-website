@@ -119,7 +119,7 @@
   - *Asynchroniczna*: leader commituje natychmiast — ryzyko utraty danych przy awarii leadera
   - *Semi-synchroniczna* (PostgreSQL): 1 follower synchroniczny, reszta async — kompromis
 
-  Problemy: *failover* — kto zostaje nowym leaderem? Split-brain jeśli stary leader wraca.
+  Problemy: *failover* — kto zostaje nowym leaderem? Split-brain jeśli poprzedni leader wraca.
 ]
 
 #slide(title: [Multi-Leader i Leaderless])[
@@ -153,7 +153,7 @@
   ]
 
   #alertblock[Quorum nie gwarantuje linearizability!][
-    Sloppy quorum (hinted handoff), network partitions, concurrent writes — nawet z W+R>N możliwe odczytanie starych danych. Artykuł Dynamo opisuje to szczegółowo.
+    Sloppy quorum (hinted handoff), network partitions, concurrent writes — nawet z W+R>N możliwe odczytanie starych danych. Wicej w "Dynamo: Amazon..."
   ]
 
   #src[Kleppmann — DDIA, rozdz. 5: „Quorums for reading and writing"]
@@ -171,7 +171,7 @@
 
   Dwa cele:
   - *Skalowalność zapisu* — rozpraszamy write load
-  - *Skalowalność danych* — terabajty rozłożone na klaster
+  - *Skalowalność danych* — dane rozłożone na klaster
 
   Klucz partycjonowania (*partition key*) determinuje, na który węzeł trafi rekord.
 ]
@@ -182,14 +182,14 @@
     #defblock[Range-based][
       Klucze posortowane, zakres per partycja.
       - + Efektywne range scany
-      - − *Hot spots* — np. klucz = data, dziś = cały ruch na jednej partycji
+      - *Hot spots* — np. klucz = data, dziś = cały ruch na jednej partycji
       - Np. HBase, BigTable
     ]
   ][
     #defblock[Hash-based][
       Klucz → hash → partycja.
       - + Równomierny rozkład
-      - − Brak range scanów (hash niszczy kolejność)
+      - Brak range scanów (hash niszczy kolejność)
       - Np. Cassandra (z opcją compound key)
     ]
   ]
@@ -217,19 +217,19 @@
   #cols[
     #defblock[ACID][
       *Atomicity* — all or nothing \
-      *Consistency* — invarianty zachowane \
+      *Consistency* — niezmienniki zachowane \
       *Isolation* — transakcje nie widzą siebie nawzajem \
       *Durability* — zapisane = trwałe
     ]
   ][
     #alertblock[BASE][
-      *Basically Available* — system odpowiada (może stare dane) \
+      *Basically Available* — system odpowiada (możliwe stare dane) \
       *Soft state* — stan może być niespójny tymczasowo \
       *Eventual consistency* — po czasie repliki się zsynchronizują (spójność ostateczna)
     ]
   ]
 
-  ACID = gwarancja dla jednej bazy. W systemie rozproszonym (wiele baz) → BASE + sagi.
+  ACID = gwarancja dla jednej bazy. W systemie rozproszonym (wiele baz) → BASE + Saga.
 ]
 
 #slide(title: [CAP Theorem (Brewer, 2000)])[
@@ -244,7 +244,7 @@
     - CAP nie mówi „wybierz 2 z 3" — *partycje się zdarzają*, więc wybór to C vs A _podczas partycji_
     - Kiedy sieć działa normalnie — możesz mieć i C, i A
     - CP: odrzuć zapisy/odczyty przy partycji (np. HBase, Spanner)
-    - AP: odpowiadaj, ale dane mogą być stale (np. Cassandra, DynamoDB default)
+    - AP: odpowiadaj, ale dane mogą być nieaktualne (np. Cassandra, DynamoDB default)
   ]
 
   #src[E. Brewer — „CAP Twelve Years Later: How the 'Rules' Have Changed" (2012)]
@@ -347,8 +347,7 @@
     - *Merkle trees* — synchronizacja danych między replikami
   ]
 
-  Artykuł Dynamo (2007) opisuje dokładnie te decyzje: \
-  Amazon wybrał *spójność ostateczną jako domyślną* — „always-writable" ważniejsze niż silna spójność dla koszyka zakupowego.
+  Amazon wybrał *spójność ostateczną jako domyślną* — „always-writable" ważniejsze niż silna spójność.
 
   #src[DeCandia et al. — „Dynamo" (SOSP 2007) · allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf]
 ]
