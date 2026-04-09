@@ -393,7 +393,7 @@
         text(fill: white, weight: "bold")[Kluczowa cecha],
       ),
       [*DynamoDB*],     [Klucz-wartość / dokument],    [Single-digit ms, global tables, on-demand scaling],
-      [*Cosmos DB*],    [Multi-model (dokument, graf)], [5 poziomów spójności (od silnej do ewentualnej)],
+      [*Cosmos DB*],    [Multi-model (dokument, graf)], [5 poziomów spójności (od silnej do ostatecznej)],
       [*Spanner*],      [Relacyjna, globalnie spójna],  [TrueTime: external consistency + global sharding],
       [*CockroachDB*],  [Distributed SQL (PostgreSQL)], [Survives AZ/region failure, serializable default],
       [*PlanetScale*],  [MySQL (Vitess)],               [Schema branching jak Git, zero-downtime migrations],
