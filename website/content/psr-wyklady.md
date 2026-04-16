@@ -106,6 +106,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 **Case study:** „Design a Rate Limiter" (A. Xu, rozdz. 4) — Token Bucket vs Sliding Window, Redis
 
+[slajdy](/jwozniak/lectures/psr-w06.pdf)
+
 #### Wykład 7: Migracja i ewolucja architektury
 
 * Diagnoza istniejącego systemu — identyfikacja bounded contexts w monolicie
