@@ -110,21 +110,23 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 #### Wykład 7: Migracja i ewolucja architektury
 
-* Diagnoza istniejącego systemu — identyfikacja bounded contexts w monolicie
-* Strangler Fig Pattern, Branch by Abstraction, Anti-Corruption Layer, Parallel Run
-* Zarządzanie danymi w trakcie migracji — dual writes, CDC
+* Diagnoza istniejącego systemu — identyfikacja bounded contexts w monolicie (nawiązanie do wykładu 2)
+* Strangler Fig Pattern, Branch by Abstraction, Anti-Corruption Layer jako wzorzec migracyjny (rozwinięcie z wykładu 2), Parallel Run
+* Zarządzanie danymi w trakcie migracji — dual writes (CDC → patrz wykład 8)
 * Feature flags — stopniowe wdrażanie zmian
-* Migracja chmurowa — 6 R-ów migracji do chmury (AWS)
+* Migracja chmurowa — 7 R-ów migracji do chmury (AWS)
 
-**Case study:** Monzo Bank — od monolitu do 2000+ mikroserwisów
+**Case study:** Monzo Bank — od kilku serwisów do 2800+ mikroserwisów
+
+[slajdy](/jwozniak/lectures/psr-w07.pdf)
 
 #### Wykład 8: Przetwarzanie danych w skali — batch, streaming, pipelines
 
 * Batch processing — MapReduce, Apache Spark, dbt
-* Stream processing — Kafka Streams, Apache Flink
-* Kafka jako centralny szkielet danych
+* Stream processing — Kafka Streams, Apache Flink (podstawy Kafki → patrz wykład 3)
+* Kafka jako centralny szkielet danych — log jako źródło prawdy, Kafka Connect
 * Lambda vs Kappa Architecture
-* Change Data Capture w praktyce — Debezium + Kafka Connect
+* Change Data Capture w praktyce — Debezium + Kafka Connect, CDC a dual writes (rozwinięcie z wykładu 5)
 * Real-time analytics — ClickHouse, Apache Druid, Apache Pinot
 * ETL vs ELT
 * ☁️ Managed streaming (Kinesis, Dataflow), managed OLAP (BigQuery, Redshift), serverless ETL (Glue)
@@ -135,8 +137,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 * Koncepcja serverless — „bez zarządzania serwerem", nie „bez serwera"
 * FaaS — AWS Lambda, Azure Functions, Google Cloud Functions, cold starts
-* Event-driven serverless — SQS, EventBridge, API Gateway
-* Serverless poza FaaS — DynamoDB, Aurora Serverless, Fargate, Cloud Run
+* Event-driven serverless — wzorce integracji (event source mapping, Lambda triggers), porównanie z wykładem 3
+* Serverless poza FaaS — DynamoDB, Aurora Serverless, Fargate, Cloud Run (nawiązanie do wykładu 2)
 * Ograniczenia — vendor lock-in, debugowanie, koszty przy stałym ruchu
 * Edge computing — Cloudflare Workers, Lambda@Edge, Vercel Edge Functions
 * Multi-cloud i hybrid-cloud
