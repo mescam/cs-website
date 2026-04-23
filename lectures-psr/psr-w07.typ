@@ -100,7 +100,7 @@
   1. Postaw facade przed monolitem
   2. Wydziel pierwszy bounded context → nowy serwis
   3. Przekieruj ruch z facade do nowego serwisu
-  4. Powtarzaj aż monolit nie ma ruchu
+  4. Powtarzaj, dopóki monolit obsługuje ruch
   5. Wyłącz monolit
 ]
 
@@ -147,7 +147,7 @@
 
   + *Stwórz abstrakcję* — interfejs opisujący kontrakt między klientem a supplierem
   + *Zmigruj klientów* — przenieś kod wywołujący starego suppliera na abstrakcję
-  + *Zbuduj nowego suppliera* — nowa implementacja behind tej samej abstrakcji
+  + *Zbuduj nowego suppliera* — nowa implementacja za tą samą abstrakcją
   + *Przełącz* — użyj flagi lub konfiguracji, by wybrać nową implementację
   + *Usuń starego i abstrakcję* — po pełnym przejściu, wyczyść kod
 
@@ -171,7 +171,7 @@
       [Poziom działania],      [Granica systemu (API Gateway)],  [Wewnątrz kodu (interfejs)],
       [Zakres],                [Cały serwis / endpoint],         [Pojedynczy komponent],
       [Wymaga],                [Routing zewnętrzny],            [Abstrakcja w kodzie],
-      [Przełączenie],          [Trajka na levelie Gateway],     [Feature toggle / konfiguracja],
+      [Przełączenie],          [Zmiana trasy na poziomie Gateway],  [Feature toggle / konfiguracja],
       [Kiedy stosować],        [Monolit → mikroserwisy],        [Zamiana biblioteki / modułu],
     )]
   ]
@@ -205,7 +205,7 @@
   - *Pełne przejście*: stary system wyłączony → ACL można usunąć
 
   #alertblock[Anti-pattern: ACL na zawsze][
-    ACL to warstwa przejściowa. Jeśli zostaje na stałe — masz nowy distributed monolith z dodatkową hopką.
+    ACL to warstwa przejściowa. Jeśli zostaje na stałe — masz nowy distributed monolith z dodatkowym przeskokiem.
   ]
 ]
 
@@ -380,7 +380,7 @@
   ]
 
   #exblock[Zasada AWS][
-    Rehost first, optimize later. Najwięksi programy migracyjne zaczynają od Rehost — potem Replatform i Re-architect na kolejnych falach.
+    Rehost first, optimize later. Największe programy migracyjne zaczynają od Rehost — potem Replatform i Re-architect na kolejnych falach.
   ]
 ]
 
@@ -435,7 +435,7 @@
     #alertblock[Na co uważać][
       - Skala lokalnego dev → wymaga specjalistycznych narzędzi
       - 2800 serwisów = 2800 potencjalnych punktów awarii
-      - Migracja biblioteki = deploying przez wszystkie serwisy
+      - Migracja biblioteki = wdrożenie do wszystkich serwisów
       - Staging drift — współdzielone środowisko rozjeżdża się z produkcją
     ]
   ]
@@ -460,7 +460,7 @@
         text(fill: white, weight: "bold")[Funkcja],
       ),
       [*AWS*],      [AWS DMS],                  [Migracja bazy danych (homogeneous i heterogeneous)],
-      [*AWS*],      [AWS MGN (Migration Hub)],   [Rehost — block-level replikacja serwerów],
+      [*AWS*],      [AWS MGN],                   [Rehost — block-level replikacja serwerów],
       [*AWS*],      [AWS Application Discovery], [Inwentaryzacja i zależności on-prem],
       [*GCP*],      [Migration Center],           [Ocena portfolio, zalecenia migracji],
       [*GCP*],      [Database Migration Service], [Migracja DB do Cloud SQL / Spanner],
