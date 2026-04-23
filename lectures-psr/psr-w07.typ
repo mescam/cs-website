@@ -149,7 +149,7 @@
   + *Zmigruj klientów* — przenieś kod wywołujący starego suppliera na abstrakcję
   + *Zbuduj nowego suppliera* — nowa implementacja za tą samą abstrakcją
   + *Przełącz* — użyj flagi lub konfiguracji, by wybrać nową implementację
-  + *Usuń starego i abstrakcję* — po pełnym przejściu, wyczyść kod
+  + *Usuń starego suppliera i abstrakcję* — po pełnym przejściu, wyczyść kod
 
   #exblock[Feature Toggles + Branch by Abstraction][
     Abstrakcja daje _szew_, flaga daje _przełącznik_. Używane razem: migracja bez downtime.
@@ -357,6 +357,14 @@
 #title-slide[Migracja chmurowa — 7 R-ów]
 
 #slide(title: [7 R-ów migracji do chmury (AWS)])[
+  #align(center)[
+    #image("resources/7rs-aws.png", width: 80%)
+  ]
+
+  #src[AWS Community — 7 Rs of Cloud Migration]
+]
+
+#slide(title: [7 R-ów — szczegółowe porównanie])[
   #align(center)[
     #sm[#table(
       columns: 4,

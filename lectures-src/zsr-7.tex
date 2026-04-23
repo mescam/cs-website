@@ -1,0 +1,383 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{Madrid}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usetikzlibrary{positioning,shapes,arrows}
+
+\definecolor{IBMBlue}{RGB}{0,113,197}
+\setbeamercolor{structure}{fg=IBMBlue}
+
+\author[J. Woźniak]{mgr inż. Jakub Woźniak}
+\institute[PUT]{Politechnika Poznańska\\Wydział Informatyki i Telekomunikacji}
+\date{}
+\title[Chmura Publiczna]{Zaawansowane Architektury Chmurowe i Inżynieria Systemów Rozproszonych}
+
+\setbeamertemplate{navigation symbols}{} % Ukrycie paska nawigacji
+\setbeamertemplate{headline}{} % Czysty nagłówek
+
+% --- Konfiguracja listingu (HCL/YAML) ---
+\definecolor{eclipseBlue}{RGB}{42,0.0,255}
+\definecolor{eclipseGreen}{RGB}{63,127,95}
+\definecolor{eclipsePurple}{RGB}{127,0,85}
+\lstdefinelanguage{hcl}{
+  keywords={resource,provider,variable,output,module,data,locals,terraform},
+  keywordstyle=\color{darkgray}\bfseries,
+  basicstyle=\ttfamily\footnotesize,                                 
+  breaklines=true,
+  breakatwhitespace=false,
+  captionpos=b,
+  commentstyle=\color{eclipseGreen},
+  stringstyle=\color{eclipseBlue},
+  identifierstyle=\color{black},
+  showstringspaces=false,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  rulecolor=\color{gray!30},
+}
+
+\begin{document}
+
+% Slajd Tytułowy
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% Slajd 1: Wprowadzenie
+\begin{frame}{Chmura jako globalny system operacyjny}
+    \begin{itemize}
+        \item \textbf{Nowy paradygmat}: „Komputerem" nie jest serwer, lecz globalnie rozproszona infrastruktura.
+        \item \textbf{Centra danych} = rejestry procesora
+        \item \textbf{Łącza światłowodowe} = magistrale systemowe
+        \item \textbf{AWS Lambda, Pub/Sub} = prymitywy systemowe
+    \end{itemize}
+    \begin{block}{Cel wykładu}
+        Analiza architektury, ekonomii i operacyjności Hiperskalerów (AWS, Azure, GCP) z perspektywy inżynierii systemów rozproszonych.
+    \end{block}
+\end{frame}
+
+% Slajd 2: Oligopol Infrastrukturalny
+\begin{frame}{Oligopol infrastrukturalny – rynek chmury 2025}
+    \begin{table}
+        \footnotesize
+        \begin{tabular}{lcc}
+            \toprule
+            \textbf{Dostawca} & \textbf{Udział} & \textbf{Charakterystyka} \\
+            \midrule
+            AWS & 30-32\% & First-mover, szerokość portfolio \\
+            Microsoft Azure & 20-23\% & Hybrydowość, Enterprise, AI \\
+            Google Cloud & 11-13\% & Analytics, K8s-native, Open Source \\
+            Oracle/IBM/Alibaba & 2-4\% & Niszowe zastosowania \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    \begin{exampleblock}{Trend}
+        Dynamika wzrostu Azure i GCP (27-30\% r/r) przewyższa AWS (17-18\% r/r). \\
+        \textit{Implikacja: nauka standardów agnostycznych (kontenery, Terraform).}
+    \end{exampleblock}
+\end{frame}
+
+% Slajd 3: Regiony i Strefy Dostępności
+\begin{frame}{Regiony i Strefy Dostępności (AZ)}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Region}
+            \begin{itemize}
+                \item Niezależny geograficznie obszar
+                \item Własne zasilanie, chłodzenie, sieć
+                \item Shared-Nothing Architecture
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \textbf{Availability Zone (AZ)}
+            \begin{itemize}
+                \item Logiczne centrum danych
+                \item Interkonekt: <2ms RTT
+                \item Izolacja awarii (pożar, zasilanie)
+            \end{itemize}
+        \end{column}
+    \end{columns}
+    \begin{alertblock}{Implikacja architektoniczna}
+        Aplikacja Cloud Native musi być rozproszona w min. 2-3 AZ dla SLA 99.99\%.
+    \end{alertblock}
+\end{frame}
+
+% Slajd 4: Sieć Globalna
+\begin{frame}{Sieć globalna i Edge Computing}
+    \begin{itemize}
+        \item \textbf{Backbone}: GCP i AWS posiadają własne sieci światłowodowe (Dark Fiber).
+        \begin{itemize}
+            \item Ruch między regionami omija publiczny Internet.
+            \item Kluczowe dla bezpieczeństwa i determinizmu opóźnień.
+        \end{itemize}
+        \item \textbf{Points of Presence (PoP)}: Tysiące punktów CDN globalnie.
+        \item \textbf{Cross-Cloud Interconnect} (nowość 2025):
+        \begin{itemize}
+            \item Dedykowane połączenia między chmurami (np. GCP $\leftrightarrow$ AWS).
+            \item Przepustowość do 100 Gbps.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Slajd 5: Modele Abstrakcji XaaS
+\begin{frame}{Modele abstrakcji obliczeniowej (XaaS)}
+    \begin{center}
+        \textbf{Trade-off: Kontrola vs. Wygoda}
+    \end{center}
+    \begin{description}
+        \item[IaaS] Wirtualny sprzęt (EC2, GCE, Azure VM). \\
+            \textit{Hypervisory: AWS Nitro, KVM. Narzut bliski zeru.}
+        \item[PaaS] Abstrahuje OS. Zarządzane Kubernetes (EKS, AKS, GKE). \\
+            \textit{GKE Autopilot – K8s zbliżony do Serverless.}
+        \item[FaaS] Jednostka skalowania = pojedyncze żądanie. \\
+            \textit{Bezstanowość, efemeryczność, płatność za ms.}
+    \end{description}
+\end{frame}
+
+% Slajd 6: Problem Cold Start
+\begin{frame}{FaaS i problem Cold Start}
+    \begin{itemize}
+        \item \textbf{Cold Start}: Opóźnienie przy pierwszym wywołaniu funkcji.
+        \begin{itemize}
+            \item Czas na alokację kontenera i start runtimu.
+        \end{itemize}
+        \item \textbf{Rozwiązania}:
+        \begin{itemize}
+            \item \textbf{AWS Lambda SnapStart}: Snapshot pamięci (Java). Start: sekundy $\rightarrow$ ms.
+            \item \textbf{Google Cloud Functions 2nd Gen}: CPU boost podczas startu.
+        \end{itemize}
+        \item \textbf{Współbieżność}:
+        \begin{itemize}
+            \item GCF: wiele żądań na jedną instancję (concurrency).
+            \item Lambda: jeden request = jedna instancja (standardowo).
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Slajd 7: FinOps
+\begin{frame}{FinOps – koszt jako metryka inżynierska}
+    \begin{block}{Definicja}
+        FinOps (Financial Operations) – optymalizacja kosztów chmury przy zachowaniu parametrów jakościowych systemu.
+    \end{block}
+    \begin{itemize}
+        \item \textbf{Widoczność}: Real-time cost monitoring.
+        \item \textbf{Alokacja}: Tagowanie zasobów (Project, Env) – Showback/Chargeback.
+        \item \textbf{Centralizacja}: Rate optimization (centralne), Usage optimization (zdecentralizowane).
+    \end{itemize}
+\end{frame}
+
+% Slajd 8: Modele Zakupu
+\begin{frame}{Modele zakupu mocy obliczeniowej}
+    \begin{description}
+        \item[On-Demand] Najdroższy. Płatność za sekundę. Brak zobowiązań. \\
+            \textit{Idealne dla workloadów nieprzewidywalnych.}
+        \item[Reserved Instances] Zobowiązanie na 1-3 lata. Zniżka do 72\%. \\
+            \textit{Problem: brak elastyczności przy zmianie architektury.}
+        \item[Savings Plans] Zobowiązanie monetarne (np. \$10/h). \\
+            \textit{Elastyczność: zmiana regionu, rodziny, VM$\rightarrow$FaaS.}
+        \item[GCP CUD/SUD] Committed Use Discounts + automatyczny Sustained Use Discount.
+    \end{description}
+\end{frame}
+
+% Slajd 9: Spot Instances
+\begin{frame}{Spot Instances – rynek nadwyżek}
+    \begin{itemize}
+        \item \textbf{Rabat}: Do 90\% względem On-Demand.
+        \item \textbf{Ryzyko}: Dostawca może odebrać zasób.
+        \item \textbf{Sygnał ostrzegawczy}:
+        \begin{itemize}
+            \item AWS: 2 minuty przed terminacją
+            \item Azure/GCP: Zazwyczaj 30 sekund
+        \end{itemize}
+    \end{itemize}
+    \begin{alertblock}{Wzorce projektowe}
+        Aplikacje Spot muszą być \textbf{stateless} i \textbf{fault-tolerant}. \\
+        Idealne: przetwarzanie wsadowe, rendering, CI/CD, pule K8s dla podów niekrytycznych.
+    \end{alertblock}
+\end{frame}
+
+% Slajd 10: Object Storage
+\begin{frame}{Object Storage – fundament Data Lake}
+    \begin{itemize}
+        \item \textbf{Usługi}: Amazon S3, Azure Blob Storage, Google Cloud Storage.
+        \item \textbf{Model danych}: Płaska przestrzeń kluczy (Key-Value), dostęp REST API.
+        \item \textbf{Spójność}:
+        \begin{itemize}
+            \item Historycznie S3: Eventual Consistency.
+            \item Obecnie: \textbf{Strong Consistency} dla PUT i LIST (AWS, Azure, GCP).
+        \end{itemize}
+        \item \textbf{Tiering}: Lifecycle Policies przenoszą dane do warstw archiwalnych.
+        \begin{itemize}
+            \item S3 Glacier, Azure Archive – dostęp: minuty do godzin, koszt minimalny.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Slajd 11: Twierdzenie CAP
+\begin{frame}{Twierdzenie CAP w praktyce chmurowej}
+    \begin{block}{Twierdzenie CAP}
+        W systemie rozproszonym można zagwarantować jednocześnie tylko 2 z 3: \\
+        \textbf{Consistency} (spójność), \textbf{Availability} (dostępność), \textbf{Partition Tolerance} (odporność na partycjonowanie).
+    \end{block}
+    \begin{itemize}
+        \item \textbf{DynamoDB}: Key-Value, jednocyfrowe ms. Domyślnie Eventually Consistent.
+        \item \textbf{Cosmos DB}: Multi-model. \textbf{5 poziomów spójności} (Strong $\rightarrow$ Eventual).
+        \item \textbf{Spanner}: Globalnie rozproszona baza SQL z \textbf{silną spójnością zewnętrzną}.
+        \begin{itemize}
+            \item TrueTime API: zegary atomowe + GPS, synchronizacja na poziomie $\mu$s.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% Slajd 12: Spanner Deep Dive
+\begin{frame}{Google Cloud Spanner – łamanie intuicji CAP}
+    \begin{itemize}
+        \item \textbf{Problem}: Jak zapewnić silną spójność globalnie przy wysokiej dostępności?
+        \item \textbf{Rozwiązanie}: TrueTime API
+        \begin{itemize}
+            \item Zegary atomowe i GPS w centrach danych Google.
+            \item Niepewność czasu: rzędu mikrosekund.
+            \item Umożliwia globalne uporządkowanie transakcji.
+        \end{itemize}
+        \item \textbf{Efekt}: System CP, który w praktyce zachowuje się jak CA.
+        \item \textbf{SLA}: 99.999\% dostępności.
+    \end{itemize}
+\end{frame}
+
+% Slajd 13: Shared Responsibility Model
+\begin{frame}{Model Współdzielonej Odpowiedzialności}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \textbf{Security OF the Cloud} \\
+            (Dostawca)
+            \begin{itemize}
+                \item Fizyczne bezpieczeństwo DC
+                \item Sprzęt, sieć szkieletowa
+                \item Warstwa wirtualizacji
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \textbf{Security IN the Cloud} \\
+            (Klient)
+            \begin{itemize}
+                \item Konfiguracja usług
+                \item Szyfrowanie, zarządzanie danymi
+                \item IAM, firewalle, OS (IaaS)
+            \end{itemize}
+        \end{column}
+    \end{columns}
+    \begin{alertblock}{Uwaga}
+        Niezrozumienie tego modelu jest najczęstszą przyczyną wycieków danych.
+    \end{alertblock}
+\end{frame}
+
+% Slajd 14: Shared Responsibility dla K8s
+\begin{frame}{Odpowiedzialność w zarządzanym Kubernetes}
+    \begin{table}
+        \footnotesize
+        \begin{tabular}{lll}
+            \toprule
+            \textbf{Warstwa} & \textbf{Odpowiedzialny} & \textbf{Opis} \\
+            \midrule
+            Control Plane & Dostawca & API Server, etcd, Scheduler \\
+            Worker Nodes & Klient/Dostawca & OS patching (lub Autopilot/Fargate) \\
+            Pod Security & Klient & Skanowanie obrazów, Network Policies \\
+            RBAC / IAM & Klient & Definicja dostępu do klastra \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+    \begin{block}{Shared Fate (GCP)}
+        Ewolucja modelu: dostawca aktywnie wspiera klienta poprzez „Secure Blueprints" i policy-as-code.
+    \end{block}
+\end{frame}
+
+% Slajd 15: Wzorce kontenerowe
+\begin{frame}{Wzorce komunikacji kontenerowej (Single Node)}
+    \begin{description}
+        \item[Sidecar] Kontener pomocniczy rozszerzający funkcjonalność. \\
+            \textit{Przykład: Envoy Proxy (Istio) – mTLS, metryki, routing.} \\
+            \textit{Od K8s 1.29: natywne wsparcie jako specjalny initContainer.}
+        \item[Ambassador] Proxy pośredniczące w komunikacji zewnętrznej. \\
+            \textit{Aplikacja łączy się z localhost, Ambassador routuje do shardów.}
+        \item[Adapter] Normalizacja interfejsów. \\
+            \textit{Konwersja logów do formatu Prometheus w locie.}
+    \end{description}
+\end{frame}
+
+% Slajd 16: Multi-Region Active-Active
+\begin{frame}{Architektura Multi-Region Active-Active}
+    \textbf{Case Study: Netflix}
+    \begin{itemize}
+        \item \textbf{Wyzwanie}: Synchronizacja stanu między regionami (USA, Europa) – ograniczenie prędkości światła.
+        \item \textbf{Podejście}:
+        \begin{enumerate}
+            \item \textbf{Stateless Services}: Mikroserwisy bez lokalnego stanu.
+            \item \textbf{Async Data Replication}: DynamoDB Global Tables, S3 CRR.
+            \item \textbf{Traffic Routing}: Route53 kieruje do najbliższego regionu.
+            \item \textbf{Capacity Buffering}: Zapas „uśpionej" mocy dla failover.
+        \end{enumerate}
+    \end{itemize}
+\end{frame}
+
+% Slajd 17: Infrastructure as Code
+\begin{frame}{Infrastructure as Code (IaC)}
+    \begin{description}
+        \item[Terraform] Standard rynkowy. Deklaratywny język HCL. \\
+            \textit{Zmiana licencji na BSL wywołała powstanie forka.}
+        \item[OpenTofu] Otwartoźródłowa alternatywa (Linux Foundation). \\
+            \textit{Kompatybilna z modułami Terraform.}
+        \item[Pulumi] Podejście imperatywne – Python/TypeScript/Go. \\
+            \textit{Pętle, warunki, testy jednostkowe z programowania aplikacji.}
+    \end{description}
+    \begin{exampleblock}{Zasada}
+        Infrastruktura = Kod $\Rightarrow$ Wersjonowanie, Code Review, CI/CD.
+    \end{exampleblock}
+\end{frame}
+
+% Slajd 18: OpenTelemetry
+\begin{frame}{OpenTelemetry (OTel) – standard observability}
+    \begin{itemize}
+        \item \textbf{Standard CNCF}: Vendor-neutral telemetria (Logi, Metryki, Tracing).
+        \item \textbf{OTel Collector}:
+        \begin{itemize}
+            \item \textit{Receivers}: OTLP, Jaeger, Prometheus
+            \item \textit{Processors}: Filtrowanie, batching, PII redaction
+            \item \textit{Exporters}: Wysyłka do wielu backendów
+        \end{itemize}
+        \item \textbf{2025}: Standard „de facto" dla śledzenia żądań przez setki mikroserwisów w różnych chmurach.
+    \end{itemize}
+\end{frame}
+
+% Slajd 19: Multicloud Networking
+\begin{frame}{Multicloud Networking}
+    \begin{itemize}
+        \item \textbf{Problem}: Systemy często łączą zasoby różnych dostawców.
+        \item \textbf{Cross-Cloud Interconnect} (GCP):
+        \begin{itemize}
+            \item Bezpośrednie łączenie VPC w GCP z sieciami AWS/Azure.
+            \item Dedykowany światłowód (pominięcie Internetu).
+            \item Przepustowość: do 100 Gbps.
+            \item Niższe koszty transferu danych (egress fees).
+        \end{itemize}
+        \item \textbf{Zastosowanie}: Analityka w BigQuery na danych z aplikacji AWS.
+    \end{itemize}
+\end{frame}
+
+% Slajd 20: Podsumowanie
+\begin{frame}{Podsumowanie – interdyscyplinarne podejście}
+    \begin{block}{Kluczowy wniosek}
+        Chmura publiczna 2025 wymaga \textbf{interdyscyplinarnego podejścia}:
+    \end{block}
+    \begin{itemize}
+        \item \textbf{Algorytmy rozproszone}: CAP, Paxos, spójność danych.
+        \item \textbf{Wiedza operacyjna}: IaC, CI/CD, Kubernetes, SRE.
+        \item \textbf{Inżynieria ekonomiczna}: FinOps, modele zakupu, optymalizacja kosztów.
+    \end{itemize}
+    \begin{exampleblock}{Cel}
+        Projektowanie systemów \textbf{skalowalnych}, \textbf{niezawodnych} i \textbf{opłacalnych biznesowo}.
+    \end{exampleblock}
+\end{frame}
+
+\end{document}
