@@ -4,6 +4,8 @@ date = 2025-01-25T21:37:00+02:00
 draft = false
 +++
 
+> ⚠️ **Zajęcia 7 maja 2026 (czwartek) nie odbędą się z powodu nieobecności prowadzącego.**
+
 Przedmiot koncentruje się na **projektowaniu aplikacji rozproszonych i chmurowych** — na decyzjach architektonicznych, wzorcach komunikacji, zarządzaniu danymi i niezawodnością, które inżynier podejmuje _zanim_ system trafi do pipeline'u CI/CD. Każdy wykład łączy fundamenty (papery, modele) z praktyką (case study z przemysłu, blogi inżynierskie) i zawiera pytanie do dyskusji ze studentami.
 
 ### Informacje
