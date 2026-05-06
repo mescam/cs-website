@@ -5,6 +5,8 @@ params:
   description: 'materiały dla studentów'
 
   homeIntroContent: |
+    > ⚠️ **Uwaga:** Zajęcia w czwartek **7 maja** nie odbędą się z powodu nieobecności prowadzącego.
+
     jakub.wozniak@cs.put.poznan.pl
 
     Instytut Informatyki  

@@ -6,8 +6,6 @@ draft = false
 
 Przedmiot koncentruje się na **projektowaniu aplikacji rozproszonych i chmurowych** — na decyzjach architektonicznych, wzorcach komunikacji, zarządzaniu danymi i niezawodnością, które inżynier podejmuje _zanim_ system trafi do pipeline'u CI/CD. Każdy wykład łączy fundamenty (papery, modele) z praktyką (case study z przemysłu, blogi inżynierskie) i zawiera pytanie do dyskusji ze studentami.
 
-> **⚠️ Uwaga:** Zajęcia w czwartek **7 maja** nie odbędą się z powodu nieobecności prowadzącego.
-
 ### Informacje
 
 Semestr letni 2025/26  
