@@ -5,8 +5,6 @@ params:
   description: 'materiały dla studentów'
 
   homeIntroContent: |
-    > ⚠️ **Uwaga:** Zajęcia w czwartek **7 maja** nie odbędą się z powodu nieobecności prowadzącego.
-
     jakub.wozniak@cs.put.poznan.pl
 
     Instytut Informatyki  
@@ -16,7 +14,7 @@ params:
     na żądanie po wcześniejszym umówieniu mailowym  
 
     **Informacje dla studentów**  
-    Semestr letni 2025/2026 — trwają zajęcia z Projektowania Systemów Rozproszonych.
+    > ⚠️ **Uwaga:** Zajęcia w czwartek **7 maja** nie odbędą się z powodu nieobecności prowadzącego.
 
     ### Przedmioty
     - **Zarządzanie Systemami Rozproszonymi**  
