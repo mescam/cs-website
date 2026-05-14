@@ -122,6 +122,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 #### Wykład 8: Przetwarzanie danych w skali — batch, streaming, pipelines
 
+[slajdy](/jwozniak/lectures/psr-w08.pdf)
+
 * Batch processing — MapReduce, Apache Spark, dbt
 * Stream processing — Kafka Streams, Apache Flink (podstawy Kafki → patrz wykład 3)
 * Kafka jako centralny szkielet danych — log jako źródło prawdy, Kafka Connect
