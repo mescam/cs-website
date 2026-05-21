@@ -149,6 +149,8 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 
 **Case study:** „Design Google Drive" (A. Xu, rozdz. 15) — Lambda + S3 + SQS + DynamoDB
 
+[slajdy](/jwozniak/lectures/psr-w09.pdf)
+
 #### Wykład 10: Obserwowalność, bezpieczeństwo i przyszłość systemów rozproszonych
 
 * Projektowanie pod obserwowalność — structured logging, correlation IDs, OpenTelemetry
