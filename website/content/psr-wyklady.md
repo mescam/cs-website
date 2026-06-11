@@ -164,3 +164,5 @@ Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
 * ☁️ AWS Well-Architected Framework, GCP Architecture Center, FinOps
 
 **Case study:** „Design YouTube" (A. Xu, rozdz. 14) — pełna analiza end-to-end łącząca wszystkie wykłady
+
+[slajdy](/jwozniak/lectures/psr-w10.pdf)
