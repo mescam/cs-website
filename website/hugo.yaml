@@ -10,11 +10,11 @@ params:
     Instytut Informatyki  
     Politechnika Poznańska
 
-    **Konsultacje**  
+    **Konsultacje** 
     na żądanie po wcześniejszym umówieniu mailowym  
 
     **Informacje dla studentów**  
-    > 📢 Wykłady PSR zakończyły się planowo, ale nie omówiliśmy wszystkich tematów. Zapraszam do sali wykładowej w **czwartki o 18:30** — kontynuujemy aż ukończymy wszystkie 10 wykładów.
+    > 🎓 Dziękuję za wspólnie spędzony rok — dwa semestry pełne nauki, projektów i dobrych pomysłów. Powodzenia na drodze zawodowej!
 
     ### Przedmioty
     - **Zarządzanie Systemami Rozproszonymi**  
@@ -24,7 +24,7 @@ params:
     - **Projektowanie Systemów Rozproszonych**   
       wykład i projekt  
       semestr letni  
-      systemy rozproszone, informatyka (mgr)  
+      systemy rozproszone, informatyka (mgr)
 
   menu:
     - name: "home"

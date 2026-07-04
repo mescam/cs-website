@@ -6,16 +6,11 @@ draft = false
 
 ### Informacje organizacyjne — koniec semestru
 
-- **28.05 (czwartek)** — Dzień Sportu Politechniki Poznańskiej. Zajęcia odwołane.
-- **04.06 (czwartek)** — Boże Ciało. Dzień wolny.
-- **11.06 (czwartek)** — Spotkanie projektowe. Możliwość oddania projektu na zajęciach.
-- **18.06 (czwartek)** — Ostatni tydzień zajęć. Możliwa nieobecność prowadzącego.
+Semestr letni 2025/26 zakończony.
 
 #### Oddawanie projektów
 
-Projekty można oddać:
-- **na zajęciach 11.06**, lub
-- **zdalnie (15-minutowy call na Microsoft Teams) — przed 18.06**. Termin do ustalenia indywidualnie mailowo.
+Projekty należy oddać do końca semestru. Szczegóły do ustalenia mailowo.
 
 ### Zaliczenie
 
