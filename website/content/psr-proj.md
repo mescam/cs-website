@@ -4,14 +4,6 @@ date = 2024-10-03T22:21:13+02:00
 draft = false
 +++
 
-### Informacje organizacyjne — koniec semestru
-
-Semestr letni 2025/26 zakończony.
-
-#### Oddawanie projektów
-
-Projekty należy oddać do końca semestru. Szczegóły do ustalenia mailowo.
-
 ### Zaliczenie
 
 Zaliczenie polega na wykonaniu projektu związanego z tematyką przedmiotu. Projekt może być wykonany w grupie do 3 osób. Termin oddania projektu to ostatnie zajęcia w semestrze.
