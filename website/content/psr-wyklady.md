@@ -6,13 +6,6 @@ draft = false
 
 Przedmiot koncentruje się na **projektowaniu aplikacji rozproszonych i chmurowych** — na decyzjach architektonicznych, wzorcach komunikacji, zarządzaniu danymi i niezawodnością, które inżynier podejmuje _zanim_ system trafi do pipeline'u CI/CD. Każdy wykład łączy fundamenty (papery, modele) z praktyką (case study z przemysłu, blogi inżynierskie) i zawiera pytanie do dyskusji ze studentami.
 
-### Informacje
-
-Semestr letni 2025/26  
-10 spotkań × 1.5h  
-
-Kurs zakłada znajomość podstaw z ZSR (Docker, K8s, CI/CD, cloud basics).
-
 ### Literatura podstawowa
 
 1. M. Kleppmann — *Designing Data-Intensive Applications* (O'Reilly, 2017)
