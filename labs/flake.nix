@@ -37,6 +37,20 @@
         };
       in rec {
         packages = {
+          ansible-student = pkgs.stdenvNoCC.mkDerivation {
+            name = "zsr-ansible-student";
+            src = self;
+            nativeBuildInputs = [ pkgs.bash pkgs.coreutils typstPkgs.pandoc typstPkgs.typst ];
+            phases = [ "unpackPhase" "buildPhase" "installPhase" ];
+            buildPhase = ''
+              export STUDENT_FONT_PATH="${typstPkgs.dejavu_fonts}/share/fonts/truetype"
+              bash build-student-ansible.sh
+            '';
+            installPhase = ''
+              install -Dm644 0-ansible.pdf "$out/0-ansible.pdf"
+            '';
+          };
+
           document = pkgs.stdenvNoCC.mkDerivation rec {
             name = "LaTeX-Build";
             src = self;
@@ -58,8 +72,13 @@
               export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
               export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
 
-              # Build all LaTeX lab documents
+              # Ansible uses only the student Markdown source. Teacher notes,
+              # solutions and test artifacts are not publication inputs.
+              cp ${packages.ansible-student}/0-ansible.pdf ./0-ansible.pdf
+
+              # Keep the remaining existing lab documents.
               for i in *.tex; do
+                if [ "$i" = "0-ansible.tex" ]; then continue; fi
                 env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var \
                   latexmk -interaction=nonstopmode -pdf -lualatex \
                   "$i"
@@ -73,6 +92,7 @@
 
             installPhase = ''
               mkdir -p $out
+              # Only top-level PDFs: never copy draft/ or teacher/ recursively.
               cp *.pdf $out/
             '';
           };

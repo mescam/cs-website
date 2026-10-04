@@ -17,12 +17,12 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
 ### Plan laboratoriów
 
 #### 1. Ansible: Automatyzacja konfiguracji
-  - **Wymagania**: Ansible
+  - **Wymagania**: VirtualBox, Vagrant, podstawy terminala i SSH
   - **Zadania**:
-    - Instalacja i konfiguracja Ansible
-    - Tworzenie i uruchamianie playbooków
-    - Automatyzacja konfiguracji serwerów
-  - [skrypt](/jwozniak/labs/0-ansible.pdf)  
+    - Inventory i playbook konfigurujący dwa serwery WWW
+    - Zmienne, szablony i handlery
+    - Idempotencja i sprawdzanie zmian
+  - [skrypt dla studentów (PDF)](/jwozniak/labs/0-ansible.pdf)
 
 #### 2. Docker: Konteneryzacja aplikacji
   - **Wymagania**: Docker
