@@ -25,7 +25,7 @@ Po wykonaniu ćwiczeń student potrafi:
 
 ## Wymagania i przygotowanie
 
-Wymagane są podstawy terminala, edycji plików i połączeń SSH. Materiały środowiska znajdują się w `materialy/ansible`. Projekt Vagrant tworzy trzy maszyny Debian 12:
+Wymagane są podstawy terminala, edycji plików i połączeń SSH. [Pobierz paczkę materiałów środowiska (ZIP)](https://www.cs.put.poznan.pl/jwozniak/labs/ansible-materialy.zip), rozpakuj ją w katalogu roboczym i przejdź do `materialy/ansible`. Projekt Vagrant tworzy trzy maszyny Debian 12:
 
 | Maszyna | Prywatny adres | Rola |
 |---|---|---|

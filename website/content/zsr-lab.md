@@ -23,6 +23,7 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
     - Zmienne, szablony i handlery
     - Idempotencja i sprawdzanie zmian
   - [skrypt dla studentów (PDF)](/jwozniak/labs/0-ansible.pdf)
+  - [materiały środowiska (ZIP)](/jwozniak/labs/ansible-materialy.zip)
 
 #### 2. Docker: Konteneryzacja aplikacji
   - **Wymagania**: Docker

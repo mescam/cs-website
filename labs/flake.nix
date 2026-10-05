@@ -40,14 +40,18 @@
           ansible-student = pkgs.stdenvNoCC.mkDerivation {
             name = "zsr-ansible-student";
             src = self;
-            nativeBuildInputs = [ pkgs.bash pkgs.coreutils typstPkgs.pandoc typstPkgs.typst ];
+            nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.zip typstPkgs.pandoc typstPkgs.typst ];
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
             buildPhase = ''
               export STUDENT_FONT_PATH="${typstPkgs.dejavu_fonts}/share/fonts/truetype"
               bash build-student-ansible.sh
+              mkdir -p package/materialy
+              cp -R draft/materialy/ansible package/materialy/ansible
+              (cd package && zip -qr "$PWD/ansible-materialy.zip" materialy/ansible)
             '';
             installPhase = ''
               install -Dm644 0-ansible.pdf "$out/0-ansible.pdf"
+              install -Dm644 package/ansible-materialy.zip "$out/ansible-materialy.zip"
             '';
           };
 
@@ -94,6 +98,7 @@
               mkdir -p $out
               # Only top-level PDFs: never copy draft/ or teacher/ recursively.
               cp *.pdf $out/
+              cp ${packages.ansible-student}/ansible-materialy.zip $out/
             '';
           };
 

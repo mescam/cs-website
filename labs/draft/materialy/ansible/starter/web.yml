@@ -1,0 +1,25 @@
+---
+- name: Przygotuj serwery WWW
+  hosts: web
+  become: true
+  tasks:
+    - name: Zainstaluj nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Umieść stronę laboratoryjną
+      ansible.builtin.copy:
+        content: "Serwer przygotowany przez Ansible\n"
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Uruchom usługę i włącz start po restarcie VM
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true

@@ -1,0 +1,26 @@
+# Trzy maszyny bez katalogów współdzielonych i zależności od Guest Additions.
+Vagrant.configure("2") do |config|
+  config.vm.box = "debian/bookworm64"
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.boot_timeout = 600
+
+  unless File.file?(File.join(__dir__, ".lab", "id_ed25519.pub"))
+    abort "Najpierw wykonaj: bash prepare.sh"
+  end
+
+  {"node-1" => "192.168.56.11", "node-2" => "192.168.56.12", "control" => "192.168.56.10"}.each do |name, ip|
+    config.vm.define name do |machine|
+      machine.vm.hostname = name
+      machine.vm.network "private_network", ip: ip
+      machine.vm.provider "virtualbox" do |vb|
+        vb.memory = name == "control" ? 1024 : 768
+        vb.cpus = 1
+      end
+      machine.vm.provision "file", source: ".lab/id_ed25519.pub", destination: "/tmp/zsr-key.pub"
+      if name == "control"
+        machine.vm.provision "file", source: ".lab/id_ed25519", destination: "/tmp/zsr-key"
+      end
+      machine.vm.provision "shell", path: "provision.sh", args: [name]
+    end
+  end
+end

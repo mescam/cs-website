@@ -1,0 +1,5 @@
+.lab/
+.vagrant/
+ssh-config
+zsr-ansible-backup.tar.gz
+work/
