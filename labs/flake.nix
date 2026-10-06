@@ -40,7 +40,7 @@
           ansible-student = pkgs.stdenvNoCC.mkDerivation {
             name = "zsr-ansible-student";
             src = self;
-            nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.zip typstPkgs.pandoc typstPkgs.typst ];
+            nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.zip typstPkgs.typst ];
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
             buildPhase = ''
               export STUDENT_FONT_PATH="${typstPkgs.dejavu_fonts}/share/fonts/truetype"
@@ -76,7 +76,7 @@
               export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
               export SSL_CERT_DIR="${pkgs.cacert}/etc/ssl/certs"
 
-              # Ansible uses only the student Markdown source. Teacher notes,
+              # Ansible uses the top-level Typst source. Teacher notes,
               # solutions and test artifacts are not publication inputs.
               cp ${packages.ansible-student}/0-ansible.pdf ./0-ansible.pdf
 
@@ -90,6 +90,7 @@
 
               # Build all Typst lab documents
               for i in *.typ; do
+                if [ "$i" = "0-ansible.typ" ]; then continue; fi
                 typst compile "$i" "$(basename "$i" .typ).pdf"
               done
             '';
