@@ -25,7 +25,7 @@ Po wykonaniu ćwiczeń student potrafi:
 
 ## Wymagania i przygotowanie
 
-Wymagane są podstawy terminala, edycji plików i połączeń SSH. [Pobierz paczkę materiałów środowiska (ZIP)](https://www.cs.put.poznan.pl/jwozniak/labs/ansible-materialy.zip), rozpakuj ją w katalogu roboczym i przejdź do `materialy/ansible`. Projekt Vagrant tworzy trzy maszyny Debian 12:
+Wymagane są podstawy terminala, edycji plików i połączeń SSH. Przed rozpoczęciem należy [pobrać paczkę materiałów środowiska (ZIP)](https://www.cs.put.poznan.pl/jwozniak/labs/ansible-materialy.zip), rozpakować ją w katalogu roboczym i przejść do `materialy/ansible`. Projekt Vagrant tworzy trzy maszyny Debian 12:
 
 | Maszyna | Prywatny adres | Rola |
 |---|---|---|
@@ -33,11 +33,11 @@ Wymagane są podstawy terminala, edycji plików i połączeń SSH. [Pobierz pacz
 | `node-1` | `192.168.56.11` | Pierwszy zarządzany serwer |
 | `node-2` | `192.168.56.12` | Drugi zarządzany serwer |
 
-Interfejs NAT zapewnia maszynom wirtualnym dostęp do pakietów, a sieć host-only umożliwia komunikację między nimi. Adresy w tabeli są prywatnymi adresami VM. Nazwa komputera laboratoryjnego, np. `lab-net-1.cs.put.poznan.pl`, odnosi się do hosta i nie jest adresem jego maszyn wirtualnych.
+VM korzystają z NAT do pobierania pakietów oraz z sieci host-only do komunikacji między sobą. Adresy w tabeli należą do VM; nazwa stanowiska, np. `lab-net-1.cs.put.poznan.pl`, wskazuje host.
 
 Vagrant przygotowuje konto `student`, Python i SSH na maszynach. Na `control` instaluje również Ansible oraz edytor Nano. Konto `student` ma uprawnienia sudo wewnątrz maszyn wirtualnych. Nginx jest instalowany dopiero przez playbook. Skrypt `prepare.sh` generuje odrębny klucz SSH dla środowiska. Katalogi `.lab` i `.vagrant` zawierają pliki środowiska i klucze; nie należy ich udostępniać.
 
-**Na stanowisku laboratoryjnym, w katalogu `materialy/ansible`:**
+**Na stanowisku laboratoryjnym, w katalogu `materialy/ansible`, należy wykonać:**
 
 ```bash
 vagrant --version
@@ -52,7 +52,7 @@ sudo -iu student
 
 Skrypt `trust-hosts.sh` odczytuje klucze hostów za pośrednictwem Vagranta i zapisuje je na maszynie `control`. Pozwala to klientowi SSH weryfikować tożsamość węzłów. Polecenie `sudo -iu student` otwiera powłokę konta, na którym wykonywane są ćwiczenia.
 
-**Następnie, na `control` jako `student`:**
+**Następnie na maszynie `control`, jako użytkownik `student`, należy wykonać:**
 
 ```bash
 ansible --version
@@ -68,7 +68,7 @@ Jeśli SSH zgłasza zmianę klucza hosta, należy sprawdzić, czy maszyna zosta�
 
 ## Inventory i dostęp do zarządzanych hostów
 
-Utworzyć `inventory.ini`:
+W katalogu projektu należy utworzyć plik `inventory.ini`:
 
 ```ini
 [web]
@@ -80,7 +80,7 @@ ansible_user=student
 ansible_python_interpreter=/usr/bin/python3
 ```
 
-Wyświetlić grupy inventory i sprawdzić połączenie Ansible:
+Następnie należy wyświetlić grupy inventory i sprawdzić połączenie Ansible z oboma hostami:
 
 ```bash
 ansible-inventory -i inventory.ini --graph
@@ -91,7 +91,7 @@ Wartość `node-1` jest aliasem zdefiniowanym w inventory. `ansible_host` okreś
 
 ## Playbook konfigurujący serwery WWW
 
-Utworzyć `web.yml` w katalogu `zsr-ansible`. Wcięcia YAML zapisywać spacjami, nie tabulatorami. Poniższy playbook korzysta z modułu `apt`, ponieważ zarządzane maszyny działają pod Debianem:
+W katalogu `zsr-ansible` należy utworzyć plik `web.yml` z poniższym playbookiem. Wcięcia w YAML należy zapisywać spacjami. Playbook korzysta z modułu `apt`, ponieważ zarządzane maszyny działają pod Debianem:
 
 ```yaml
 ---
@@ -121,7 +121,7 @@ Utworzyć `web.yml` w katalogu `zsr-ansible`. Wcięcia YAML zapisywać spacjami,
         enabled: true
 ```
 
-Najpierw sprawdzić składnię, a następnie zastosować playbook i zweryfikować odpowiedzi HTTP:
+W pierwszej kolejności należy sprawdzić składnię. Następnie należy uruchomić playbook, zweryfikować odpowiedzi HTTP obu serwerów i ponownie uruchomić playbook:
 
 ```bash
 ansible-playbook -i inventory.ini web.yml --syntax-check
@@ -133,32 +133,36 @@ ansible-playbook -i inventory.ini web.yml
 
 `hosts: web` wybiera grupę hostów. `become: true` podnosi uprawnienia na zarządzanych maszynach. `state: present` zapewnia obecność pakietu bez wymuszania aktualizacji przy każdym wykonaniu. `enabled: true` włącza usługę podczas startu systemu.
 
-Porównać podsumowanie pierwszego i kolejnego uruchomienia. Przy drugim przebiegu oba hosty powinny raportować `changed=0`. Playbook nadal wykonuje kontrolę stanu; brak zmian oznacza, że konfiguracja odpowiada deklarowanemu rezultatowi.
+Należy porównać podsumowanie pierwszego i drugiego uruchomienia. Przy drugim przebiegu oba hosty powinny raportować `changed=0`. Playbook nadal wykonuje kontrolę stanu; brak zmian oznacza, że konfiguracja odpowiada deklarowanemu rezultatowi.
+
+```{=typst}
+#pagebreak()
+```
 
 ### Odtworzenie zmienionego pliku
 
-Na `control` usunąć stronę zarządzaną przez playbook z pierwszego hosta, po czym ponownie uruchomić playbook:
+Na maszynie `control` należy usunąć stronę zarządzaną przez playbook z pierwszego hosta, a następnie ponownie uruchomić playbook:
 
 ```bash
 ssh student@192.168.56.11 'sudo rm /var/www/html/index.html'
 ansible-playbook -i inventory.ini web.yml
 ```
 
-Zweryfikować, które zadanie odtworzyło plik i jak zmieniło się podsumowanie hostów. Oczekiwany rezultat to jedna zmiana na `node-1` i brak zmian na `node-2`.
+Po wykonaniu playbooka należy sprawdzić, które zadanie odtworzyło plik i jak zmieniło się podsumowanie hostów. Oczekiwany rezultat to jedna zmiana na `node-1` i brak zmian na `node-2`.
 
 ## Zadania
 
 ### A. Szablon i konfiguracja hostów
 
-Zastąpić stałą treść strony szablonem `templates/index.html.j2`. Strona ma wyświetlać alias hosta oraz jego przeznaczenie: `node-1` obsługuje środowisko testowe, a `node-2` środowisko demonstracyjne. Przeznaczenie zdefiniować osobno w `host_vars/node-1.yml` i `host_vars/node-2.yml`.
+Należy zastąpić stałą treść strony szablonem `templates/index.html.j2`. Strona ma wyświetlać alias hosta oraz jego przeznaczenie: `node-1` obsługuje środowisko testowe, a `node-2` środowisko demonstracyjne. Przeznaczenie każdego hosta należy zdefiniować osobno w `host_vars/node-1.yml` i `host_vars/node-2.yml`.
 
-Do obu hostów zastosować ten sam playbook i szablon. Nazwy plików `host_vars` muszą odpowiadać aliasom z inventory. Szablon może korzystać ze zmiennej wbudowanej `inventory_hostname` oraz własnej zmiennej `environment_name`; plik docelowy należy wdrożyć modułem `ansible.builtin.template`.
+Do obu hostów należy zastosować ten sam playbook i szablon. Nazwy plików `host_vars` muszą odpowiadać aliasom z inventory. Szablon może korzystać ze zmiennej wbudowanej `inventory_hostname` oraz własnej zmiennej `environment_name`; plik docelowy należy wdrożyć modułem `ansible.builtin.template`.
 
 **Kryteria weryfikacji:** oba serwery zwracają HTTP 200, strony pokazują różne środowiska, a ponowne wykonanie playbooka nie wprowadza zmian.
 
 ### B. Konfiguracja Nginx i handler
 
-Skonfigurować dodatkowy serwer Nginx na porcie `8081`, pozostawiając działający port 80. Plik `.conf` należy umieścić w `/etc/nginx/conf.d/`. Minimalny blok serwera:
+Należy skonfigurować dodatkowy serwer Nginx na porcie `8081`, zachowując działanie portu 80. Plik `.conf` należy umieścić w `/etc/nginx/conf.d/`. Minimalny blok serwera ma następującą postać:
 
 ```nginx
 server {
@@ -171,19 +175,19 @@ server {
 }
 ```
 
-Port `web_port` zdefiniować jako zmienną grupy w `group_vars/web.yml`; szablon zapisać jako `templates/zsr.conf.j2`. Wymagane katalogi należy utworzyć, jeśli nie istnieją.
+Port `web_port` należy zdefiniować jako zmienną grupy w `group_vars/web.yml`, a szablon zapisać jako `templates/zsr.conf.j2`. Jeśli wymagane katalogi nie istnieją, należy je utworzyć.
 
-Zmiana pliku konfiguracyjnego ma powiadamiać handler przeładowujący usługę. Dodać zadanie `nginx -t`, które sprawdza konfigurację po wdrożeniu pliku i przed zadaniem uruchamiającym usługę. Walidacja nie zmienia stanu systemu, dlatego zadanie powinno zawierać `changed_when: false`. Błąd walidacji ma przerwać playbook przed wykonaniem handlera. Nie stosować `ignore_errors` ani `--force-handlers`.
+Zmiana pliku konfiguracyjnego ma powiadamiać handler przeładowujący usługę. Następnie należy dodać zadanie `nginx -t`, które sprawdza konfigurację po wdrożeniu pliku i przed zadaniem uruchamiającym usługę. Walidacja nie zmienia stanu systemu, dlatego zadanie powinno zawierać `changed_when: false`. Błąd walidacji ma przerwać playbook przed wykonaniem handlera. Nie należy stosować `ignore_errors` ani `--force-handlers`.
 
 **Wskazówka:** zadanie zapisujące konfigurację używa `notify: Przeładuj nginx`. Handler o tej nazwie znajduje się w sekcji `handlers` na tym samym poziomie wcięcia co `tasks` i korzysta z `ansible.builtin.service` ze stanem `reloaded`. Wielokrotne powiadomienie tego samego handlera w ramach jednego przebiegu powoduje jedno jego wykonanie.
 
-Sprawdzić z `control` adresy `http://192.168.56.11:8081` i `http://192.168.56.12:8081`. Potwierdzić również działanie portu 80, a następnie ponownie uruchomić playbook bez zmian.
+Na maszynie `control` należy sprawdzić adresy `http://192.168.56.11:8081` i `http://192.168.56.12:8081`. Po potwierdzeniu działania portu 80 należy ponownie uruchomić playbook bez zmian.
 
-**Kryteria weryfikacji:** port 8081 odpowiada na obu hostach; zmiana konfiguracji powoduje przeładowanie; kolejny identyczny przebieg nie uruchamia handlera. Wyjaśnić, dlaczego zmiana treści HTML nie wymaga przeładowania Nginx.
+**Kryteria weryfikacji:** port 8081 działa na obu hostach; handler uruchamia się po zmianie konfiguracji, a nie przy kolejnym przebiegu. Czy zmiana HTML wymaga przeładowania Nginx?
 
 ### C. Ograniczenie zakresu zmian
 
-Zmienić przeznaczenie obu hostów w plikach `host_vars`. Najpierw wykonać tryb sprawdzający:
+W plikach `host_vars` należy zmienić przeznaczenie obu hostów. Następnie należy uruchomić playbook w trybie sprawdzającym:
 
 ```bash
 ansible-playbook -i inventory.ini web.yml --check --diff
@@ -192,7 +196,7 @@ curl --fail http://192.168.56.12
 ansible-playbook -i inventory.ini web.yml --limit node-1
 ```
 
-Po `--check` strony powinny zachować poprzednią treść. Uruchomienie z `--limit node-1` powinno zmienić tylko stronę `node-1`, mimo że zmieniono konfigurację obu hostów. Następnie ponownie sprawdzić obie strony i ustalić, czy zmiana HTML uruchomiła handler.
+Po wykonaniu `--check` strony powinny zachować poprzednią treść. Uruchomienie z `--limit node-1` powinno zmienić tylko stronę `node-1`, mimo że zmieniono konfigurację obu hostów. Na koniec należy ponownie sprawdzić obie strony i ustalić, czy zmiana HTML uruchomiła handler.
 
 `--check` nie symuluje pełnego działania systemu. Wynik zależy od obsługi tego trybu przez użyte moduły i istniejącego stanu hosta; powodzenie polecenia nie gwarantuje poprawnego uruchomienia usługi.
 
@@ -210,7 +214,7 @@ Pytania kontrolne:
 
 Pliki projektu powstają na maszynie `control`. Przed zakończeniem należy przenieść katalog `zsr-ansible` na stanowisko laboratoryjne, a następnie zapisać go w repozytorium lub własnej chmurze plikowej.
 
-Wrócić do terminala stanowiska (inne okno terminala albo `exit` z powłoki `student`, a następnie `exit` z VM). W katalogu `materialy/ansible` utworzyć archiwum projektu, pobrać je i sprawdzić zawartość:
+Należy wrócić do terminala stanowiska: otworzyć inne okno terminala albo wyjść z powłoki `student` i z maszyny wirtualnej poleceniami `exit`. Następnie w katalogu `materialy/ansible` należy utworzyć archiwum projektu, pobrać je i sprawdzić jego zawartość:
 
 ```bash
 vagrant ssh control -c \
@@ -222,20 +226,20 @@ scp -F ssh-config control:/tmp/zsr-ansible-backup.tar.gz ./zsr-ansible-backup.ta
 tar -tzf zsr-ansible-backup.tar.gz
 ```
 
-Archiwum powinno zawierać pliki projektu. Po zapisaniu pracy należy ją zweryfikować w docelowym repozytorium lub chmurze. Do archiwum nie dołączać kluczy SSH ani katalogu `.vagrant`.
+Archiwum powinno zawierać pliki projektu. Po zapisaniu pracy należy ją zweryfikować w docelowym repozytorium lub chmurze. Do archiwum nie należy dołączać kluczy SSH ani katalogu `.vagrant`.
 
-Zatrzymać maszyny poleceniem `vagrant halt`. `vagrant destroy` usuwa maszyny wirtualne i ich lokalne dane; stosować je wyłącznie z katalogu tego projektu po sprawdzeniu kopii plików. VM nie są potrzebne do kolejnego laboratorium Docker.
+Na zakończenie należy zatrzymać maszyny poleceniem `vagrant halt`. Polecenie `vagrant destroy` usuwa maszyny wirtualne i ich lokalne dane; można je wykonać wyłącznie z katalogu tego projektu, po sprawdzeniu kopii plików. VM nie są potrzebne do kolejnego laboratorium Docker.
 
 ## Diagnostyka
 
 | Objaw | Pierwsza kontrola |
-|---|---|
+|:---|:---|
 | `UNREACHABLE` | Czy SSH z `control` działa do tego samego adresu i konta |
 | Brak interpretera Python | Czy VM ma `/usr/bin/python3` |
 | Błąd sudo | Konto i polityka sudo w zarządzanej VM |
 | Kolejny przebieg wciąż zgłasza zmiany | Zmienne wartości w szablonie i użycie modułów zamiast `shell` |
 | Handler nie uruchomił się | Czy zadanie zgłosiło `changed` i czy nazwa `notify` odpowiada nazwie handlera |
-| Nginx odrzuca konfigurację | Wynik `nginx -t`; poprawić szablon i ponowić playbook. Walidacja zapobiega reloadowi, lecz nie cofa błędnego pliku już zapisanego na dysku |
+| Nginx odrzuca konfigurację | Wynik `nginx -t`; należy poprawić szablon i ponownie uruchomić playbook. Walidacja zapobiega reloadowi, lecz nie cofa błędnego pliku już zapisanego na dysku |
 
 ## Źródła
 

@@ -7,7 +7,7 @@ student_pdf_output=${1:-0-ansible.pdf}
 student_build_dir=$(mktemp -d)
 trap 'rm -f "$student_build_dir/ansible.typ"; rmdir "$student_build_dir"' EXIT
 pandoc draft/01-ansible.md \
-  --from=markdown --to=typst --standalone \
+  --from=markdown --to=typst --standalone --shift-heading-level-by=-1 \
   --template=templates/student.typ \
   --output="$student_build_dir/ansible.typ"
 typst compile --font-path "$STUDENT_FONT_PATH" \

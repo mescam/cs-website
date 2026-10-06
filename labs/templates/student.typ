@@ -9,7 +9,7 @@
 )
 #set page(
   paper: "a4",
-  margin: (top: 2cm, bottom: 1.8cm, left: 2.1cm, right: 2.1cm),
+  margin: (top: 2cm, bottom: 1.9cm, left: 2.15cm, right: 2.15cm),
   numbering: "1",
   header: context [
     #set text(font: "DejaVu Sans", size: 8pt, fill: gray)
@@ -28,31 +28,36 @@
     )
   ],
 )
-#set text(font: "DejaVu Serif", size: 10pt, lang: "pl")
-#set par(justify: true, leading: 0.68em)
+#set text(font: "DejaVu Serif", size: 10.5pt, lang: "pl")
+#set par(justify: true, leading: 0.62em, spacing: 0.8em)
 #set heading(numbering: none)
-#set table(inset: 6pt, stroke: 0.4pt + rgb("#c6c6c6"))
-#show heading.where(level: 1): it => block(above: 17pt, below: 7pt, sticky: true)[
-  #set text(font: "DejaVu Sans", fill: pp-blue, size: 17pt, weight: "bold")
+#set table(inset: 7pt, stroke: 0.4pt + rgb("#c6c6c6"))
+#set list(spacing: 0.36em)
+#set enum(spacing: 0.36em)
+#show heading.where(level: 1): it => block(above: 22pt, below: 10pt, sticky: true)[
+  #set text(font: "DejaVu Sans", fill: pp-blue, size: 16pt, weight: "bold")
   #it.body
+  #v(5pt)
+  #line(length: 100%, stroke: 0.7pt + pp-blue)
 ]
-#show heading.where(level: 2): it => block(above: 11pt, below: 5pt, sticky: true)[
+#show heading.where(level: 2): it => block(above: 16pt, below: 6pt, sticky: true)[
   #set text(font: "DejaVu Sans", fill: pp-blue, size: 12pt, weight: "bold")
   #it.body
 ]
-#show heading.where(level: 3): it => block(above: 8pt, below: 4pt, sticky: true)[
-  #set text(font: "DejaVu Sans", fill: pp-orange, size: 10pt, weight: "bold")
+#show heading.where(level: 3): it => block(above: 11pt, below: 5pt, sticky: true)[
+  #set text(font: "DejaVu Sans", fill: pp-orange, size: 10.5pt, weight: "bold")
   #it.body
 ]
-#show raw: set text(font: "DejaVu Sans Mono", size: 8pt)
+#show raw: set text(font: "DejaVu Sans Mono", size: 8.2pt)
 #show raw.where(block: true): it => block(
   width: 100%,
-  inset: 8pt,
+  inset: 9pt,
   fill: pale-blue,
   breakable: false,
   it,
 )
 #show strong: set text(font: "DejaVu Sans", weight: "bold")
+#show link: set text(fill: pp-blue)
 #let horizontalrule = line(length: 100%, stroke: 0.6pt + pp-blue)
 
 #v(62pt)
@@ -75,8 +80,8 @@
 #text(weight: "bold", fill: pp-blue)[mgr inż. Jakub Woźniak]
 #line(length: 100%, stroke: 0.5pt + rgb("#c6c6c6"))
 #v(8pt)
-#set text(fill: gray, size: 9pt)
-Instytut Informatyki · Politechnika Poznańska
+#text(fill: gray, size: 9pt)[Instytut Informatyki · Politechnika Poznańska]
 
 #pagebreak()
+#set text(font: "DejaVu Serif", size: 10.5pt, fill: rgb("#24313b"), lang: "pl")
 $body$
