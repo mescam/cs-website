@@ -28,10 +28,11 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
 #### 2. Docker: Konteneryzacja aplikacji
   - **Wymagania**: Docker
   - **Zadania**:
-    - Tworzenie obrazów Docker
-    - Uruchamianie i zarządzanie kontenerami
-    - Tworzenie aplikacji wielokontenerowych
-  - [skrypt](/jwozniak/labs/1-docker.pdf)
+    - Praca z kontenerami i budowanie obrazu aplikacji z Dockerfile
+    - Przenoszenie obrazu oraz przechowywanie danych w wolumenach
+    - Sieć kontenerów i uruchomienie Redmine z PostgreSQL
+  - [skrypt dla studentów (PDF)](/jwozniak/labs/1-docker.pdf)
+  - [materiały startowe (ZIP)](/jwozniak/labs/docker-materialy.zip)
 
 #### 3. Kubernetes: Tworzenie klastra i skalowanie
   - **Wymagania**: Kubernetes (Minikube lub chmura)

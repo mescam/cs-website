@@ -55,6 +55,24 @@
             '';
           };
 
+          docker-student = pkgs.stdenvNoCC.mkDerivation {
+            name = "zsr-docker-student";
+            src = self;
+            nativeBuildInputs = [ pkgs.coreutils pkgs.zip typstPkgs.typst ];
+            phases = [ "unpackPhase" "buildPhase" "installPhase" ];
+            buildPhase = ''
+              typst compile --font-path "${typstPkgs.dejavu_fonts}/share/fonts/truetype" \
+                1-docker.typ 1-docker.pdf
+              mkdir -p package/materialy
+              cp -R draft/materialy/docker package/materialy/docker
+              (cd package && zip -qr "$PWD/docker-materialy.zip" materialy/docker)
+            '';
+            installPhase = ''
+              install -Dm644 1-docker.pdf "$out/1-docker.pdf"
+              install -Dm644 package/docker-materialy.zip "$out/docker-materialy.zip"
+            '';
+          };
+
           document = pkgs.stdenvNoCC.mkDerivation rec {
             name = "LaTeX-Build";
             src = self;
@@ -79,10 +97,11 @@
               # Ansible uses the top-level Typst source. Teacher notes,
               # solutions and test artifacts are not publication inputs.
               cp ${packages.ansible-student}/0-ansible.pdf ./0-ansible.pdf
+              cp ${packages.docker-student}/1-docker.pdf ./1-docker.pdf
 
               # Keep the remaining existing lab documents.
               for i in *.tex; do
-                if [ "$i" = "0-ansible.tex" ]; then continue; fi
+                if [ "$i" = "0-ansible.tex" ] || [ "$i" = "1-docker.tex" ]; then continue; fi
                 env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var \
                   latexmk -interaction=nonstopmode -pdf -lualatex \
                   "$i"
@@ -90,7 +109,7 @@
 
               # Build all Typst lab documents
               for i in *.typ; do
-                if [ "$i" = "0-ansible.typ" ]; then continue; fi
+                if [ "$i" = "0-ansible.typ" ] || [ "$i" = "1-docker.typ" ]; then continue; fi
                 typst compile "$i" "$(basename "$i" .typ).pdf"
               done
             '';
@@ -100,6 +119,7 @@
               # Only top-level PDFs: never copy draft/ or teacher/ recursively.
               cp *.pdf $out/
               cp ${packages.ansible-student}/ansible-materialy.zip $out/
+              cp ${packages.docker-student}/docker-materialy.zip $out/
             '';
           };
 
