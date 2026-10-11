@@ -1,192 +1,228 @@
 #import "@preview/typslides:1.3.2": *
 #import "zsr-theme.typ": *
 #import emoji: cloud
-#show: typslides.with(ratio: "16-9", theme: kolor-pp, font: "DejaVu Sans", font-size: 20pt, show-progress: true, show-page-numbers: true)
+
+#show: typslides.with(
+  ratio: "16-9", theme: kolor-pp, font: "DejaVu Sans", font-size: 20pt,
+  show-progress: true, show-page-numbers: true,
+)
 #set text(lang: "pl")
-#front-slide(title: "Kontenery w eksploatacji", subtitle: [Izolacja, budowanie obrazu i trwałość danych], authors: "mgr inż. Jakub Woźniak", info: [Zarządzanie Systemami Rozproszonymi · Semestr zimowy 2026/27])
-#slide(title: [Od źródeł do procesu])[
-#flow[Źródła][Build][Obraz OCI][Rejestr][Kontener]
-- Obraz: warstwy systemu plików, konfiguracja, identyfikator treści.
-- Kontener: instancja uruchomienia obrazu; procesy i warstwa zapisywalna.
-- Ten sam obraz, różne adresy usług i tożsamości przy uruchomieniu.
-#src[#link("https://github.com/opencontainers/image-spec")[OCI — Image Format Specification]]
-]
-#slide(title: [Maszyna wirtualna i kontener])[
-#data-table(3,
-[Warstwa],
-[Maszyny wirtualne],
-[Kontenery Linux],
-[Aplikacje],
-[Procesy w każdej VM],
-[Procesy w kontenerach],
-[Izolacja OS],
-[Osobne jądra gości],
-[Wspólne jądro hosta],
-[Podstawa],
-[Hypervisor i sprzęt],
-[Namespaces i cgroups],
-[Konsekwencja],
-[Własny system gościa],
-[Zależność od jądra hosta],
+
+#front-slide(
+  title: "Kontenery w systemie rozproszonym",
+  subtitle: [Od niezgodnych środowisk do wymienialnej usługi],
+  authors: "mgr inż. Jakub Woźniak",
+  info: [Zarządzanie Systemami Rozproszonymi · Semestr zimowy 2026/27],
 )
-#src[Docker Desktop może uruchamiać kontenery Linux wewnątrz VM.]
+
+#slide(title: [Ten sam kod, dwa różne wyniki])[
+  #alertblock[Przypadek][
+    Worker systemu zamówień działa na pierwszym serwerze. Na drugim uruchamia
+    się z tego samego commita, ale korzysta z innej wersji biblioteki i kończy
+    pracę błędem.
+  ]
+
+  #align(center)[
+    Ten sam kod źródłowy ≠ to samo działające środowisko
+  ]
+
+  - Wdrożenie zależy nie tylko od programu, lecz także od jego otoczenia.
+  - Celem jest ograniczenie liczby różnic między miejscami uruchomienia.
+
+  #src[Worker nawiązuje do systemu zamówień z wykładu 1.]
 ]
-#slide(title: [Namespaces, cgroups i uprawnienia])[
-#data-table(3,
-[Mechanizm],
-[Przykład],
-[Czego nie zapewnia],
-[Namespaces],
-[Osobny widok PID, sieci, mountów],
-[Odporności na błąd jądra],
-[cgroups],
-[Limit pamięci; udział CPU],
-[Poprawności aplikacji],
-[UID / capabilities],
-[Proces bez uprawnień administratora],
-[Pełnej izolacji samodzielnie],
-)
-- Root w kontenerze: zależny od mapowania użytkowników i uprawnień runtime.
-- Unikać trybu privileged i udostępniania socketu Dockera.
-#src[#link("https://docs.docker.com/engine/security/")[Docker — Security]]
+
+#slide(title: [Kod nie określa środowiska uruchomienia])[
+  #flow[Program][Biblioteki i runtime][System gospodarza]
+
+  - Proces potrzebuje określonych bibliotek, narzędzi i ustawień.
+  - Gdy są przygotowywane osobno na każdym serwerze, łatwo o różnice
+    niewidoczne w repozytorium źródeł.
+  - Potrzebna jest jednostka dostarczenia obejmująca program i jego
+    zależności, którą można przenieść między węzłami.
+
+  #src[#link("https://github.com/opencontainers/image-spec")[OCI — Image Format Specification]]
 ]
-#slide(title: [Dockerfile: narzędzia builda w obrazie])[
-#codebox[
-```dockerfile
-FROM golang:1.26
-WORKDIR /src
-COPY . .
-RUN go build -o /worker ./cmd/worker
-CMD ["/worker"]
-```
+
+#slide(title: [Kontener współdzieli jądro hosta])[
+  #data-table(3,
+    [Podejście], [Co przenosimy], [Konsekwencja],
+    [Sam program], [Kod lub plik wykonywalny], [Środowisko trzeba przygotować na hoście],
+    [Maszyna wirtualna], [System gościa i aplikacja], [Osobne jądro wzmacnia izolację],
+    [Kontener], [Aplikacja i środowisko użytkowe], [Wspólne jądro hosta],
+  )
+
+  - Kontener pozwala powielać środowisko aplikacji bez dołączania osobnego
+    systemu gościa do każdej instancji.
+  - Ta oszczędność wynika z decyzji o współdzieleniu jądra; wpływa też na
+    granicę izolacji.
 ]
-- Obraz końcowy zawiera kompilator i źródła.
-- Zmiana dowolnego kopiowanego pliku unieważnia cache kolejnych kroków.
-#src[Przykład: projekt Go z go.mod i go.sum; tag wersji nie jest niezmiennym digestem.]
+
+#slide(title: [Kontener jest izolowanym procesem])[
+  #cols[
+    #defblock[Wewnątrz][
+      Proces widzi własne drzewo plików, przestrzeń procesów i sieć.
+    ]
+  ][
+    #exblock[Na hoście][
+      Proces nadal wykonuje wywołania do jądra gospodarza i zużywa jego zasoby.
+    ]
+  ]
+
+  #align(center)[
+    Kontener = proces + izolowany widok otoczenia + kontrola zasobów
+  ]
+
+  - Nie jest to osobny komputer ani osobne jądro systemu operacyjnego.
+  - Na Docker Desktop hostem kontenerów Linux może być maszyna wirtualna.
+
+  #src[#link("https://docs.docker.com/engine/security/")[Docker — Engine security]]
 ]
-#slide(title: [Multistage: osobny build i runtime])[
-#codebox[
-```dockerfile
-FROM golang:1.26 AS build
-WORKDIR /src
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -o /worker ./cmd/worker
-FROM scratch
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /worker /worker
-USER 65532:65532
-ENTRYPOINT ["/worker"]
-```
+
+#slide(title: [Izolacja kontenera ma granice])[
+  #data-table(3,
+    [Mechanizm], [Po co jest], [Czego nie rozwiązuje],
+    [Namespaces], [Osobny widok procesów i sieci], [Błędu współdzielonego jądra],
+    [cgroups], [Kontrola zużycia zasobów], [Poprawności programu],
+    [Uprawnienia], [Proces bez roota ogranicza skutki błędu], [Błędnej konfiguracji usługi],
+  )
+
+  #alertblock[Wniosek][
+    Izolacja pomaga uruchamiać wiele usług na jednym węźle, ale nie zastępuje
+    kontroli uprawnień, aktualizacji hosta ani projektowania odporności.
+  ]
 ]
-#sm[Założenie: statyczny worker bez potrzeby powłoki i dodatkowych plików runtime.]
-#src[#link("https://docs.docker.com/build/building/multi-stage/")[Docker — Multi-stage builds]]
+
+#slide(title: [Obraz i kontener pełnią różne role])[
+  #flow[Jeden obraz][Wiele niezależnych instancji]
+
+  - Obraz opisuje program i jego zależności jako artefakt.
+  - Kontener jest konkretnym uruchomieniem obrazu: ma proces, konfigurację
+    uruchomienia i własną warstwę zapisywalną.
+  - Jeden obraz może służyć do tworzenia wielu instancji. Nowa wersja obrazu
+    nie zmienia procesów już działających.
+
+  #exblock[Po co ten podział?][
+    Umożliwia zastępowanie instancji bez ręcznej zmiany ich zawartości.
+  ]
 ]
-#slide(title: [Cache, tag i digest])[
-#data-table(2,
-[Zmiana],
-[Skutek w przykładzie],
-[Tylko plik .go],
-[Ponowienie COPY źródeł i kompilacji],
-[go.mod / go.sum],
-[Ponowne pobranie modułów i kompilacja],
-[Zawartość tagu bazowego],
-[Możliwy inny obraz przy kolejnym buildzie],
-)
-- Digest identyfikuje zawartość obrazu; tag może wskazywać inną zawartość.
-- Przypięcie bazy nie przypina pakietów pobranych później z ruchomego repozytorium.
-#src[#link("https://docs.docker.com/build/cache/invalidation/")[Docker — Cache invalidation]]
+
+#slide(title: [Warstwy ułatwiają budowanie i dystrybucję])[
+  #data-table(2,
+    [Idea], [Uzasadnienie],
+    [Dockerfile], [Jawny przepis utworzenia artefaktu],
+    [Warstwy], [Współdzielenie niezmienionych składników obrazów],
+    [Pamięć podręczna], [Szybsze ponowne budowanie po częściowej zmianie],
+  )
+
+  - Te mechanizmy ułatwiają dystrybucję i rozwój aplikacji.
+  - Sam przepis nie gwarantuje identycznego wyniku, jeżeli obraz bazowy
+    lub pobierane zależności mogą się zmieniać.
+
+  #src[#link("https://docs.docker.com/build/cache/invalidation/")[Docker — Cache invalidation]]
 ]
-#slide(title: [Usunięcie kontenera a usunięcie danych])[
-#codebox[
-```bash
-docker volume create orders-demo
-docker run --rm -v orders-demo:/data alpine:3.23 \
-  sh -c 'echo 42 > /data/order-id'
-docker run --rm -v orders-demo:/data alpine:3.23 \
-  cat /data/order-id
-```
+
+#slide(title: [Zachowanie usługi zależy także od otoczenia])[
+  #flow[Obraz][Konfiguracja + dane + sieć][Zachowanie usługi]
+
+  - Obraz ogranicza różnice w programie i jego zależnościach.
+  - Zgodność hosta, adres kolejki, dostępność bazy i dane pozostają
+    właściwościami środowiska uruchomienia.
+  - Dwie instancje tego samego obrazu mogą więc zachowywać się inaczej.
+
+  #alertblock[Granica obietnicy][
+    Przenośność artefaktu ułatwia wdrożenie; nie oznacza przenośności całego
+    działającego systemu.
+  ]
 ]
-- Drugi kontener odczytuje `42` z tego samego wolumenu.
-- Bez montowania: plik z warstwy kontenera znika wraz z jego usunięciem.
-- Wolumen na jednym hoście nie jest backupem ani replikacją.
-#src[#link("https://docs.docker.com/engine/storage/volumes/")[Docker — Volumes]]
+
+#slide(title: [Stan usługi ma osobny cykl życia])[
+  #cols[
+    #defblock[Proces i pliki tymczasowe][
+      Można je zastąpić razem z kontenerem.
+    ]
+  ][
+    #exblock[Zamówienia i załączniki][
+      Muszą przetrwać wymianę instancji i awarię węzła.
+    ]
+  ]
+
+  - Warstwa zapisywalna kontenera znika po jego usunięciu.
+  - Wolumen może przetrwać usunięcie kontenera, lecz lokalny wolumen nadal
+    wiąże dane z węzłem. Trwałość wymaga osobnej architektury i kopii zapasowej.
+
+  #src[#link("https://docs.docker.com/engine/storage/volumes/")[Docker — Volumes]]
 ]
-#slide(title: [Konfiguracja i zakończenie procesu])[
-#codebox[
-```bash
-docker run --read-only --memory=256m \
-  --env QUEUE_URL=https://queue.example.test \
-  --mount type=bind,src=/run/worker-token,dst=/run/token,readonly \
-  registry.example.test/worker:v2
-```
+
+#slide(title: [Wymiana instancji może przerwać pracę])[
+  #flow[Stary proces pracuje][Wymiana][Nowy proces pracuje]
+
+  - Kontener może zniknąć podczas obsługi żądania lub wiadomości.
+  - Możliwość ponownego dostarczenia pracy chroni przed jej utratą, lecz
+    może prowadzić do powtórnego wykonania.
+  - Dlatego bezpieczna wymiana zależy od zachowania aplikacji: obsługi
+    zakończenia, trwałego zapisu i idempotencji.
+
+  #src[Przypadek workera rozwija problem ponawiania z wykładu 1.]
 ]
-- Przykład wymaga obrazu i istniejącego pliku tokenu.
-- SIGTERM: zatrzymanie pobierania, dokończenie lub oddanie wiadomości.
-- ACK dopiero po trwałym skutku; ponowne dostarczenie musi być bezpieczne.
-#src[Adresy przykładowe. Preferować tożsamość workloadu, gdy platforma ją udostępnia.]
+
+#slide(title: [Kontener nie gwarantuje własności całej usługi])[
+  #data-table(2,
+    [Daje], [Nie daje automatycznie],
+    [Przenośny artefakt], [Identycznego zachowania w każdym środowisku],
+    [Izolację procesów], [Pełnej granicy bezpieczeństwa],
+    [Wymienialną instancję], [Nieprzerwanej obsługi żądań],
+    [Możliwość montowania danych], [Kopii zapasowej i odtworzenia],
+  )
+
+  #alertblock[Sens tej granicy][
+    Kontenery rozwiązują problem pakowania i uruchamiania procesu. Własności
+    całej usługi wynikają z projektu aplikacji i infrastruktury.
+  ]
 ]
-#slide(title: [Nix i reprodukowalność budowania])[
-#flow[flake.lock][Nix: narzędzia i fonty][Typst][PDF]
-- Ten kurs: przypięte wejścia Nix, kompilator Typst, pakiet slajdów i fonty.
-- Nix może także budować obrazy OCI; kontener może służyć jako środowisko builda.
-- Identyczne wejścia i izolacja ograniczają zmienność środowiska.
-#alertblock[Granica gwarancji][Identyczne bity wymagają również deterministycznego builda: bez zmiennych dat, losowości i niekontrolowanych wejść.]
-#src[#link("https://reproducible.nixos.org/")[NixOS — Reproducible Builds]]
+
+#slide(title: [#cloud Orkiestracja zarządza instancjami])[
+  - Obraz i kontener dotyczą pojedynczego artefaktu oraz instancji.
+  - Przy wielu węzłach pojawiają się nowe pytania: gdzie uruchomić instancję,
+    jak skierować do niej ruch i co zrobić po awarii węzła?
+  - Platforma kontenerowa może zarządzać rozmieszczeniem, wykrywaniem usług
+    i zastępowaniem instancji. Nie zna jednak znaczenia danych biznesowych.
+
+  #align(center)[
+    Kontener → instancja aplikacji → usługa działająca na wielu węzłach
+  ]
+
+  #src[Następny wykład: Kubernetes i rekonsyliacja stanu usługi.]
 ]
-#slide(title: [#cloud Rejestr Azure Container Registry])[
-#flow[CI: push digest][ACR][AKS: pull digest]
-- Osobne uprawnienia publikowania i pobierania.
-- Retencja obrazów: zachować wersje potrzebne do rollbacku.
-- Przypięty digest daje identyfikację; aktualizacje bezpieczeństwa wymagają nowego builda.
-#src[#link("https://learn.microsoft.com/azure/container-registry/container-registry-intro")[Microsoft — Introduction to container registries]]
+
+#slide(title: [Przenośny obraz ogranicza różnice między serwerami])[
+  #cols[
+    #alertblock[Na początku][
+      Ten sam kod zależał od bibliotek przygotowanych osobno na serwerach.
+    ]
+  ][
+    #exblock[Po konteneryzacji][
+      Program i zależności są przenoszone jako obraz. Instancje można zastępować.
+    ]
+  ]
+
+  - Różnice między węzłami zostały ograniczone, ale nie zniknęły: pozostają
+    jądro hosta, konfiguracja, sieć i dostęp do danych.
+  - O niezawodności przetwarzania zamówień nadal decydują trwałość danych
+    i zachowanie workera podczas przerwania pracy.
+
+  #align(center)[
+    Kontener upraszcza dostarczenie programu; nie zastępuje projektu usługi.
+  ]
 ]
-#slide(title: [#cloud Trwałość danych w usłudze kontenerowej])[
-#data-table(3,
-[Dane],
-[Przykładowe miejsce],
-[Pytanie operacyjne],
-[Pliki tymczasowe],
-[Lokalny filesystem kontenera],
-[Czy mogą zniknąć przy wymianie?],
-[Zamówienia],
-[Zarządzana baza danych],
-[Jak wykonać i sprawdzić restore?],
-[Załączniki],
-[Object storage],
-[Jaka retencja i wersjonowanie?],
-)
-#sm[Konkretny typ magazynu zależy od platformy; samo użycie kontenera niczego tu nie gwarantuje.]
-]
-#slide(title: [Przypadek: dwa buildy, jeden commit])[
-#data-table(3,
-[Właściwość],
-[Build A],
-[Build B],
-[Commit / Dockerfile],
-[Identyczne],
-[Identyczne],
-[Baza po digescie],
-[Identyczna],
-[Identyczna],
-[RUN apt-get install libfoo],
-[Repozytorium w poniedziałek],
-[Repozytorium w piątek],
-[Cache],
-[Dostępny],
-[Pusty],
-)
-#alertblock[Do rozstrzygnięcia][Czy obrazy muszą być identyczne? Jakie wejścia należy ustalić? Jak niezależnie sprawdzić reprodukowalność?]
-]
+
 #slide(title: [Źródła i lektury])[
-#text(size: 16pt)[
-- #link("https://docs.docker.com/build/building/multi-stage/")[Docker — Multi-stage builds]
-- #link("https://docs.docker.com/build/cache/invalidation/")[Docker — Cache invalidation]
-- #link("https://docs.docker.com/engine/storage/volumes/")[Docker — Volumes]
-- #link("https://github.com/opencontainers/image-spec")[OCI — Image Format Specification]
-- #link("https://reproducible.nixos.org/")[NixOS — Reproducible Builds]
-- #link("https://learn.microsoft.com/azure/container-registry/container-registry-intro")[Microsoft — Azure Container Registry]
-]
-#src[Dokumentacja sprawdzona: 26.09.2026. Dane przypadków: przykłady dydaktyczne.]
+  #text(size: 16pt)[
+    - #link("https://github.com/opencontainers/image-spec")[OCI — Image Format Specification]
+    - #link("https://docs.docker.com/engine/security/")[Docker — Engine security]
+    - #link("https://docs.docker.com/build/cache/invalidation/")[Docker — Cache invalidation]
+    - #link("https://docs.docker.com/engine/storage/volumes/")[Docker — Volumes]
+  ]
+
+  #src[Przykład workera służy wyjaśnieniu granic i zastosowań kontenerów.]
 ]
