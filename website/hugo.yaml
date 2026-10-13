@@ -14,7 +14,7 @@ params:
     na żądanie po wcześniejszym umówieniu mailowym  
 
     **Informacje dla studentów**  
-    > 🎓 Dziękuję za wspólnie spędzony rok — dwa semestry pełne nauki, projektów i dobrych pomysłów. Powodzenia na drodze zawodowej!
+    > ⚠️ Informuję, że w dniach 2 i 9 listopada zajęcia nie odbędą się z powodu nieobecności prowadzącego.
 
     ### Przedmioty
     - **Zarządzanie Systemami Rozproszonymi**  
@@ -33,8 +33,6 @@ params:
       url: /jwozniak/zsr-wyklady
     - name: "zsr lab"
       url: /jwozniak/zsr-lab
-    - name: "zsr wyniki"
-      url: /jwozniak/zsr-wyniki
     - name: "psr wykład"
       url: /jwozniak/psr-wyklady
     - name: "psr projekt"

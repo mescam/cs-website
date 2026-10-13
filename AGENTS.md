@@ -91,8 +91,7 @@ This is an academic website for **mgr inż. Jakub Woźniak** from the Institute 
     │   ├── psr-proj.md               # PSR project info
     │   ├── psr-wyklady.md            # PSR lectures
     │   ├── zsr-lab.md                # ZSR labs
-    │   ├── zsr-wyklady.md            # ZSR lectures
-    │   └── zsr-wyniki.md             # ZSR results
+    │   └── zsr-wyklady.md            # ZSR lectures
     └── themes/typo/                   # Hugo theme
 ```
 
