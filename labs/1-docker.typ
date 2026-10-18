@@ -2,7 +2,7 @@
 #let orange = rgb("#bf5327")
 #let pale = rgb("#e8f1f5")
 
-#set document(title: "Docker — konteneryzacja aplikacji", author: "mgr inż. Jakub Woźniak")
+#set document(title: "Docker i Kubernetes — od kontenera do wdrożenia", author: "mgr inż. Jakub Woźniak")
 #set page(paper: "a4", margin: (top: 2cm, bottom: 2cm, left: 2.15cm, right: 2.15cm), numbering: "1")
 #set text(font: "DejaVu Sans", size: 10pt, lang: "pl")
 #set par(justify: false, leading: 0.7em, spacing: 0.8em)
@@ -29,14 +29,18 @@
   #v(30pt)
   #text(font: "DejaVu Sans", size: 11pt, fill: blue)[ZARZĄDZANIE SYSTEMAMI ROZPROSZONYMI]
   #v(20pt)
-  #text(font: "DejaVu Sans", size: 28pt, weight: "bold", fill: blue)[Docker]
+  #text(font: "DejaVu Sans", size: 28pt, weight: "bold", fill: blue)[Docker i Kubernetes]
   #v(7pt)
-  #text(font: "DejaVu Sans", size: 16pt)[Konteneryzacja aplikacji]
+  #text(font: "DejaVu Sans", size: 16pt)[Od kontenera do wdrożenia]
   #v(14pt)
-  #text(size: 10pt)[Powłoka · Dockerfile · obrazy · sieć · wolumeny]
+  #text(size: 10pt)[Obrazy · sieć · wolumeny · wdrażanie · skalowanie]
   #v(22pt)
   mgr inż. Jakub Woźniak · Politechnika Poznańska
 ]
+
+= Część I. Docker — konteneryzacja aplikacji
+
+Skrypt prowadzi od budowania obrazu do uruchomienia tej samej aplikacji w Kubernetesie. W części I należy przygotować obrazy Flaska oraz uruchomić Redmine z PostgreSQL. Część II wykorzystuje te doświadczenia do pracy z klastrem; jej zadania A–D dotyczą podstaw, a E–G sond zdrowia, konfiguracji i trwałości danych.
 
 = Cel ćwiczenia
 
@@ -273,3 +277,5 @@ Po demonstracji należy zatrzymać kontenery. Usunięcie wolumenów kasuje dane 
 4. Co pozostałoby po usunięciu kontenerów, gdyby zabrakło wolumenu załączników?
 
 #link("https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/")[Dockerfile] · #link("https://docs.docker.com/reference/cli/docker/image/save/")[Zapis obrazu] · #link("https://docs.docker.com/reference/cli/docker/image/load/")[Odczyt obrazu] · #link("https://docs.docker.com/engine/network/drivers/bridge/")[Sieć bridge] · #link("https://docs.docker.com/engine/storage/volumes/")[Wolumeny] · #link("https://hub.docker.com/_/postgres")[Obraz PostgreSQL] · #link("https://hub.docker.com/_/redmine")[Obraz Redmine]
+
+#include "chapters/kubernetes.typ"

@@ -25,23 +25,25 @@ Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (we
   - [skrypt dla studentów (PDF)](/jwozniak/labs/0-ansible.pdf)
   - [materiały środowiska (ZIP)](/jwozniak/labs/ansible-materialy.zip)
 
-#### 2. Docker: Konteneryzacja aplikacji
-  - **Wymagania**: Docker
+#### 2. Docker i Kubernetes: Od obrazu do wdrożenia
+  - **Wymagania**: Docker, Minikube i kubectl; dodatkowe spotkania: Helm
   - **Zadania**:
-    - Praca z kontenerami i budowanie obrazu aplikacji z Dockerfile
-    - Przenoszenie obrazu oraz przechowywanie danych w wolumenach
-    - Sieć kontenerów i uruchomienie Redmine z PostgreSQL
+    - Dockerfile, obrazy, sieć kontenerów i wolumeny
+    - Uruchomienie Redmine z PostgreSQL, a następnie wdrożenie Flaska w Kubernetesie
+    - Pod, Deployment, Service, skalowanie, aktualizacje i diagnostyka
+    - Sondy zdrowia, ConfigMap, Secret, StatefulSet i PVC
+    - Job, CronJob, sidecar, SecurityContext i NetworkPolicy
+    - Gateway API z Traefikiem i podstawy Kustomize
   - [skrypt dla studentów (PDF)](/jwozniak/labs/1-docker.pdf)
   - [materiały startowe (ZIP)](/jwozniak/labs/docker-materialy.zip)
 
 #### 3. Kubernetes: Tworzenie klastra i skalowanie
   - **Wymagania**: Kubernetes (Minikube lub chmura)
   - **Zadania**:
-    - Instalacja Kubernetes
-    - Pod, Deployment, Service
-    - PersistentVolume i PVC
-    - Secrets i ConfigMaps
-    - HPA
+    - Kontynuacja i utrwalenie części Kubernetes ze skryptu Docker
+    - Ponowne uruchomienie, skalowanie i wycofywanie wdrożeń
+    - StatefulSet, PV i PVC dla bazy PostgreSQL
+    - Opcjonalnie: HPA oraz przeniesienie danych z Dockera
   - [skrypt](/jwozniak/labs/2-kubernetes.pdf)
 
 #### 4. Kubernetes: LivenessProbe, StatefulSet i Ingress
