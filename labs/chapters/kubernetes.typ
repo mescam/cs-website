@@ -39,16 +39,15 @@ Pod zawiera jeden lub więcej kontenerów współdzielących sieć i zadeklarowa
 
 = A. Klaster i własny obraz
 
-Wymagane są działający lokalny Docker, Minikube, `kubectl`, `curl` i `openssl`. Narzędzia należy przygotować zgodnie z #link("https://minikube.sigs.k8s.io/docs/start/")[instrukcją Minikube] i #link("https://kubernetes.io/docs/tasks/tools/")[instrukcją kubectl] dla systemu stanowiska. Klaster laboratoryjny otrzyma 2 CPU i 4 GiB pamięci; host musi mieć również zasoby dla własnego systemu. Potrzebny jest dostęp do Internetu do pobrania obrazów. Polecenia wykonuje się na stanowisku, w powłoce Bash, o ile nie wskazano inaczej.
+Przed ćwiczeniem należy pobrać i zainstalować Minikube zgodnie z #link("https://minikube.sigs.k8s.io/docs/start/")[instrukcją dla systemu stanowiska]. Wymagane są także działający lokalny Docker, `kubectl`, `curl` i `openssl`; `kubectl` można zainstalować zgodnie z #link("https://kubernetes.io/docs/tasks/tools/")[instrukcją Kubernetes] albo korzystać z wersji dostarczanej przez Minikube. Klaster laboratoryjny otrzyma 2 CPU i 4 GiB pamięci; host musi mieć również zasoby dla własnego systemu. Potrzebny jest dostęp do Internetu do pobrania obrazów. Polecenia wykonuje się na stanowisku, w powłoce Bash, o ile nie wskazano inaczej.
 
 Jeśli nie zainstalowano osobnego `kubectl`, Minikube udostępnia go przez `minikube kubectl --`. W Bash można przed kolejnymi poleceniami ustawić alias `alias kubectl='minikube kubectl --'`; działa on tylko w bieżącej powłoce, więc w nowym terminalu trzeba go ustawić ponownie. Przy zainstalowanym `kubectl` alias nie jest potrzebny.
 
-Używamy domyślnego profilu Minikube (kontekst `minikube`), bez tworzenia profilu dla ćwiczenia. Jeśli wcześniej wybrano inny profil, należy najpierw przełączyć się poleceniem `minikube profile minikube`. Jeśli domyślny klaster już istnieje z innym sterownikiem, np. VirtualBox, zamiast poniższego `minikube start --driver=docker ...` należy go uruchomić przez `minikube start`; nie zmieniać jego sterownika ani nie usuwać klastra z danymi bez ich zabezpieczenia. Do ćwiczenia z NetworkPolicy potrzebny jest klaster z Calico — jeśli istniejący go nie ma, należy uzgodnić przygotowanie klastra z prowadzącym.
+Ćwiczenie korzysta z jednego, domyślnego profilu Minikube o nazwie `minikube`. Nie należy tworzyć osobnego profilu `zsr` ani dodawać `-p zsr` do poleceń; `zsr` będzie jedynie nazwą namespace. Klaster uruchamiamy ze sterownikiem Docker i Calico, potrzebnym do ćwiczenia z NetworkPolicy.
 
 ```bash
 docker info
 minikube version
-minikube profile list
 minikube start --driver=docker --cni=calico --cpus=2 --memory=4096
 kubectl version --client
 kubectl config use-context minikube
@@ -58,7 +57,7 @@ kubectl get namespace zsr || kubectl create namespace zsr
 kubectl config set-context minikube --namespace=zsr
 ```
 
-Węzeł ma mieć stan `Ready`. Namespace `zsr` grupuje zasoby ćwiczenia wewnątrz klastra i nie jest profilem Minikube. W każdym kolejnym terminalu należy sprawdzić bieżący kontekst i namespace (`kubectl config view --minify`); jeśli używany jest alias, ustawić go ponownie. Jeżeli namespace już istnieje po wcześniejszym uruchomieniu, należy go wykorzystać.
+Węzeł ma mieć stan `Ready`, a bieżący kontekst to `minikube`. Namespace `zsr` grupuje zasoby ćwiczenia wewnątrz klastra. W każdym kolejnym terminalu należy sprawdzić bieżący kontekst i namespace (`kubectl config view --minify`); jeśli używany jest alias, ustawić go ponownie. Jeżeli namespace już istnieje po wcześniejszym uruchomieniu, należy go wykorzystać.
 
 Należy utworzyć katalog `kubernetes` obok katalogu `starter` i zapisywać w nim manifesty YAML. YAML używa wcięć ze spacji; położenie pola określa, do którego obiektu ono należy. Polecenie `kubectl apply -f PLIK` wysyła opis do API klastra. Jego powodzenie oznacza przyjęcie konfiguracji, a nie gotowość aplikacji.
 
