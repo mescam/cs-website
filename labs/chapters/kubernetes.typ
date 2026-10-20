@@ -39,34 +39,38 @@ Pod zawiera jeden lub więcej kontenerów współdzielących sieć i zadeklarowa
 
 = A. Klaster i własny obraz
 
-Wymagane są działający lokalny Docker, Minikube, `kubectl`, `curl` i `openssl`. Narzędzia należy przygotować zgodnie z #link("https://minikube.sigs.k8s.io/docs/start/")[instrukcją Minikube] i #link("https://kubernetes.io/docs/tasks/tools/")[instrukcją kubectl] dla systemu stanowiska. Klaster laboratoryjny otrzyma 2 CPU i 4 GiB pamięci; host musi mieć również zasoby dla własnego systemu. Potrzebny jest dostęp do Internetu do pobrania obrazów. Polecenia wykonuje się na stanowisku, w powłoce Bash, o ile nie wskazano inaczej.
+Przed ćwiczeniem należy pobrać i zainstalować Minikube zgodnie z #link("https://minikube.sigs.k8s.io/docs/start/")[instrukcją dla systemu stanowiska]. Wymagane są także działający lokalny Docker, `kubectl`, `curl` i `openssl`; `kubectl` można zainstalować zgodnie z #link("https://kubernetes.io/docs/tasks/tools/")[instrukcją Kubernetes] albo korzystać z wersji dostarczanej przez Minikube. Klaster laboratoryjny otrzyma 2 CPU i 4 GiB pamięci; host musi mieć również zasoby dla własnego systemu. Potrzebny jest dostęp do Internetu do pobrania obrazów. Polecenia wykonuje się na stanowisku, w powłoce Bash, o ile nie wskazano inaczej.
+
+Jeśli nie zainstalowano osobnego `kubectl`, Minikube udostępnia go przez `minikube kubectl --`. W Bash można przed kolejnymi poleceniami ustawić alias `alias kubectl='minikube kubectl --'`; działa on tylko w bieżącej powłoce, więc w nowym terminalu trzeba go ustawić ponownie. Przy zainstalowanym `kubectl` alias nie jest potrzebny.
+
+Ćwiczenie korzysta z jednego, domyślnego profilu Minikube o nazwie `minikube`. Nie należy tworzyć osobnego profilu `zsr` ani dodawać `-p zsr` do poleceń; `zsr` będzie jedynie nazwą namespace. Klaster uruchamiamy ze sterownikiem Docker i Calico, potrzebnym do ćwiczenia z NetworkPolicy.
 
 ```bash
 docker info
 minikube version
+minikube start --driver=docker --cni=calico --cpus=2 --memory=4096
 kubectl version --client
-minikube start -p zsr --driver=docker --cni=calico --cpus=2 --memory=4096
-kubectl config use-context zsr
+kubectl config use-context minikube
 kubectl config current-context
 kubectl get nodes -o wide
 kubectl get namespace zsr || kubectl create namespace zsr
-kubectl config set-context zsr --namespace=zsr
+kubectl config set-context minikube --namespace=zsr
 ```
 
-Oczekiwany kontekst to `zsr`, a węzeł ma mieć stan `Ready`. Profil Minikube `zsr` wskazuje lokalny klaster; namespace `zsr` grupuje zasoby ćwiczenia wewnątrz niego. W każdym kolejnym terminalu należy sprawdzić bieżący kontekst. Jeżeli namespace już istnieje po wcześniejszym uruchomieniu, należy go wykorzystać.
+Węzeł ma mieć stan `Ready`, a bieżący kontekst to `minikube`. Namespace `zsr` grupuje zasoby ćwiczenia wewnątrz klastra. W każdym kolejnym terminalu należy sprawdzić bieżący kontekst i namespace (`kubectl config view --minify`); jeśli używany jest alias, ustawić go ponownie. Jeżeli namespace już istnieje po wcześniejszym uruchomieniu, należy go wykorzystać.
 
 Należy utworzyć katalog `kubernetes` obok katalogu `starter` i zapisywać w nim manifesty YAML. YAML używa wcięć ze spacji; położenie pola określa, do którego obiektu ono należy. Polecenie `kubectl apply -f PLIK` wysyła opis do API klastra. Jego powodzenie oznacza przyjęcie konfiguracji, a nie gotowość aplikacji.
 
-Obrazy na hoście Docker i obrazy dostępne dla węzła Minikube są przechowywane osobno. Należy wczytać obie wersje Flaska przygotowane w części I:
+*Przed pierwszym `kubectl apply`* należy wczytać obie wersje Flaska przygotowane w części I do uruchomionego klastra Minikube:
 
 ```bash
 docker image ls zsr-flask
-minikube -p zsr image load zsr-flask:v1
-minikube -p zsr image load zsr-flask:v2
-minikube -p zsr image ls
+minikube image load zsr-flask:v1
+minikube image load zsr-flask:v2
+minikube image ls
 ```
 
-Jeżeli brakuje wersji 2, można ją odtworzyć poleceniem `docker load -i zsr-flask-v2.tar.gz`. Wersję 1 należy zachować z części I lub odbudować z jej kodu. Wersja 2 musi zwracać `ok` pod `/health`, a wersja 1 nie powinna zawierać tej trasy. Nie należy nadpisywać znaczników inną zawartością podczas kolejnych ćwiczeń.
+`docker build` lub `docker load` umieszcza obraz na hoście, ale węzeł Minikube korzysta z własnego magazynu obrazów, nawet gdy uruchomiono go ze sterownikiem Docker. `minikube image load` kopiuje obraz z hosta do węzła, aby Pod mógł go uruchomić przy `imagePullPolicy: Never` (bez pobierania z rejestru). Po ponownym zbudowaniu obrazu należy załadować go ponownie, zanim powstaną nowe Pody. Jeżeli brakuje wersji 2 na hoście, można ją odtworzyć poleceniem `docker load -i zsr-flask-v2.tar.gz`. Wersję 1 należy zachować z części I lub odbudować z jej kodu. Wersja 2 musi zwracać `ok` pod `/health`, a wersja 1 nie powinna zawierać tej trasy. Nie należy nadpisywać znaczników inną zawartością podczas kolejnych ćwiczeń.
 
 *Weryfikacja:* węzeł jest gotowy, a lista obrazów w Minikube zawiera obie wersje Flaska. Należy wyjaśnić, dlaczego samo `docker build` na stanowisku nie wystarcza do ich uruchomienia w klastrze.
 
@@ -272,11 +276,11 @@ Nie należy zmieniać trasy startup podczas tych prób: dopóki startup nie zako
 W części I nazwany wolumen przechowywał dane poza kontenerem. W Kubernetesie aplikacja zgłasza zapotrzebowanie na miejsce przez *PersistentVolumeClaim (PVC)*. Odpowiadający mu *PersistentVolume (PV)* opisuje przydzielony zasób. StorageClass określa sposób jego dostarczania; w Minikube lokalny provisioner może utworzyć PV na żądanie.
 
 ```bash
-minikube -p zsr addons list
+minikube addons list
 kubectl get storageclass
 ```
 
-Powinna istnieć klasa `standard` oznaczona jako domyślna. W świeżym Minikube odpowiadają za nią dodatki `storage-provisioner` i `default-storageclass`. Jeżeli są wyłączone, należy włączyć je przez `minikube -p zsr addons enable storage-provisioner` oraz `minikube -p zsr addons enable default-storageclass`. Dalsze manifesty korzystają z domyślnej klasy i są przeznaczone dla tego lokalnego klastra.
+Powinna istnieć klasa `standard` oznaczona jako domyślna. W świeżym Minikube odpowiadają za nią dodatki `storage-provisioner` i `default-storageclass`. Jeżeli są wyłączone, należy włączyć je przez `minikube addons enable storage-provisioner` oraz `minikube addons enable default-storageclass`. Dalsze manifesty korzystają z domyślnej klasy i są przeznaczone dla tego lokalnego klastra.
 
 == ConfigMap i Secret
 
@@ -575,7 +579,7 @@ Kontener w zadaniu B ma już żądania i limity CPU oraz pamięci. Należy zmien
 HPA (Horizontal Pod Autoscaler) zmienia liczbę replik na podstawie metryk. W lokalnym Minikube należy najpierw włączyć Metrics Server:
 
 ```bash
-minikube -p zsr addons enable metrics-server
+minikube addons enable metrics-server
 kubectl top nodes
 kubectl top pods
 kubectl autoscale deployment flask --cpu=50% --min=2 --max=5
@@ -837,7 +841,7 @@ Manifesty i obserwacje należy zachować. Dla konfiguracji z hasłami w repozyto
 
 == Zatrzymanie środowiska
 
-Po demonstracji należy zakończyć procesy `port-forward` i zatrzymać klaster poleceniem `minikube stop -p zsr`. Pracę można wznowić przez `minikube start -p zsr`. Usunięcie namespace (`kubectl delete namespace zsr`) usuwa również należące do niego PVC i może spowodować usunięcie danych przez provisioner. Usunięcie profilu (`minikube delete -p zsr`) usuwa lokalny klaster i jego dane. Te operacje należy wykonywać dopiero po zakończeniu pracy z danymi.
+Po demonstracji należy zakończyć procesy `port-forward` i zatrzymać klaster poleceniem `minikube stop`. Pracę można wznowić przez `minikube start`. Usunięcie namespace (`kubectl delete namespace zsr`) usuwa również należące do niego PVC i może spowodować usunięcie danych przez provisioner. Polecenie `minikube delete` usuwa cały domyślny klaster i jego dane, także spoza ćwiczenia. Tych operacji nie należy wykonywać bez upewnienia się, że dane nie są już potrzebne.
 
 = Diagnostyka Kubernetes
 
@@ -854,7 +858,7 @@ kubectl logs NAZWA --previous
 
 `NAZWA` wymaga zastąpienia rzeczywistą nazwą Poda. `--previous` działa, gdy istnieją logi poprzedniej instancji kontenera w tym Podzie.
 
-- `ErrImageNeverPull`: należy sprawdzić nazwę i znacznik oraz wczytać obraz do profilu `zsr`. `ImagePullBackOff` przy obrazach z rejestru wymaga sprawdzenia zdarzeń, dostępu do rejestru i istnienia znacznika.
+- `ErrImageNeverPull`: należy sprawdzić nazwę i znacznik oraz wczytać obraz przez `minikube image load` do domyślnego klastra. `ImagePullBackOff` przy obrazach z rejestru wymaga sprawdzenia zdarzeń, dostępu do rejestru i istnienia znacznika.
 - `Pending`: `describe` może wskazać brak CPU lub pamięci albo nieprzydzielony PVC. Przy PVC należy sprawdzić `kubectl describe pvc NAZWA` i domyślną StorageClass.
 - `CrashLoopBackOff`: należy odczytać logi bieżącego i poprzedniego kontenera, kod zakończenia oraz zdarzenia. Powodem może być błąd konfiguracji, brak bazy albo sonda liveness.
 - `CreateContainerConfigError`: należy sprawdzić istnienie ConfigMap, Secret i wskazanych kluczy w namespace `zsr`.
