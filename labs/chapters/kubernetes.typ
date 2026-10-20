@@ -43,6 +43,8 @@ Wymagane są działający lokalny Docker, Minikube, `kubectl`, `curl` i `openssl
 
 Jeśli nie zainstalowano osobnego `kubectl`, Minikube udostępnia go przez `minikube kubectl --`. W Bash można przed kolejnymi poleceniami ustawić alias `alias kubectl='minikube kubectl --'`; działa on tylko w bieżącej powłoce, więc w nowym terminalu trzeba go ustawić ponownie. Przy zainstalowanym `kubectl` alias nie jest potrzebny.
 
+Używamy domyślnego profilu Minikube (kontekst `minikube`), bez tworzenia profilu dla ćwiczenia. Jeśli wcześniej wybrano inny profil, należy najpierw przełączyć się poleceniem `minikube profile minikube`. Jeśli domyślny klaster już istnieje z innym sterownikiem, np. VirtualBox, zamiast poniższego `minikube start --driver=docker ...` należy go uruchomić przez `minikube start`; nie zmieniać jego sterownika ani nie usuwać klastra z danymi bez ich zabezpieczenia. Do ćwiczenia z NetworkPolicy potrzebny jest klaster z Calico — jeśli istniejący go nie ma, należy uzgodnić przygotowanie klastra z prowadzącym.
+
 ```bash
 docker info
 minikube version
@@ -56,7 +58,7 @@ kubectl get namespace zsr || kubectl create namespace zsr
 kubectl config set-context minikube --namespace=zsr
 ```
 
-Używamy domyślnego profilu Minikube (kontekst `minikube`), bez tworzenia profilu dla ćwiczenia. Jeśli domyślny klaster już istnieje z innym sterownikiem, np. VirtualBox, nie należy próbować zmieniać jego sterownika powyższym poleceniem ani usuwać klastra z danymi bez ich zabezpieczenia; przed ćwiczeniem należy uzgodnić przygotowanie klastra z prowadzącym. Węzeł ma mieć stan `Ready`. Namespace `zsr` grupuje zasoby ćwiczenia wewnątrz klastra i nie jest profilem Minikube. W każdym kolejnym terminalu należy sprawdzić bieżący kontekst i namespace (`kubectl config view --minify`); jeśli używany jest alias, ustawić go ponownie. Jeżeli namespace już istnieje po wcześniejszym uruchomieniu, należy go wykorzystać.
+Węzeł ma mieć stan `Ready`. Namespace `zsr` grupuje zasoby ćwiczenia wewnątrz klastra i nie jest profilem Minikube. W każdym kolejnym terminalu należy sprawdzić bieżący kontekst i namespace (`kubectl config view --minify`); jeśli używany jest alias, ustawić go ponownie. Jeżeli namespace już istnieje po wcześniejszym uruchomieniu, należy go wykorzystać.
 
 Należy utworzyć katalog `kubernetes` obok katalogu `starter` i zapisywać w nim manifesty YAML. YAML używa wcięć ze spacji; położenie pola określa, do którego obiektu ono należy. Polecenie `kubectl apply -f PLIK` wysyła opis do API klastra. Jego powodzenie oznacza przyjęcie konfiguracji, a nie gotowość aplikacji.
 
