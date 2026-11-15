@@ -24,6 +24,7 @@
 #show raw: set text(font: "DejaVu Sans Mono", size: 8pt)
 #show raw.where(block: true): it => block(width: 100%, inset: 8pt, fill: pale, breakable: true, it)
 #show strong: set text(font: "DejaVu Sans", weight: "bold")
+#show link: set text(fill: blue)
 
 #align(center)[
   #v(30pt)

@@ -6,106 +6,50 @@ draft = false
 
 ### Informacje
 
-Semestr zimowy 2025/26  
+Semestr zimowy 2026/27  
 Laboratorium 1.6.16  
 poniedziałki, od razu po wykładzie
 
 ### Zaliczenie
 
-Zaliczenie wykładu i laboratoriów odbędzie się 27 stycznia na wykładzie (według planu zajęć). 
+Przedmiot zaliczony jest kolokwium przeprowadzonym na zajęciach w laboratorium.
 
 ### Plan laboratoriów
 
-#### 1. Ansible: Automatyzacja konfiguracji
+Zajęcia prowadzone są w trzech blokach. Każdy blok ma własny skrypt i materiały, które należy zachować w swoim repozytorium.
+
+#### 1. Ansible: automatyzacja konfiguracji
   - **Wymagania**: VirtualBox, Vagrant, podstawy terminala i SSH
-  - **Zadania**:
+  - **Zakres**:
     - Inventory i playbook konfigurujący dwa serwery WWW
     - Zmienne, szablony i handlery
     - Idempotencja i sprawdzanie zmian
   - [skrypt dla studentów (PDF)](/jwozniak/labs/0-ansible.pdf)
   - [materiały środowiska (ZIP)](/jwozniak/labs/ansible-materialy.zip)
 
-#### 2. Docker i Kubernetes: Od obrazu do wdrożenia
+#### 2. Kontenery aplikacyjne: Docker i Kubernetes
   - **Wymagania**: Docker, Minikube i kubectl; dodatkowe spotkania: Helm
-  - **Zadania**:
+  - **Zakres**:
     - Dockerfile, obrazy, sieć kontenerów i wolumeny
     - Uruchomienie Redmine z PostgreSQL, a następnie wdrożenie Flaska w Kubernetesie
     - Pod, Deployment, Service, skalowanie, aktualizacje i diagnostyka
     - Sondy zdrowia, ConfigMap, Secret, StatefulSet i PVC
     - Job, CronJob, sidecar, SecurityContext i NetworkPolicy
-    - Gateway API z Traefikiem i podstawy Kustomize
+    - Gateway API z Traefikiem
+    - Prometheus, Grafana i Alertmanager: ruch, błędy i p95 z histogramu
+    - Alert z mailem, ślad i log tej samej operacji, diagnoza przypadku
   - [skrypt dla studentów (PDF)](/jwozniak/labs/1-docker.pdf)
   - [materiały startowe (ZIP)](/jwozniak/labs/docker-materialy.zip)
+  - Materiały uzupełniające: [Cert-Manager](/jwozniak/labs/5b-certbot.pdf), [Service Mesh z Istio](/jwozniak/labs/6-servicemesh.pdf)
 
-#### 3. Kubernetes: Tworzenie klastra i skalowanie
-  - **Wymagania**: Kubernetes (Minikube lub chmura)
-  - **Zadania**:
-    - Kontynuacja i utrwalenie części Kubernetes ze skryptu Docker
-    - Ponowne uruchomienie, skalowanie i wycofywanie wdrożeń
-    - StatefulSet, PV i PVC dla bazy PostgreSQL
-    - Opcjonalnie: HPA oraz przeniesienie danych z Dockera
-  - [skrypt](/jwozniak/labs/2-kubernetes.pdf)
-
-#### 4. Kubernetes: LivenessProbe, StatefulSet i Ingress
-  - **Wymagania**: Kubernetes (minikube lub chmura)
-  - **Zadania**:
-    - Deployment nginx z livenessProbe
-    - Baza danych przy użyciu StatefulSet
-    - Konfiguracja Ingress na NGINX
-  - [skrypt](/jwozniak/labs/3-kubernetes-2.pdf)
-
-#### 5. Monitorowanie z Prometheus i Grafana
-  - **Wymagania**: Prometheus, Grafana
-  - **Zadania**:
-    - Konfiguracja Prometheus
-    - Zbieranie metryk z aplikacji
-    - Tworzenie dashboardów monitorujących w Grafana
-  - [skrypt](/jwozniak/labs/4-monitoring.pdf)
-
-#### 6. GitOps z ArgoCD
-  - **Wymagania**: Kubernetes, ArgoCD
-  - **Zadania**:
-    - Konfiguracja GitOps za pomocą ArgoCD
-    - Automatyzacja wdrożeń aplikacji Kubernetes
-  - [skrypt](/jwozniak/labs/5-gitops.pdf)
-
-#### 7. Cert-Manager
-  - **Wymagania**: Kubernetes, Cert-Manager
-  - **Zadania**:
-    - Instalacja i konfiguracja Cert-Manager
-    - Automatyczne zarządzanie certyfikatami TLS
-  - [skrypt](/jwozniak/labs/5b-certbot.pdf)
-
-#### 8. Service Mesh z Istio
-  - **Wymagania**: Kubernetes, Istio
-  - **Zadania**:
-    - Instalacja i konfiguracja Istio
-    - Monitorowanie ruchu sieciowego
-    - Konfiguracja Ingress i Egress Gateway
-  - [skrypt](/jwozniak/labs/6-servicemesh.pdf)
-
-#### 9. Terraform: Tworzenie infrastruktury chmurowej
-  - **Wymagania**: Terraform, AWS/Azure/GCP
-  - **Zadania**:
-    - Wprowadzenie do chmury Microsoft Azure
-    - Tworzenie prostych zasobów chmurowych (np. instancje EC2)
-    - Automatyzacja zarządzania infrastrukturą
-  - [skrypt](/jwozniak/labs/7-azuretf.pdf)
-
-#### 10. Terraform: moduły, zmienne i stan zdalny
-  - **Wymagania**: Terraform, Microsoft Azure
-  - **Zadania**:
-    - Tworzenie modułów w Terraform
-    - Użycie stanu zdalnego
-    - Napisanie modułu maszyny wirtualnej
-    - Stworzenie bazy danych
-  - [skrypt](/jwozniak/labs/8-terraform.pdf)
-
-#### 11. AKS i Terraform - podsumowanie
-  - **Wymagania**: Terraform, Microsoft Azure, Kubernetes
-  - **Zadania**:
-    - Stworzenie infrastruktury w Microsoft Azure
-    - Konfiguracja klastra Kubernetes
-    - Wystawienie aplikacji na świat
-    - Zapewnienie ciągłego wdrażania
-  - [skrypt](/jwozniak/labs/9-final.pdf)
+#### 3. Chmura publiczna: infrastruktura i wdrożenia
+  - **Wymagania**: subskrypcja Azure for Students, Terraform, Git
+  - **Zakres**:
+    - Wprowadzenie do chmury publicznej i Terraform: zasoby, zmienne, plan
+    - Moduły, stan zdalny i praca zespołowa
+    - GitOps z ArgoCD
+    - AKS i podsumowanie: infrastruktura, klaster i wdrożenie aplikacji
+  - [Terraform: tworzenie infrastruktury chmurowej](/jwozniak/labs/7-azuretf.pdf)
+  - [Terraform: moduły, zmienne i stan zdalny](/jwozniak/labs/8-terraform.pdf)
+  - [GitOps z ArgoCD](/jwozniak/labs/5-gitops.pdf)
+  - [AKS i Terraform: podsumowanie](/jwozniak/labs/9-final.pdf)

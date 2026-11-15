@@ -2,7 +2,7 @@
 #let orange = rgb("#bf5327")
 #let pale = rgb("#e8f1f5")
 
-#set document(title: "Docker i Kubernetes — od kontenera do wdrożenia", author: "mgr inż. Jakub Woźniak")
+#set document(title: "Kontenery aplikacyjne — Docker i Kubernetes", author: "mgr inż. Jakub Woźniak")
 #set page(paper: "a4", margin: (top: 2cm, bottom: 2cm, left: 2.15cm, right: 2.15cm), numbering: "1")
 #set text(font: "DejaVu Sans", size: 10pt, lang: "pl")
 #set par(justify: false, leading: 0.7em, spacing: 0.8em)
@@ -24,23 +24,24 @@
 #show raw: set text(font: "DejaVu Sans Mono", size: 8pt)
 #show raw.where(block: true): it => block(width: 100%, inset: 8pt, fill: pale, breakable: true, it)
 #show strong: set text(font: "DejaVu Sans", weight: "bold")
+#show link: set text(fill: blue)
 
 #align(center)[
   #v(30pt)
   #text(font: "DejaVu Sans", size: 11pt, fill: blue)[ZARZĄDZANIE SYSTEMAMI ROZPROSZONYMI]
   #v(20pt)
-  #text(font: "DejaVu Sans", size: 28pt, weight: "bold", fill: blue)[Docker i Kubernetes]
+  #text(font: "DejaVu Sans", size: 28pt, weight: "bold", fill: blue)[Kontenery aplikacyjne]
   #v(7pt)
-  #text(font: "DejaVu Sans", size: 16pt)[Od kontenera do wdrożenia]
+  #text(font: "DejaVu Sans", size: 16pt)[Docker i Kubernetes]
   #v(14pt)
-  #text(size: 10pt)[Obrazy · sieć · wolumeny · wdrażanie · skalowanie]
+  #text(size: 10pt)[Obrazy · sieć · wolumeny · wdrażanie · skalowanie · metryki · ślady · logi]
   #v(22pt)
   mgr inż. Jakub Woźniak · Politechnika Poznańska
 ]
 
 = Część I. Docker — konteneryzacja aplikacji
 
-Skrypt prowadzi od budowania obrazu do uruchomienia tej samej aplikacji w Kubernetesie. W części I należy przygotować obrazy Flaska oraz uruchomić Redmine z PostgreSQL. Część II wykorzystuje te doświadczenia do pracy z klastrem; jej zadania A–D dotyczą podstaw, a E–G sond zdrowia, konfiguracji i trwałości danych.
+Skrypt prowadzi od budowania obrazu do diagnozy działającej usługi. W części I należy przygotować obrazy Flaska oraz uruchomić Redmine z PostgreSQL. Część II wykorzystuje te doświadczenia do pracy z klastrem; jej zadania A–D dotyczą podstaw, a E–G sond zdrowia, konfiguracji i trwałości danych. Część III zamienia Traefika z części II w źródło telemetrii: metryki pozwalają zawęzić obszar poszukiwań, ślad wskazuje miejsce, a log wyjaśnia przyczynę.
 
 = Cel ćwiczenia
 
@@ -229,8 +230,8 @@ Należy spełnić następujące wymagania:
 
 1. Oba kontenery znajdują się w sieci `zsr-net`, a Redmine łączy się z bazą po nazwie `zsr-db`.
 2. Redmine jest dostępny na porcie hosta `3000`. Port PostgreSQL nie jest publikowany na hoście.
-3. Baza korzysta z wolumenu `zsr-pgdata`. Pliki przesłane do Redmine mają osobny nazwany wolumen pod `/usr/src/redmine/files`.
-4. Konfiguracja Redmine zawiera stałą wartość `SECRET_KEY_BASE`, zachowaną również po odtworzeniu kontenera.
+3. Baza korzysta z wolumenu `zsr-pgdata`. Pliki przesłane do Redmine mają osobny nazwany wolumen `zsr-uploads` pod `/usr/src/redmine/files`.
+4. Kontener Redmine otrzymuje zmienną środowiskową `SECRET_KEY_BASE` o ustalonej wartości (np. z `openssl rand -hex 64`), zachowanej również po odtworzeniu kontenera.
 
 Należy zapisać w `start.sh` sprawdzone polecenie uruchomienia PostgreSQL z poprzedniego zadania oraz polecenie uruchomienia Redmine. Skrypt powinien czekać na gotowość bazy przed uruchomieniem aplikacji. Można wykorzystać poniższą pętlę:
 
@@ -241,6 +242,14 @@ done
 ```
 
 Po uruchomieniu bazy należy wykonać polecenie uruchamiające Redmine. Inicjalizacja aplikacji i migracje bazy mogą wymagać oczekiwania. Stan należy sprawdzać przez `docker ps -a`, `docker logs zsr-redmine` oraz `docker logs zsr-db`. Aplikacja powinna być dostępna pod `http://localhost:3000`; jeżeli Docker działa na innej maszynie, należy użyć jej adresu podanego przez prowadzącego.
+
+Obraz Redmine wykonuje przy pierwszym starcie migracje schematu, lecz nie ładuje danych domyślnych. Bez nich w bazie nie ma żadnego trackera, statusu ani priorytetu i nie da się utworzyć zgłoszenia; formularz kończy się wtedy błędem o brakującym trackerze. Po ustaleniu, że aplikacja odpowiada, należy jednorazowo wykonać:
+
+```bash
+docker exec -e REDMINE_LANG=en zsr-redmine rake redmine:load_default_data
+```
+
+Polecenie tworzy trzy trackery, sześć statusów i pięć priorytetów. Wystarczy je wykonać raz, ponieważ dane trafiają do bazy PostgreSQL i po odtworzeniu kontenera są już na miejscu.
 
 Po uruchomieniu należy zalogować się na konto `admin` z hasłem `admin` i wykonać wymaganą zmianę hasła. Następnie należy utworzyć projekt i zgłoszenie z małym plikiem tekstowym jako załącznikiem. Tytuł projektu i treść pliku posłużą do sprawdzenia trwałości danych.
 
@@ -268,6 +277,8 @@ Po demonstracji należy zatrzymać kontenery. Usunięcie wolumenów kasuje dane 
 - Redmine nie łączy się z bazą: należy sprawdzić `docker network inspect zsr-net`, nazwę `zsr-db`, zmienne `REDMINE_DB_*` i gotowość PostgreSQL.
 - Dane zniknęły po odtworzeniu: należy sprawdzić `docker inspect zsr-db` i `docker inspect zsr-redmine`, zwłaszcza pole `Mounts`, oraz nazwy wolumenów w `start.sh`.
 - Zmienione hasło PostgreSQL nie działa: zmienne `POSTGRES_*` konfigurują bazę przy inicjalizacji pustego katalogu danych. Ponowne użycie wolumenu zachowuje poprzednie hasło.
+- Nie można utworzyć zgłoszenia w Redmine: w bazie nie ma trackerów, statusów ani priorytetów. Obraz nie ładuje danych domyślnych; należy jednorazowo wykonać `docker exec -e REDMINE_LANG=en zsr-redmine rake redmine:load_default_data`.
+- `Conflict. The container name ... is already in use`: kontener o tej nazwie nadal istnieje. Przed ponownym uruchomieniem `start.sh` należy zatrzymać i usunąć oba kontenery poleceniami `docker stop` i `docker rm`.
 
 = Pytania końcowe i źródła
 
@@ -279,3 +290,5 @@ Po demonstracji należy zatrzymać kontenery. Usunięcie wolumenów kasuje dane 
 #link("https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/")[Dockerfile] · #link("https://docs.docker.com/reference/cli/docker/image/save/")[Zapis obrazu] · #link("https://docs.docker.com/reference/cli/docker/image/load/")[Odczyt obrazu] · #link("https://docs.docker.com/engine/network/drivers/bridge/")[Sieć bridge] · #link("https://docs.docker.com/engine/storage/volumes/")[Wolumeny] · #link("https://hub.docker.com/_/postgres")[Obraz PostgreSQL] · #link("https://hub.docker.com/_/redmine")[Obraz Redmine]
 
 #include "chapters/kubernetes.typ"
+
+#include "chapters/monitoring.typ"

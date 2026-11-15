@@ -17,7 +17,7 @@ Po wykonaniu ćwiczeń należy umieć odróżnić restart kontenera od odtworzen
   [2], [Sondy, ConfigMap, Secret, PVC i baza], [Test sond i działający StatefulSet PostgreSQL],
   [3], [Job, CronJob, init container, sidecar i zasoby], [Zadania jednorazowe i wielokontenerowy Pod],
   [4], [Bezpieczeństwo Podów i NetworkPolicy], [Uruchomienie jako non-root i ograniczony ruch],
-  [5], [Gateway API, Kustomize i scenariusz odbioru], [Redmine pod własną domeną i wdrożenie odtworzone z overlay],
+  [5], [Gateway API i scenariusz odbioru], [Redmine pod własną domeną i wdrożenie odtworzone z manifestów],
 )
 
 Plan jest modułowy. Spotkania 1 i 2 rozwijają zadania A–G. Spotkania 3–5 są dodatkowymi rozdziałami. Prowadzący może rozłożyć każdy zakres na więcej laboratoriów. Ćwiczenia wykorzystują Minikube, więc mają jeden węzeł; służą nauce zasobów aplikacji, a nie prezentacji odporności na awarię maszyny.
@@ -39,7 +39,7 @@ Pod zawiera jeden lub więcej kontenerów współdzielących sieć i zadeklarowa
 
 = A. Klaster i własny obraz
 
-Wymagane są działający lokalny Docker, Minikube, `kubectl`, `curl` i `openssl`. Narzędzia należy przygotować zgodnie z #link("https://minikube.sigs.k8s.io/docs/start/")[instrukcją Minikube] i #link("https://kubernetes.io/docs/tasks/tools/")[instrukcją kubectl] dla systemu stanowiska. Klaster laboratoryjny otrzyma 2 CPU i 4 GiB pamięci; host musi mieć również zasoby dla własnego systemu. Potrzebny jest dostęp do Internetu do pobrania obrazów. Polecenia wykonuje się na stanowisku, w powłoce Bash, o ile nie wskazano inaczej.
+Wymagane są: działający lokalny Docker, Minikube, `kubectl`, `curl`, `openssl` i `helm` (potrzebny w zadaniu J do instalacji kontrolera Traefika). Narzędzia należy przygotować zgodnie z #link("https://minikube.sigs.k8s.io/docs/start/")[instrukcją Minikube], #link("https://kubernetes.io/docs/tasks/tools/")[instrukcją kubectl] i #link("https://helm.sh/docs/intro/install/")[instrukcją Helma] dla systemu stanowiska. Klaster laboratoryjny otrzyma 2 CPU i 4 GiB pamięci; host musi mieć również zasoby dla własnego systemu. Potrzebny jest dostęp do Internetu do pobrania obrazów. Polecenia wykonuje się na stanowisku, w powłoce Bash, o ile nie wskazano inaczej.
 
 ```bash
 docker info
@@ -208,11 +208,14 @@ Należy zmienić `replicas` w `flask.yaml` z 2 na 3, wykonać `kubectl apply -f 
 W `flask.yaml` należy zmienić obraz na `zsr-flask:v2`, zastosować manifest i obserwować wdrożenie:
 
 ```bash
+kubectl annotate deployment/flask kubernetes.io/change-cause="wersja 2" --overwrite
 kubectl apply -f flask.yaml
 kubectl rollout status deployment/flask --timeout=120s
 kubectl rollout history deployment/flask
 kubectl get replicasets
 ```
+
+Adnotacja `kubernetes.io/change-cause` opisuje rewizję w historii wdrożenia; bez niej kolumna `CHANGE-CAUSE` pozostaje pusta i nie da się powiązać numeru rewizji ze zmianą.
 
 Zmiana szablonu Poda powoduje utworzenie nowego ReplicaSetu. Przy domyślnej strategii `RollingUpdate` nowe Pody stopniowo zastępują stare. W czasie zmiany mogą być obecne obie wersje aplikacji. Po jej zakończeniu należy ponownie uruchomić przekierowanie Service i sprawdzić tekst wersji 2 oraz odpowiedź `ok` pod `http://localhost:8080/health`.
 
@@ -416,7 +419,7 @@ W pliku `redmine.yaml` należy przygotować PVC, Deployment i Service, rozdzielo
 
 1. PVC `redmine-files` żąda `1Gi` z trybem `ReadWriteOnce`.
 2. Deployment `redmine` uruchamia jedną replikę obrazu `redmine:6.1.5`. Szablon Poda ma etykietę `app: redmine`, a kontener nasłuchuje na porcie `3000`.
-3. Strategia Deploymentu to `Recreate`, aby podczas aktualizacji obrazu najpierw zakończyć stare Pody. Przy tej strategii trzeba zaakceptować przerwę w dostępności. Aplikacja ma jeden wolumen załączników i w tym zadaniu nie jest skalowana.
+3. Strategia Deploymentu to `Recreate`, aby podczas aktualizacji obrazu najpierw zakończyć stare Pody. Przy tej strategii należy zaakceptować przerwę w dostępności. Aplikacja ma jeden wolumen załączników i w tym zadaniu nie jest skalowana.
 4. Wolumen wskazujący `persistentVolumeClaim.claimName: redmine-files` jest zamontowany pod `/usr/src/redmine/files`.
 5. `REDMINE_DB_POSTGRES` ma wartość `postgres`. Zmienne `REDMINE_DB_DATABASE` i `REDMINE_DB_USERNAME` pobierają odpowiednie klucze z ConfigMap. `REDMINE_DB_PASSWORD` oraz `SECRET_KEY_BASE` korzystają z Secret.
 6. Service `redmine` typu `ClusterIP` wybiera `app: redmine` i kieruje port `3000` na port `3000` Poda. Baza pozostaje dostępna wyłącznie wewnątrz klastra.
@@ -450,6 +453,14 @@ kubectl port-forward service/redmine 8081:3000
 ```
 
 W przeglądarce należy otworzyć `http://localhost:8081`, zalogować się na `admin` / `admin` i zmienić hasło. Następnie należy utworzyć nowy projekt, zgłoszenie i mały załącznik tekstowy. W razie błędów należy sprawdzić logi obu aplikacji, odwołania do ConfigMap i Secret oraz stan PVC.
+
+Podobnie jak w części Dockerowej obraz Redmine uruchamia migracje, lecz nie ładuje danych domyślnych. Bez nich nie istnieje żaden tracker, status ani priorytet i nie da się utworzyć zgłoszenia. Po ustaleniu, że aplikacja odpowiada, należy jednorazowo wykonać:
+
+```bash
+kubectl exec deployment/redmine -- env REDMINE_LANG=en rake redmine:load_default_data
+```
+
+Dane trafiają do bazy PostgreSQL, więc po odtworzeniu Poda są już na miejscu.
 
 == Próba trwałości i zmiany konfiguracji
 
@@ -564,13 +575,13 @@ spec:
       emptyDir: {}
 ```
 
-Należy zastosować manifest, poczekać na `kubectl wait --for=condition=Ready pod/logger --timeout=120s`, sprawdzić `kubectl logs logger -c tail` oraz wykonać `kubectl exec logger -c aplikacja -- cat /var/log/demo/status`. Następnie należy usunąć init container z manifestu i utworzyć Poda ponownie. Należy porównać zachowanie kontenerów, poprzedni wolumen i logi po odtworzeniu Poda.
+Należy zastosować manifest, poczekać na `kubectl wait --for=condition=Ready pod/logger --timeout=120s`, sprawdzić `kubectl logs logger -c tail` oraz wykonać `kubectl exec logger -c aplikacja -- cat /var/log/demo/status`. Następnie należy usunąć init container z manifestu i odtworzyć Poda: `kubectl delete pod logger`, a po nim ponownie zastosować plik. Listy `initContainers` i pola `securityContext` istniejącego Poda nie można zmienić przez `apply`. Należy porównać zachowanie kontenerów, poprzedni wolumen i logi po odtworzeniu Poda.
 
 *Weryfikacja:* status utworzył się przed uruchomieniem aplikacji; sidecar odczytuje te same pliki, które zapisuje główny kontener. Odtworzenie Poda tworzy nowy `emptyDir`; nie zastępuje wolumenu trwałego dla bazy danych.
 
 == Zasoby i HPA
 
-Kontener w zadaniu B ma już żądania i limity CPU oraz pamięci. Należy zmienić limit pamięci na `16Mi`, zastosować manifest, odczytać nazwę Poda i wykonać `kubectl describe pod NAZWA` oraz `kubectl logs NAZWA --previous`. Po obserwacji należy przywrócić `128Mi`. Zbyt niski limit pamięci może wywołać `OOMKilled`; żądanie zbyt duże w stosunku do wolnych zasobów może pozostawić Pod w stanie `Pending`.
+Kontener w zadaniu B ma już żądania i limity CPU oraz pamięci. Należy zmienić na `16Mi` *żądanie i limit* pamięci. Samo obniżenie limitu zostałoby odrzucone przez API, ponieważ żądanie nie może przekraczać limitu. Po zastosowaniu manifestu należy odczytać nazwę Poda i wykonać `kubectl describe pod NAZWA`; w stanie poprzedniego kontenera pojawi się `OOMKilled` z kodem wyjścia 137. Polecenie `kubectl logs NAZWA --previous` przy natychmiastowym OOM może zwrócić pusty wynik, bo proces nie zdążył zapisać logu. Po obserwacji należy przywrócić żądanie `64Mi` i limit `128Mi`. Zbyt niski limit pamięci kończy proces; żądanie zbyt duże w stosunku do wolnych zasobów może pozostawić Pod w stanie `Pending`.
 
 HPA (Horizontal Pod Autoscaler) zmienia liczbę replik na podstawie metryk. W lokalnym Minikube należy najpierw włączyć Metrics Server:
 
@@ -606,11 +617,11 @@ Należy dodać do Deploymentu Flaska pod `containers[0].env`:
                   key: komunikat
 ```
 
-Aby aplikacja wyświetliła tę wartość, trzeba rozszerzyć kod i zbudować nowy obraz. Zadanie polega na poprawnym dodaniu zmiennej, sprawdzeniu `kubectl exec POD -- env` i odtworzeniu Deploymentu po zmianie ConfigMap. Nie należy twierdzić, że dotychczasowy Flask używa ustawienia tylko dlatego, że zmienna jest obecna w kontenerze.
+Aby aplikacja wyświetliła tę wartość, należy rozszerzyć kod i zbudować nowy obraz. Zadanie polega na poprawnym dodaniu zmiennej, sprawdzeniu `kubectl exec POD -- env` i odtworzeniu Deploymentu po zmianie ConfigMap. Nie należy twierdzić, że dotychczasowy Flask używa ustawienia tylko dlatego, że zmienna jest obecna w kontenerze.
 
 Sekrety służą do przekazywania wrażliwych danych. Należy sprawdzić nazwy kluczy w `kubectl describe secret redmine-secret`, bez wyświetlania wartości hasła w udostępnianym terminalu. W produkcji dostęp do Secret powinien mieć tylko potrzebny podmiot, a konfiguracja klastra powinna szyfrować sekrety w spoczynku. Manifest przykładowy z hasłem laboratoryjnym nie jest wzorem na zarządzanie sekretami repozytorium.
 
-Następnie należy przetestować ograniczenie kontenerów nieuprzywilejowanych. W manifeście `logger.yaml` należy dodać `securityContext` na poziomie `spec` Poda oraz `securityContext` dla obu głównych kontenerów. `fsGroup` ustawia się na poziomie `spec`; pozostałe ograniczenia na poziomie pojedynczego kontenera:
+Następnie należy sprawdzić uruchomienie kontenerów jako użytkownik nieuprzywilejowany. W manifeście `logger.yaml` należy dodać `securityContext` na poziomie `spec` Poda oraz `securityContext` dla obu głównych kontenerów. `fsGroup` ustawia się na poziomie `spec`; pozostałe ograniczenia na poziomie pojedynczego kontenera:
 
 ```yaml
   securityContext:
@@ -629,7 +640,7 @@ Następnie należy przetestować ograniczenie kontenerów nieuprzywilejowanych. 
 
 Te same ograniczenia należy ustawić dla kontenera `aplikacja`. Inicjalizacyjny zapis i plik logu przechowywane są w `emptyDir`; `fsGroup: 2000` przyznaje grupie dostęp do zamontowanego wolumenu. `readOnlyRootFilesystem` blokuje zapis do głównego systemu plików, ale nie do jawnie podmontowanego `emptyDir`.
 
-Po zastosowaniu należy wykonać `kubectl exec logger -c tail -- id` i `kubectl logs logger -c tail`. Jeżeli kontener nie startuje, należy odczytać zdarzenia i sprawdzić prawa dostępu do plików. Nie należy usuwać ograniczeń bezpieczeństwa bez ustalenia, które pole jest przyczyną problemu.
+Ponieważ `securityContext` Poda jest polem niemutowalnym, po zmianie manifestu należy usunąć Poda (`kubectl delete pod logger`) i zastosować plik ponownie. Dopiero na odtworzonym Podzie należy wykonać `kubectl exec logger -c tail -- id` i `kubectl logs logger -c tail`. Jeżeli kontener nie startuje, należy odczytać zdarzenia i sprawdzić prawa dostępu do plików. Nie należy usuwać ograniczeń bezpieczeństwa bez ustalenia, które pole jest przyczyną problemu.
 
 = J. Polityka ruchu i wejście HTTP
 
@@ -652,6 +663,24 @@ spec:
   ingress: []
 ```
 
+Klienta diagnostycznego należy utworzyć w namespace aplikacji i oznaczyć etykietą, której używa reguła. Manifest `diagnostyka.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: diagnostyka
+  labels:
+    app: diagnostyka
+spec:
+  containers:
+    - name: klient
+      image: busybox:1.36
+      command: ["sh", "-c", "sleep 3600"]
+```
+
+Po utworzeniu Poda (`kubectl apply -f diagnostyka.yaml`) próbę połączenia wykonuje się z jego wnętrza, np. `kubectl exec diagnostyka -- wget -T 5 -qO- http://redmine:3000`. Przekroczenie czasu oczekiwania oznacza, że polityka blokuje ruch. Ten sam manifest należy zastosować w osobnym namespace (`kubectl create namespace diagnostyka`, a następnie `kubectl apply -f diagnostyka.yaml -n diagnostyka`), aby potwierdzić, że sama reguła `podSelector` nie wpuszcza ruchu spoza namespace aplikacji.
+
 Następnie `ingress: []` należy zastąpić regułą dla klienta w tym namespace:
 
 ```yaml
@@ -666,6 +695,19 @@ Następnie `ingress: []` należy zastąpić regułą dla klienta w tym namespace
 ```
 
 Należy zmodyfikować politykę tak, by `ingress.from` zezwalał tylko na źródło w tym samym namespace z `podSelector.matchLabels.app: diagnostyka`, a `ingress.ports` zezwalał na TCP `3000`. Klient w osobnym namespace powinien wciąż nie mieć dostępu. Jeżeli klient diagnostyczny musi docierać również do DNS, egress klienta wymaga reguły dla UDP/TCP `53` skierowanej do Podów DNS w `kube-system`.
+
+Do polityki należy dodać drugie źródło ruchu: Traefika z namespace `traefik`:
+
+```yaml
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+```
+
+Bez tego wpisu ćwiczenie z Gateway API zakończy się niepowodzeniem, mimo że trasa `HTTPRoute` zostanie przyjęta: Traefik działa w innym namespace, więc sama reguła `podSelector` go nie obejmuje i ruch z Traefika do Redmine zostanie odrzucony. Etykietę `kubernetes.io/metadata.name` dodaje Kubernetes automatycznie i zawiera ona nazwę namespace, a etykietę `app.kubernetes.io/name=traefik` nadaje wykres Helm.
 
 Sieć aplikacji i bazy można ograniczyć dodatkowo. Do powyższego manifestu należy dodać `Egress` do `policyTypes` i poniższe reguły. Wskazana etykieta DNS jest używana przez domyślny CoreDNS w Kubernetes; przed ćwiczeniem należy potwierdzić etykiety przez `kubectl get pods -n kube-system --show-labels`:
 
@@ -801,34 +843,11 @@ curl -I -H 'Host: redmine.zsr.test' http://localhost:8080/login
 
 Nagłówek HTTP wybiera regułę hosta; modyfikowanie `/etc/hosts` nie jest potrzebne dla tych prób. Należy celowo zmienić nazwę usługi backendu w jednym wpisie, sprawdzić status i warunki HTTPRoute oraz logi Traefika, po czym przywrócić właściwą nazwę. Pozostawienie TLS, certyfikatu i publicznej nazwy domenowej do osobnych ćwiczeń pozwala skupić się na przepływie żądania: host → Gateway → HTTPRoute → Service → Pod.
 
-= K. Kustomize i sprawdzian praktyczny
-
-Kustomize pozwala utrzymać wspólną bazę manifestów oraz niewielkie różnice dla danego środowiska. `kubectl` ma wbudowaną obsługę przez `kubectl kustomize` i `kubectl apply -k`.
-
-Należy utworzyć katalogi `deploy/base` i `deploy/overlays/lab`. W `deploy/base/kustomization.yaml` trzeba wskazać manifesty `flask.yaml`, `postgres.yaml`, `redmine.yaml` i `httproutes.yaml`. W overlay należy dodać własny `kustomization.yaml`, który odwołuje się do `../../base`, definiuje prefix `zsr-` i ustawia odpowiedni namespace. Przed zastosowaniem trzeba obejrzeć `kubectl kustomize deploy/overlays/lab`, sprawdzić nazwy Service i referencje w selektorach, PVC oraz `parentRefs` tras.
-
-Jeżeli transformacja nazwy obejmuje obiekt, do którego odwołują się inne manifesty, należy sprawdzić wynikowy YAML: zmiana nazwy PVC lub Service wymaga zgodności referencji. Secret użyty do ćwiczenia należy zachować w osobnym pliku wyłączonym z repozytorium lub utworzyć bezpośrednio przez `kubectl`; nie należy generować publicznego overlay z hasłami.
-
-== Zadanie zaliczeniowe
-
-Na czystym namespace `zsr-egzamin` należy wdrożyć Flaska i Redmine według kryteriów:
-
-1. Deployment Flaska ma dwie gotowe repliki z obrazem `zsr-flask:v2`, limitami CPU i pamięci, żądaniami CPU oraz sondami.
-2. Service nie ma adresu zewnętrznego. Odpowiedź Flaska i trasa `/health` są dostępne po przekierowaniu portu.
-3. Nieudany rollout nie pozbawia usługi ostatniej gotowej wersji; student potrafi odczytać powód i przywrócić właściwy obraz.
-4. PostgreSQL działa jako pojedynczy StatefulSet z PVC, hasłem z Secret, gotowością sprawdzaną sondą i stabilną nazwą Service.
-5. Redmine korzysta z ConfigMap, Secret i osobnego PVC na załączniki; login, baza i plik pozostają dostępne po odtworzeniu obu Podów.
-6. Job zapisuje jednorazowy raport; CronJob tworzy raport cyklicznie; student potrafi odczytać logi i historię.
-7. NetworkPolicy pozwala na ruch z klienta diagnostycznego tylko na port aplikacji i na ruch Redmine → PostgreSQL.
-8. Gateway przyjmuje HTTP i pozwala na dołączenie HTTPRoute z przestrzeni nazw aplikacji; Kustomize renderuje spójny zestaw manifestów.
-
-Odbiór powinien sprawdzić *działanie*, *stan obiektów* i *trwałość po odtworzeniu*. Sam wynik `kubectl apply` nie spełnia tych kryteriów. Student powinien umieć w czasie demonstracji użyć `kubectl get`, `describe`, `logs`, `exec`, `rollout status` i `rollout undo` oraz wyjaśnić, co konkretnie naprawił.
-
 = Odbiór części Kubernetes
 
 Do odbioru należy przedstawić manifesty oraz krótkie obserwacje z doświadczeń:
 
-- Odtworzenie Poda Flaska, trzy gotowe repliki i działające połączenie przez Service z klienta wewnątrz klastra.
+- Odtworzenie Poda Flaska, dwie gotowe repliki i działające połączenie przez Service z klienta wewnątrz klastra.
 - Aktualizację do wersji 2, rozpoznaną przyczynę nieudanego wdrożenia i zgodność poprawionego pliku ze stanem klastra.
 - Różnicę między skutkami błędów readiness i liveness: gotowość, restarty i UID.
 - Redmine z PostgreSQL oraz projekt i załącznik dostępne po wymianie Podów.
@@ -865,4 +884,4 @@ kubectl logs NAZWA --previous
 
 HPA używający procentu CPU wymaga źródła metryk oraz zadeklarowanych `requests.cpu`. NetworkPolicy działa tylko wtedy, gdy CNI je egzekwuje. Gateway API wymaga zainstalowanych CRD i kontrolera, który obsługuje jego zasoby; same manifesty nie uruchamiają procesu obsługującego ruch. Zadania tych spotkań warto robić po samodzielnym sprawdzeniu Service, sond i ręcznego skalowania.
 
-#link("https://github.com/cncf/curriculum/tree/master/ckad")[CKAD curriculum CNCF] · #link("https://minikube.sigs.k8s.io/docs/drivers/docker/")[Minikube z Dockerem] · #link("https://minikube.sigs.k8s.io/docs/handbook/pushing/")[Obrazy w Minikube] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/deployment/")[Deployment] · #link("https://kubernetes.io/docs/concepts/services-networking/service/")[Service] · #link("https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/")[Sondy] · #link("https://kubernetes.io/docs/concepts/configuration/configmap/")[ConfigMap] · #link("https://kubernetes.io/docs/concepts/configuration/secret/")[Secret] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/")[StatefulSet] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/job/")[Job] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/")[CronJob] · #link("https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/")[Sidecar] · #link("https://kubernetes.io/docs/tasks/configure-pod-container/security-context/")[SecurityContext] · #link("https://kubernetes.io/docs/concepts/services-networking/network-policies/")[NetworkPolicy] · #link("https://minikube.sigs.k8s.io/docs/handbook/network_policy/")[Calico i polityki w Minikube] · #link("https://kubernetes.io/docs/concepts/services-networking/gateway/")[Gateway API] · #link("https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/gateway-api/")[Traefik Gateway API] · #link("https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/")[Kustomize] · #link("https://minikube.sigs.k8s.io/docs/handbook/persistent_volumes/")[Dane trwałe w Minikube] · #link("https://helm.sh/docs/")[Helm] · #link("https://hub.docker.com/_/postgres")[Obraz PostgreSQL] · #link("https://hub.docker.com/_/redmine")[Obraz Redmine]
+#link("https://github.com/cncf/curriculum/tree/master/ckad")[CKAD curriculum CNCF] · #link("https://minikube.sigs.k8s.io/docs/drivers/docker/")[Minikube z Dockerem] · #link("https://minikube.sigs.k8s.io/docs/handbook/pushing/")[Obrazy w Minikube] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/deployment/")[Deployment] · #link("https://kubernetes.io/docs/concepts/services-networking/service/")[Service] · #link("https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/")[Sondy] · #link("https://kubernetes.io/docs/concepts/configuration/configmap/")[ConfigMap] · #link("https://kubernetes.io/docs/concepts/configuration/secret/")[Secret] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/")[StatefulSet] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/job/")[Job] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/")[CronJob] · #link("https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/")[Sidecar] · #link("https://kubernetes.io/docs/tasks/configure-pod-container/security-context/")[SecurityContext] · #link("https://kubernetes.io/docs/concepts/services-networking/network-policies/")[NetworkPolicy] · #link("https://minikube.sigs.k8s.io/docs/handbook/network_policy/")[Calico i polityki w Minikube] · #link("https://kubernetes.io/docs/concepts/services-networking/gateway/")[Gateway API] · #link("https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/kubernetes/gateway-api/")[Traefik Gateway API] · #link("https://minikube.sigs.k8s.io/docs/handbook/persistent_volumes/")[Dane trwałe w Minikube] · #link("https://helm.sh/docs/")[Helm] · #link("https://hub.docker.com/_/postgres")[Obraz PostgreSQL] · #link("https://hub.docker.com/_/redmine")[Obraz Redmine]
