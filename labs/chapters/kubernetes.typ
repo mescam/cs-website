@@ -66,6 +66,8 @@ minikube -p zsr image load zsr-flask:v2
 minikube -p zsr image ls
 ```
 
+Jeżeli część I nie została wykonana, obrazy trzeba przygotować samodzielnie: pobrać `docker-materialy.zip` (adres w części I, zadanie B), w katalogu `materialy/docker/starter` uzupełnić Dockerfile według wzoru z części I i zbudować obraz `zsr-flask:v1`, a następnie zmienić w `app.py` tekst na `wersja 2`, dodać trasę `GET /health` zwracającą `ok` i zbudować `zsr-flask:v2`.
+
 Jeżeli brakuje wersji 2, można ją odtworzyć poleceniem `docker load -i zsr-flask-v2.tar.gz`. Wersję 1 należy zachować z części I lub odbudować z jej kodu. Wersja 2 musi zwracać `ok` pod `/health`, a wersja 1 nie powinna zawierać tej trasy. Nie należy nadpisywać znaczników inną zawartością podczas kolejnych ćwiczeń.
 
 *Weryfikacja:* węzeł jest gotowy, a lista obrazów w Minikube zawiera obie wersje Flaska. Należy wyjaśnić, dlaczego samo `docker build` na stanowisku nie wystarcza do ich uruchomienia w klastrze.

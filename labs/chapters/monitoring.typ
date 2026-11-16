@@ -2,7 +2,23 @@
 
 = Część III. Monitoring i diagnoza
 
-Traefik z części II staje się teraz źródłem telemetrii. Do klastra dołączają Prometheus, Grafana i Alertmanager, a żądania przechodzące przez Traefika dostarczają trzech rodzajów danych: metryk, śladów i logów. Celem nie jest zbieranie wykresów, lecz odpowiedź na pytanie, gdzie usługa traci czas i jak to potwierdzić pomiarem. Wszystkie obrazy i wykresy Helm są publiczne i przypięte do wersji.
+Do klastra dołączają Prometheus, Grafana i Alertmanager, a żądania przechodzące przez bramę Traefika dostarczają trzech rodzajów danych: metryk, śladów i logów. Celem nie jest zbieranie wykresów, lecz odpowiedź na pytanie, gdzie usługa traci czas i jak to potwierdzić pomiarem.
+
+Ta część jest samodzielna. Wszystkie potrzebne obrazy są publiczne, a klaster, namespace, brama i trasy powstają w zadaniach poniżej; wykonanie części I i II nie jest konieczne. Odnośniki do tamtych części wskazują wyłącznie materiał uzupełniający.
+
+== Punkt startowy
+
+Wymagane są: działający Docker, Minikube, `kubectl`, `helm` i dostęp do Internetu. Klaster można uruchomić od zera:
+
+```bash
+minikube start -p zsr --driver=docker --cpus=2 --memory=4096
+kubectl config use-context zsr
+kubectl get nodes
+kubectl get namespace zsr || kubectl create namespace zsr
+kubectl label namespace zsr zsr-gateway-access=true --overwrite
+```
+
+Namespace `zsr` grupuje aplikacje ćwiczenia. Etykieta `zsr-gateway-access` pozwala trasom z tego namespace dołączyć do Gateway utworzonego w zadaniu B; bez niej trasa zostanie przyjęta, ale nie podłączy się do bramy. Jeżeli klaster z wcześniejszych zajęć nadal działa, należy pominąć samo `minikube start` i sprawdzić kontekst.
 
 == Plan pracy na kilka spotkań
 
@@ -12,7 +28,7 @@ Traefik z części II staje się teraz źródłem telemetrii. Do klastra dołąc
   [1], [Stos monitoringowy i telemetria z Traefika (A, B)], [Prometheus, Grafana i Alertmanager działają, cel Traefika jest zbierany],
   [2], [Ruch, błędy, p95 i alert (C, D)], [p95 z histogramu i alert, który dociera mailem],
   [3], [Ślad, log i diagnoza przypadku (E, F)], [Ten sam identyfikator śladu w logu i w Collectorze, przyczyna potwierdzona pomiarem],
-  [4], [Brak danych, retencja i kardynalność (G)], [Student odróżnia brak serii od zera i zna koszt etykiety],
+  [4], [Brak danych, retencja i kardynalność (G)], [Rozróżnienie braku szeregu od zera i znany koszt etykiety],
 )
 
 Plan jest modułowy. Zadania A–D są obowiązkowe, E i F domykają diagnozę, G jest rozszerzeniem dla szybszych grup.
@@ -82,7 +98,18 @@ kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
 
 = B. Traefik jako źródło telemetrii
 
-Traefik z części II nie eksportował metryk do Prometheusa ani nie zapisywał logów w formacie czytelnym dla maszyny. Te ustawienia włącza się przez rozszerzenie tego samego wydania Helm — nie trzeba instalować Traefika ponownie.
+Brama zamienia żądania w dane, na których opiera się diagnoza: eksportuje metryki do Prometheusa, wysyła ślady do Collectora i zapisuje log dostępu w formacie JSON. Zadanie obejmuje trzy kroki: definicje CRD Gateway API, obiekty GatewayClass i Gateway oraz instalację Traefika. Jeżeli brama działa z wcześniejszych zajęć, ten sam plik wartości rozszerza istniejące wydanie i nie usuwa tras.
+
+== CRD Gateway API
+
+Traefik z włączonym providerem Gateway API odczytuje zasoby Gateway API. Bez ich definicji (CRD) proces nie wystartuje, a w logu pojawi się błąd o nieznanym zasobie, na przykład `tlsroutes`. Kolejność ma więc znaczenie: najpierw CRD, potem brama.
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
+kubectl get crd gateways.gateway.networking.k8s.io httproutes.gateway.networking.k8s.io tlsroutes.gateway.networking.k8s.io
+```
+
+== Instalacja Traefika z telemetrią
 
 Należy utworzyć plik `traefik-values.yaml`:
 
@@ -116,19 +143,61 @@ service:
     type: ClusterIP
 ```
 
-Sekcje `providers` i `gateway` powtarzają ustawienia z części II, ponieważ `helm upgrade` z plikiem wartości zastępuje całą konfigurację wydania. Pominięcie tych linii wyłączyłoby Traefika i trasy przestałyby działać.
+Plik opisuje całe wydanie, a nie tylko dodatek, dlatego zawiera również ustawienia providerów i Gateway. Gdy Traefik już działa, `helm upgrade` z tym plikiem zachowuje konfigurację tras; gdy wydania nie ma, ten sam plik instaluje bramę od zera.
 
 ```bash
 helm repo add traefik https://traefik.github.io/charts
 helm repo update
-helm upgrade traefik traefik/traefik \
+helm upgrade --install traefik traefik/traefik \
   --version 42.0.0 \
-  --namespace traefik \
+  --namespace traefik --create-namespace \
   -f traefik-values.yaml \
   --wait --timeout 5m
 kubectl get servicemonitor -n traefik
 kubectl rollout status deployment/traefik -n traefik --timeout=180s
 ```
+
+Polecenie `helm upgrade --install` instaluje wydanie, jeżeli go nie ma, i rozszerza je, jeżeli istnieje. Opcja `--create-namespace` tworzy namespace `traefik`; bez niej instalacja na świeżym klastrze kończy się błędem o nieistniejącym namespace. Jeżeli Traefik nie wystartuje, pierwszym miejscem do sprawdzenia jest `kubectl logs` Poda bramy: brak CRD Gateway API daje błąd o nieznanym zasobie, a brakujący namespace zatrzymuje już samo wydanie Helm.
+
+== GatewayClass i Gateway
+
+W namespace `traefik` należy utworzyć GatewayClass i Gateway. Namespace istnieje od poprzedniego kroku, ponieważ tworzy go `helm --create-namespace`. Gdyby zastosować ten manifest przed instalacją Traefika, `kubectl apply` zgłosiłby brak namespace i nie utworzyłby Gateway.
+
+Listener przyjmuje ruch HTTP na porcie 8000 kontrolera, a do Gateway mogą dołączyć trasy z namespace oznaczonego etykietą `zsr-gateway-access: "true"` (Punkt startowy). Należy zapisać plik `gateway.yaml`:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: traefik
+spec:
+  controllerName: traefik.io/gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: aplikacje
+  namespace: traefik
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 8000
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              zsr-gateway-access: "true"
+```
+
+```bash
+kubectl apply -f gateway.yaml
+kubectl get gatewayclass,gateway -A
+```
+
+Stan `Unknown` w chwili utworzenia jest prawidłowy: kontroler wypełnia go po chwili. Jeżeli obiekty istnieją z wcześniejszych zajęć, `apply` ich nie zmieni.
 
 Traefik eksponuje metryki na porcie `9100`, a wykres tworzy obiekt `ServiceMonitor`, który opisuje, jak Prometheus ma je zbierać. Cel pojawia się na liście po kilkudziesięciu sekundach.
 
@@ -149,7 +218,7 @@ Dwie pułapki etykiet, które należy znać przy pisaniu zapytań:
 - Traefik nadaje metrykom usług własną etykietę `service`, ale Prometheus dodaje do każdej próbki etykietę `service` pochodzącą z celu. Nazwa jest zajęta, więc etykieta Traefika trafia do `exported_service`. Zapytanie o usługę musi używać `exported_service`, na przykład `exported_service=~".*-svc-zsr-.*"`.
 - Metryki punktów wejścia mają etykietę `entrypoint` (na przykład `web`), a nie `entrypointName`. Zapytanie z błędną nazwą etykiety zwraca pusty wynik, nie błąd.
 
-*Weryfikacja:* obiekt `ServiceMonitor` istnieje w namespace `traefik`, cel `serviceMonitor/traefik/traefik` ma stan `UP`, a `kubectl logs` pokazuje jedną linię JSON z polami `Duration` i `TraceId`. Należy wyjaśnić, dlaczego wyłączenie `providers.kubernetesGateway` zepsułoby trasy z części II.
+*Weryfikacja:* obiekty `GatewayClass` i `Gateway` mają stan `Accepted`, wydanie Helm ma gotowy Deployment, obiekt `ServiceMonitor` istnieje w namespace `traefik`, cel `serviceMonitor/traefik/traefik` ma stan `UP`, a `kubectl logs` pokazuje jedną linię JSON z polami `Duration` i `TraceId`. Należy wyjaśnić, dlaczego kolejność CRD → Gateway → Traefik ma znaczenie i co dzieje się w logu bramy, gdy definicji CRD brakuje.
 
 #pagebreak()
 
@@ -284,7 +353,7 @@ Rzeczywisty czas należy zmierzyć niezależnie. Po zakończeniu zadania `obciaz
 kubectl logs -n zsr job/obciazenie --tail=5
 ```
 
-*Weryfikacja:* zapytanie o ruch zwraca około `100` żądań na sekundę, udział błędów jest pusty lub równy zero, a `histogram_quantile` zwraca około `0,095` s, podczas gdy `fortio` raportuje kod 200 dla wszystkich 30 000 wywołań i średni czas około `3,9` ms. Należy wyjaśnić, dlaczego wartość z histogramu jest ponad dwadzieścia razy większa od pomiaru klienta i dlaczego nie znaczy to, że histogram jest bezużyteczny. Przedziały histogramu należy dobierać do rzędu wielkości mierzonego zjawiska; przy milisekundach przedział `0,1` s jest zbyt szeroki.
+*Weryfikacja:* zapytanie o ruch zwraca kilkadziesiąt żądań na sekundę (generator deklaruje `100`), udział błędów jest pusty lub równy zero, a `histogram_quantile` zwraca około `0,095` s, podczas gdy `fortio` raportuje kod 200 dla wszystkich 30 000 wywołań i średni czas około `3,9` ms. Należy wyjaśnić, dlaczego wartość z histogramu jest ponad dwadzieścia razy większa od pomiaru klienta i dlaczego nie znaczy to, że histogram jest bezużyteczny. Przedziały histogramu należy dobierać do rzędu wielkości mierzonego zjawiska; przy milisekundach przedział `0,1` s jest zbyt szeroki.
 
 = D. Alert, Alertmanager i Mailpit
 
@@ -658,7 +727,8 @@ prometheus_tsdb_head_series
 = Diagnostyka monitoringu
 
 - Obiekt `Alertmanager` ma `RECONCILED: False`: należy odczytać komunikat warunku. Najczęstsze przyczyny to odbiorca `null` usunięty z listy `receivers` oraz nieznane pole konfiguracji, na przykład `require_tls` zamiast `smtp_require_tls`.
-- Cel Traefika jest `DOWN`: należy sprawdzić `kubectl get servicemonitor -n traefik` oraz port `metrics` w wydaniu Traefika. Zmiana wartości Helm bez sekcji `providers` wyłącza Traefika i psuje trasy z części II.
+- Cel Traefika jest `DOWN`: należy sprawdzić `kubectl get servicemonitor -n traefik` oraz port `metrics` w wydaniu Traefika. Zmiana wartości Helm bez sekcji `providers` wyłącza bramę i psuje istniejące trasy.
+- Brama nie startuje, a w logu jest błąd o nieznanym zasobie (`tlsroutes`, `httproutes`): brakuje definicji CRD Gateway API. Należy je zastosować przed instalacją Traefika (zadanie B).
 - Zapytanie zwraca pusty wynik: należy sprawdzić nazwę etykiety. Dla usług Traefika jest to `exported_service`, a dla punktów wejścia `entrypoint`. Błędna nazwa etykiety nie powoduje błędu, tylko pusty wynik.
 - Wartości p95 są zawyżone: tak działa `histogram_quantile` przy zbyt szerokich przedziałach. Należy porównać wynik z pomiarem klienta i dobrać przedziały histogramu do rzędu wielkości mierzonego zjawiska.
 - Alert nie pojawia się: należy sprawdzić `for`, `evaluationInterval` i `scrapeInterval`. Łączny czas do pierwszego listu wynosi kilka minut i nie jest błędem.
