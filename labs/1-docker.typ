@@ -2,7 +2,7 @@
 #let orange = rgb("#bf5327")
 #let pale = rgb("#e8f1f5")
 
-#set document(title: "Kontenery aplikacyjne — Docker i Kubernetes", author: "mgr inż. Jakub Woźniak")
+#set document(title: "Kontenery aplikacyjne — Docker, Kubernetes i GitOps", author: "mgr inż. Jakub Woźniak")
 #set page(paper: "a4", margin: (top: 2cm, bottom: 2cm, left: 2.15cm, right: 2.15cm), numbering: "1")
 #set text(font: "DejaVu Sans", size: 10pt, lang: "pl")
 #set par(justify: false, leading: 0.7em, spacing: 0.8em)
@@ -32,16 +32,16 @@
   #v(20pt)
   #text(font: "DejaVu Sans", size: 28pt, weight: "bold", fill: blue)[Kontenery aplikacyjne]
   #v(7pt)
-  #text(font: "DejaVu Sans", size: 16pt)[Docker i Kubernetes]
+  #text(font: "DejaVu Sans", size: 16pt)[Docker, Kubernetes i GitOps]
   #v(14pt)
-  #text(size: 10pt)[Obrazy · sieć · wolumeny · wdrażanie · skalowanie · metryki · ślady · logi]
+  #text(size: 10pt)[Obrazy · sieć · wolumeny · wdrażanie · skalowanie · metryki · ślady · logi · GitOps]
   #v(22pt)
   mgr inż. Jakub Woźniak · Politechnika Poznańska
 ]
 
 = Część I. Docker — konteneryzacja aplikacji
 
-Skrypt prowadzi od budowania obrazu do diagnozy działającej usługi. W części I należy przygotować obrazy Flaska oraz uruchomić Redmine z PostgreSQL. Część II wykorzystuje te doświadczenia do pracy z klastrem; jej zadania A–D dotyczą podstaw, a E–G sond zdrowia, konfiguracji i trwałości danych. Część III zamienia Traefika z części II w źródło telemetrii: metryki pozwalają zawęzić obszar poszukiwań, ślad wskazuje miejsce, a log wyjaśnia przyczynę.
+Skrypt prowadzi od budowania obrazu do diagnozy działającej usługi. W części I należy przygotować obrazy Flaska oraz uruchomić Redmine z PostgreSQL. Część II wykorzystuje te doświadczenia do pracy z klastrem; jej zadania A–D dotyczą podstaw, a E–G sond zdrowia, konfiguracji i trwałości danych. Część III zamienia Traefika z części II w źródło telemetrii: metryki pozwalają zawęzić obszar poszukiwań, ślad wskazuje miejsce, a log wyjaśnia przyczynę. Część IV przenosi źródło prawdy do repozytorium Git i pokazuje, jak Argo CD uzgadnia klaster z tym źródłem.
 
 = Cel ćwiczenia
 
@@ -292,3 +292,5 @@ Po demonstracji należy zatrzymać kontenery. Usunięcie wolumenów kasuje dane 
 #include "chapters/kubernetes.typ"
 
 #include "chapters/monitoring.typ"
+
+#include "chapters/gitops.typ"

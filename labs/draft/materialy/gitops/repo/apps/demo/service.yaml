@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zsr-demo
+  namespace: zsr-gitops
+spec:
+  selector:
+    app: zsr-demo
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

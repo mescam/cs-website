@@ -27,8 +27,8 @@ Zajęcia prowadzone są w trzech blokach. Każdy blok ma własny skrypt i materi
   - [skrypt dla studentów (PDF)](/jwozniak/labs/0-ansible.pdf)
   - [materiały środowiska (ZIP)](/jwozniak/labs/ansible-materialy.zip)
 
-#### 2. Kontenery aplikacyjne: Docker i Kubernetes
-  - **Wymagania**: Docker, Minikube i kubectl; dodatkowe spotkania: Helm
+#### 2. Kontenery aplikacyjne: Docker, Kubernetes i GitOps
+  - **Wymagania**: Docker, Minikube, kubectl i Git; dodatkowe spotkania: Helm
   - **Zakres**:
     - Dockerfile, obrazy, sieć kontenerów i wolumeny
     - Uruchomienie Redmine z PostgreSQL, a następnie wdrożenie Flaska w Kubernetesie
@@ -38,6 +38,7 @@ Zajęcia prowadzone są w trzech blokach. Każdy blok ma własny skrypt i materi
     - Gateway API z Traefikiem
     - Prometheus, Grafana i Alertmanager: ruch, błędy i p95 z histogramu
     - Alert z mailem, ślad i log tej samej operacji, diagnoza przypadku
+    - GitOps z Argo CD: repozytorium jako źródło prawdy, synchronizacja, samonaprawa, prune i rollback
   - [skrypt dla studentów (PDF)](/jwozniak/labs/1-docker.pdf)
   - [materiały startowe (ZIP)](/jwozniak/labs/docker-materialy.zip)
   - Materiały uzupełniające: [Cert-Manager](/jwozniak/labs/5b-certbot.pdf), [Service Mesh z Istio](/jwozniak/labs/6-servicemesh.pdf)

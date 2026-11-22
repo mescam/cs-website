@@ -65,7 +65,8 @@
                 1-docker.typ 1-docker.pdf
               mkdir -p package/materialy
               cp -R draft/materialy/docker package/materialy/docker
-              (cd package && zip -qr "$PWD/docker-materialy.zip" materialy/docker)
+              cp -R draft/materialy/gitops package/materialy/gitops
+              (cd package && zip -qr "$PWD/docker-materialy.zip" materialy/docker materialy/gitops)
             '';
             installPhase = ''
               install -Dm644 1-docker.pdf "$out/1-docker.pdf"

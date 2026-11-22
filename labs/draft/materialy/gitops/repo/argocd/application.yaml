@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: zsr-demo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.cs.put.poznan.pl/<użytkownik>/zsr-gitops.git
+    targetRevision: main
+    path: apps/demo
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: zsr-gitops
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
