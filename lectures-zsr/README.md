@@ -11,7 +11,7 @@ Cykl 15 spotkań po maksymalnie 45 minut. Źródła Typst korzystają z lokalneg
 | 03 | [Kubernetes: model działania](result/zsr-w03.pdf) · [Typst](zsr-w03.typ) | 19 | [45 minut i rozwiązania](notes/zsr-w03.md) |
 | 04 | [Kubernetes w eksploatacji](result/zsr-w04.pdf) · [Typst](zsr-w04.typ) | 13 | [45 minut i rozwiązania](notes/zsr-w04.md) |
 | 05 | [Obserwowalność](result/zsr-w05.pdf) · [Typst](zsr-w05.typ) | 18 | [45 minut i rozwiązania](notes/zsr-w05.md) |
-| 06 | [CI/CD i GitOps](result/zsr-w06.pdf) · [Typst](zsr-w06.typ) | 14 | [45 minut i rozwiązania](notes/zsr-w06.md) |
+| 06 | [CI/CD i GitOps](result/zsr-w06.pdf) · [Typst](zsr-w06.typ) | 18 | [45 minut i rozwiązania](notes/zsr-w06.md) |
 | 07 | [Bezpieczeństwo operacyjne](result/zsr-w07.pdf) · [Typst](zsr-w07.typ) | 14 | [45 minut i rozwiązania](notes/zsr-w07.md) |
 | 08 | [Chmura dla operatora](result/zsr-w08.pdf) · [Typst](zsr-w08.typ) | 13 | [45 minut i rozwiązania](notes/zsr-w08.md) |
 | 09 | [Infrastructure as Code](result/zsr-w09.pdf) · [Typst](zsr-w09.typ) | 14 | [45 minut i rozwiązania](notes/zsr-w09.md) |
@@ -27,6 +27,10 @@ Liczba stron obejmuje tytuł i bibliografię. W1 zawiera wprowadzenie do przedmi
 ## Plan redakcyjny W05
 
 Wykład 05 został przepisany na podstawie planu redakcyjnego w [notes/PLAN-zsr-w05.md](notes/PLAN-zsr-w05.md). Dokument opisuje umiejscowienie w kursie, kontrakt dydaktyczny, listę korekt względem wersji z 26.09.2026, szkielet slajdów z przypisaniem do minut, rozkład budżetu, rozwiązanie przypadku, kryteria odbioru i ryzyka. W05 rozszerzono z 14 do 18 stron, dodając agendę, rozróżnienie monitoringu i obserwowalności, regułę wyboru sygnału, slajd o OpenTelemetry (czym jest i po co powstał), exemplars, wniosek o propagacji kontekstu w śladzie oraz slajd „Kluczowe wnioski”. Slajd z efektami kształcenia usunięto — żaden inny wykład ZSR go nie ma.
+
+## Plan redakcyjny W06
+
+Wykład 06 został przepisany na podstawie planu redakcyjnego w [notes/PLAN-zsr-w06.md](notes/PLAN-zsr-w06.md). W06 rozszerzono z 14 do 18 stron: doszły slajd problemu (zielony pipeline i tag użyty dwa razy), agenda, definicja GitOps z czterema zasadami OpenGitOps, przykład „liczba replik to nie procent ruchu" z dokumentacji Argo Rollouts, slajd „Kluczowe wnioski" z pytaniem sprawdzającym oraz lektura obowiązkowa na wykład 7 (SLSA Provenance) z pytaniem otwierającym. Teza, że przy włączonej synchronizacji automatycznej Argo CD nie wykonuje rollbacku, pochodzi wprost z dokumentacji (sprawdzone 22.11.2026). Wątek chmurowy zredukowano na decyzję prowadzącego do jednego slajdu (token OIDC i zarządzana bramka środowiska); slajd o retencji artefaktów pozostał treścią regularną, a cykl życia rozszerzeń GitOps zarządzanych opisano w notatkach.
 
 ## Prowadzenie
 
