@@ -1,6 +1,6 @@
 #pagebreak()
 
-= Część IV. GitOps — stan oczekiwany w repozytorium Git
+= Część IV. GitOps — stan oczekiwany w repozytorium Git <part>
 
 Ręczne `kubectl apply` wprowadza do klastra zmianę, której nikt nie zapisał w repozytorium. Klaster i repozytorium zaczynają się różnić, a odtworzenie środowiska wymaga odtworzenia czyjejś pamięci. GitOps odwraca zależność: repozytorium Git jest źródłem prawdy, a kontroler w klastrze porównuje stan rzeczywisty z nim i usuwa różnicę.
 
@@ -17,21 +17,11 @@ kubectl config use-context zsr
 kubectl get nodes
 ```
 
+Instalacja Argo CD w zadaniu A używa aplikowania po stronie serwera (`--server-side`). Kubectl wbudowany w Minikube (`minikube kubectl`) bywa starszy i nie zna tej opcji; dlatego przed rozpoczęciem należy zainstalować pełny klient zgodnie z #link("https://kubernetes.io/docs/tasks/tools/")[oficjalną instrukcją] i sprawdzić `kubectl version --client`. Kolejne polecenia tej części wykonuje się tym klientem.
+
 Profil `zsr` i namespace `zsr` mogą pochodzić z wcześniejszych zajęć; ta część tworzy własne namespace `argocd` i `zsr-gitops`; wariant awaryjny tworzy dodatkowo namespace `gitea`. Pliki potrzebne do ćwiczenia znajdują się w katalogu `materialy/gitops` paczki `docker-materialy.zip`. Należy pobrać #link("https://www.cs.put.poznan.pl/jwozniak/labs/docker-materialy.zip")[docker-materialy.zip] i rozpakować go, jeżeli nie został jeszcze rozpakowany. W poleceniach `<ścieżka>` oznacza katalog, w którym rozpakowano materiały.
 
 Przed rozpoczęciem należy sprawdzić, czy w klastrze działają już wydania z części III. Ta część nie wymaga Traefika ani stosu monitoringu, a przy 4 GB pamięci oba zestawy mogą się nie zmieścić. W razie potrzeby należy zatrzymać zbędne wydania albo uruchomić klaster z większym limitem pamięci.
-
-== Plan pracy na kilka spotkań
-
-#table(
-  columns: (auto, 1fr, 1fr), inset: 6pt, stroke: 0.4pt,
-  table.header([*Spotkanie*], [*Zakres*], [*Efekt pracy*]),
-  [1], [Argo CD, repozytorium Git, pierwsza aplikacja (A–C)], [Application zsynchronizowana, strona odpowiada],
-  [2], [Rozbieżność, prune, wycofanie (D–F)], [Samonaprawa, usuwanie i powrót do wersji 1 potwierdzone],
-  [3], [Druga aplikacja i rozszerzenia (G) — opcjonalnie], [Własna Application i samodzielne ćwiczenie],
-)
-
-Zadania A–F są obowiązkowe i mieszczą się w dwóch spotkaniach po 135 minut. Trzecie spotkanie jest opcjonalne: G dla szybszych grup oraz rozszerzenia wskazane przez prowadzącego.
 
 == Od ręcznego wdrożenia do GitOps
 
@@ -57,7 +47,7 @@ kubectl apply --server-side -n argocd \
   -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.6.2/manifests/install.yaml
 ```
 
-Flaga `--server-side` jest wymagana: manifest zawiera definicję CRD, której adnotacja przekracza limit przyjęty przez klasyczne `kubectl apply`. Bez tej flagi instalacja kończy się komunikatem o zbyt dużej adnotacji, mimo że część obiektów zdąży powstać.
+Flaga `--server-side` jest wymagana: manifest zawiera definicję CRD, której adnotacja przekracza limit przyjęty przez klasyczne `kubectl apply`. Bez tej flagi instalacja kończy się komunikatem o zbyt dużej adnotacji, mimo że część obiektów zdąży powstać. Polecenia wykonuje się pełnym klientem `kubectl` z punktu startowego; wbudowany w Minikube bywa starszy i nie zna tej flagi.
 
 Następnie należy poczekać na gotowość Podów i odczytać hasło administratora:
 
@@ -248,6 +238,7 @@ curl --fail http://localhost:8082
 = Diagnostyka GitOps
 
 - `metadata.annotations: Too long`: instalacja Argo CD wymaga `--server-side`; klasyczne `apply` nie mieści adnotacji CRD.
+- `kubectl` nie zna opcji `--server-side` (`unknown flag`): użyto klienta wbudowanego w Minikube; należy zainstalować pełny `kubectl` zgodnie z punktem startowym i powtórzyć polecenie.
 - Push odrzucony z kodem 401: poświadczenia GitLaba są nieaktualne; należy użyć nazwy konta i hasła albo personal access tokenu z zakresem `write_repository`.
 - Push odrzucony jako niezwiązane historie: repozytorium zostało utworzone z README; należy utworzyć puste repozytorium albo użyć `git pull --rebase`.
 - Aplikacja w stanie `Unknown` lub `ComparisonError`: należy sprawdzić adres repozytorium w obiekcie `Application` i log `kubectl -n argocd logs deploy/argocd-repo-server`; adres musi być osiągalny z klastra, a `<użytkownik>` — zastąpiony nazwą konta.
